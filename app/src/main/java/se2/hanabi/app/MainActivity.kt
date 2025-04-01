@@ -159,25 +159,25 @@ fun StartMenuScreen() {
         Text(
             text = "Hanabi!",
             fontFamily = FontFamily.Cursive,
-            color = Color(0xFFfbf7b5),
+            color = Color(0xFFF2FF90),
             fontSize = 100.sp,
             fontWeight = FontWeight.Bold,
             style = TextStyle(
                 shadow = Shadow(
-                    color = Color.Black.copy(alpha = 1f),
+                    color = Color.Black.copy(alpha = 100f),
                     offset = Offset(-0f, 0f),
                     blurRadius = 50f
                 )
             ),
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 100.dp)
+                .padding(top = 50.dp)
         )
         Column(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Button( // Transparent button for the background
+            /*Button( // Transparent button for the background
                 onClick = { },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Transparent
@@ -187,7 +187,7 @@ fun StartMenuScreen() {
                     .padding(16.dp)
                     .width(200.dp)
                     .height(300.dp)
-            ) {
+            )*/ {
             }
             Button(
                 onClick = { showJoinDialog = true },
@@ -197,63 +197,49 @@ fun StartMenuScreen() {
                 ),
                 border = BorderStroke(5.dp, Color.White),
                 modifier = Modifier
-                    .padding(16.dp)
+                    .padding(top = 350.dp)
                     .width(200.dp)
                     .height(60.dp)
             ) {
                 Text(
-                    text = "Enter Lobby Code",
+                    text = "Join Lobby",
                     textAlign = TextAlign.Center
                 )
             }
 
-            /*if (isConnected) {
-                Button(
-                    onClick = { startGame() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFe74c3c),
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(5.dp, Color.White),
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .width(200.dp)
-                        .height(60.dp)
-                ) {
-                    Text(
-                        text = "Start Game",
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }*/
-
-            Button(onClick = {/*todo*/},
+            Button(onClick = { /*todo*/ },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.DarkGray,
                     contentColor = Color.White
                 ),
                 border = BorderStroke(5.dp, Color.White),
                 modifier = Modifier
-                    .padding(1.dp)
+                    .padding(top = 10.dp)
                     .width(200.dp)
                     .height(60.dp)
             ) {
                 Text("Create Lobby")
             }
         }
-        IconButton(
-            onClick = { fetchStatus() },
+        Surface(
             modifier = Modifier
                 .padding(16.dp)
-                .size(60.dp)
-                .align(Alignment.BottomEnd)
+                .size(48.dp)
+                .align(Alignment.BottomEnd),
+            shape = RoundedCornerShape(25.dp),
+            color = Color.White,
+            tonalElevation = 4.dp
         ) {
-            Icon(
-                imageVector = Icons.Default.Info,
-                contentDescription = "Settings",
-                tint = Color.Black,
-                modifier = Modifier.size(100.dp)  // Große Icon-Größe
-            )
+            IconButton(
+                onClick = { fetchStatus() }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = "Status",
+                    tint = Color.DarkGray,
+                    modifier = Modifier.size(50.dp)
+                )
+            }
         }
     }
 
@@ -338,3 +324,4 @@ fun PopupDialog(title: String, message: String, onDismiss: () -> Unit) {
         }
     )
 }
+
