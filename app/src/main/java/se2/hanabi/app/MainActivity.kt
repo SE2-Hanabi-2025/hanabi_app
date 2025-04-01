@@ -82,8 +82,11 @@ fun StartMenuScreen() {
     var showConnectDialog by remember { mutableStateOf(false) }
     var showStartDialog by remember { mutableStateOf(false) }
     var showStatusDialog by remember { mutableStateOf(false) }
+    var showJoinDialog by remember { mutableStateOf(false) }
+    var lobbyCode by remember { mutableStateOf("") }
     var statusMessage by remember { mutableStateOf("Fetching status...") }
     var isLoading by remember { mutableStateOf(false) }
+    var isConnected by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val client = remember { HttpClient(CIO) }
     val urlEmulator = "http://10.0.2.2:8080"
@@ -131,6 +134,20 @@ fun StartMenuScreen() {
         }
     }
 
+    fun joinLobby(code: String) {
+        coroutineScope.launch {
+            isLoading = true
+            try {
+                val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code")
+                statusMessage = response.body()
+                isConnected = true
+            } catch (e: Exception) {
+                statusMessage = "Failed to join lobby"
+            }
+            showStatusDialog = true
+            isLoading = false
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -152,7 +169,9 @@ fun StartMenuScreen() {
                     blurRadius = 50f
                 )
             ),
-            modifier = Modifier.align(Alignment.TopCenter)
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 100.dp)
         )
         Column(
             modifier = Modifier.align(Alignment.Center),
@@ -171,7 +190,7 @@ fun StartMenuScreen() {
             ) {
             }
             Button(
-                onClick = {/*todo*/},
+                onClick = { showJoinDialog = true },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF2ecc71),
                     contentColor = Color.White
@@ -183,10 +202,31 @@ fun StartMenuScreen() {
                     .height(60.dp)
             ) {
                 Text(
-                    text = "Connect To Lobby",
+                    text = "Enter Lobby Code",
                     textAlign = TextAlign.Center
                 )
             }
+
+            /*if (isConnected) {
+                Button(
+                    onClick = { startGame() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFe74c3c),
+                        contentColor = Color.White
+                    ),
+                    border = BorderStroke(5.dp, Color.White),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .width(200.dp)
+                        .height(60.dp)
+                ) {
+                    Text(
+                        text = "Start Game",
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }*/
+
             Button(onClick = {/*todo*/},
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.DarkGray,
@@ -245,6 +285,35 @@ fun StartMenuScreen() {
         PopupDialog("Server Status", statusMessage) {
             showStatusDialog = false
         }
+    }
+
+    if (showJoinDialog) {
+        AlertDialog(
+            onDismissRequest = { showJoinDialog = false },
+            title = { Text("Join Lobby") },
+            text = {
+                androidx.compose.material3.TextField(
+                    value = lobbyCode,
+                    onValueChange = { lobbyCode = it },
+                    label = { Text("Enter Lobby Code") }
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    if (lobbyCode.isNotEmpty()) {
+                        joinLobby(lobbyCode)
+                        showJoinDialog = false
+                    }
+                }) {
+                    Text("Join")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showJoinDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
