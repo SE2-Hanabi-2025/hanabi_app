@@ -151,7 +151,7 @@ fun StartMenuScreen() {
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
-            painter = painterResource(id = R.drawable.background_image), // Replace with your image
+            painter = painterResource(id = R.drawable.backgroundimage), // Replace with your image
             contentDescription = "Background Image",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop // or ContentScale.FillBounds for different scaling
