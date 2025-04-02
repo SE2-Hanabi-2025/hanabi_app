@@ -38,6 +38,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.ktor.client.HttpClient
@@ -46,8 +47,8 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.launch
-import se2.hanabi.app.PopupDialog
 import se2.hanabi.app.R
+import se2.hanabi.app.ui.theme.AppTheme
 
 @Composable
 fun StartMenuScreen() {
@@ -229,7 +230,7 @@ fun StartMenuScreen() {
     }
 
     if (showStatusDialog) {
-        PopupDialog("Server Status", statusMessage) {
+         PopupDialog("Server Status", statusMessage) {
             showStatusDialog = false
         }
     }
@@ -262,4 +263,24 @@ fun StartMenuScreen() {
             }
         )
     }
+}
+@Preview(showBackground = true)
+@Composable
+fun StartMenuScreenPreview() {
+    AppTheme {
+        StartMenuScreen()
+    }
+}
+@Composable
+fun PopupDialog(title: String, message: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+        text = { Text(message, fontSize = 16.sp) },
+        confirmButton = {
+            Button(onClick = onDismiss) {
+                Text("OK")
+            }
+        }
+    )
 }

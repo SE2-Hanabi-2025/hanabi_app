@@ -36,25 +36,3 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun StartMenuScreenPreview() {
-    AppTheme {
-        StartMenuScreen()
-    }
-}
-
-@Composable
-fun PopupDialog(title: String, message: String, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
-        text = { Text(message, fontSize = 16.sp) },
-        confirmButton = {
-            Button(onClick = onDismiss) {
-                Text("OK")
-            }
-        }
-    )
-}
-
