@@ -72,11 +72,21 @@ class GameActivity : ComponentActivity() {
             drawnCards.remove(card) // Remove card from the drawnCards list
         }
         fun placeCardInBox(boxIndex: Int) {
-            if (selectedCard != null) {
-                boxes[boxIndex] = selectedCard // Place selected card in the chosen box
-                removeCard(selectedCard!!) // Remove card from hand after placing it in a box
-                selectedCard = null // Reset the selected card after placing it
+            val cardValue = selectedCard?.toIntOrNull()
+            val boxValue = boxes[boxIndex]?.toIntOrNull()
+
+            if (cardValue != null) {
+                val canPlace = when (boxValue) {
+                    null -> cardValue == 1 //Only 1 can start a stack
+                    else -> cardValue == boxValue + 1 //Stacking rule: next must be + 1
+                }
+                if(canPlace) {
+                    boxes[boxIndex] = cardValue.toString()
+                    removeCard(selectedCard!!)
+                    selectedCard = null
+                }
             }
+
         }
 
 

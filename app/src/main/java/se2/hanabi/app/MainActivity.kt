@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.ktor.client.statement.HttpResponse
 import se2.hanabi.app.ui.theme.ClientTheme
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -64,7 +65,7 @@ class MainActivity : ComponentActivity() {
             coroutineScope.launch {
                 isLoading = true
                 try {
-                    val response: HttpResponse = client.get("$urlEmulator/game/start") // FIXED URL
+                    val response: io.ktor.client.statement.HttpResponse = client.get("$urlEmulator/game/start") // FIXED URL
                     statusMessage = response.body()
                     startActivity(Intent(this@MainActivity, GameActivity::class.java))
                 } catch (e: Exception) {
