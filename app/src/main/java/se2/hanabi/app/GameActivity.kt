@@ -34,10 +34,19 @@ class GameActivity : ComponentActivity() {
         var selectedCard by remember { mutableStateOf<String?>(null) } // Track selected card
         var discardedCard by remember { mutableStateOf("No card discarded yet") }
         val drawnCards = remember { mutableStateListOf<String>() }
-        val boxes = remember { mutableStateListOf<String?>(null, null, null, null, null) } // 5 boxes, each holding a card or null
+        val boxes = remember {
+            mutableStateListOf<String?>(
+                null,
+                null,
+                null,
+                null,
+                null
+            )
+        } // 5 boxes, each holding a card or null
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
         val urlEmulator = "http://10.0.2.2:8080"
+        val snackbarHostState = remember { SnackbarHostState() }
 
         fun drawCard() {
             coroutineScope.launch {
@@ -67,10 +76,12 @@ class GameActivity : ComponentActivity() {
                 discardedCard = "No card selected to discard" // Notify user if no card is selected
             }
         }
+
         // Function to remove a card from the hand (drawnCards list)
         fun removeCard(card: String) {
             drawnCards.remove(card) // Remove card from the drawnCards list
         }
+
         fun placeCardInBox(boxIndex: Int) {
             val cardValue = selectedCard?.toIntOrNull()
             val boxValue = boxes[boxIndex]?.toIntOrNull()
@@ -80,100 +91,110 @@ class GameActivity : ComponentActivity() {
                     null -> cardValue == 1 //Only 1 can start a stack
                     else -> cardValue == boxValue + 1 //Stacking rule: next must be + 1
                 }
-                if(canPlace) {
+                if (canPlace) {
                     boxes[boxIndex] = cardValue.toString()
                     removeCard(selectedCard!!)
                     selectedCard = null
+                } else {
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar("Invalid move! You must play ${boxValue?.plus(1) ?: 1}!")
+                    }
                 }
             }
 
         }
 
-
-
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Button(
-                    onClick = { drawCard() },
-                    modifier = Modifier.fillMaxWidth().padding(8.dp)
-                ) {
-                    Text("Draw Card")
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = drawnCard, style = MaterialTheme.typography.headlineSmall)
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Discard Card Button
-                Button(
-                    onClick = { discardCard() },
-                    modifier = Modifier.fillMaxWidth().padding(8.dp)
-                ) {
-                    Text("Discard Card")
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = discardedCard, style = MaterialTheme.typography.headlineSmall)
-            }
-
-            // Playing field with 5 boxes
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                repeat(5) { index ->
-                    Box(
-                        modifier = Modifier
-                            .size(50.dp) // Size of each box
-                            .background(
-                                if (boxes[index] != null) Color.Magenta else Color.Gray
-                            ) // Color purple if it has a card, else gray
-                            .border(1.dp, Color.Gray) // Border around each box
-                            .padding(8.dp)
-                            .clickable {
-                                placeCardInBox(index) // Place card when box is clicked
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = boxes[index] ?: "",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp)) // Space between boxes
-                }
-            }
-
-            // Drawn Cards display
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { paddingValues ->
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                for (row in drawnCards.chunked(5).reversed()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Button(
+                        onClick = { drawCard() },
+                        modifier = Modifier.fillMaxWidth().padding(8.dp)
                     ) {
-                        row.forEach { card ->
-                            Button(
-                                onClick = {
-                                    // Set the selected card when clicked
-                                    selectedCard = if (selectedCard == card) null else card
+                        Text("Draw Card")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = drawnCard, style = MaterialTheme.typography.headlineSmall)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Discard Card Button
+                    Button(
+                        onClick = { discardCard() },
+                        modifier = Modifier.fillMaxWidth().padding(8.dp)
+                    ) {
+                        Text("Discard Card")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = discardedCard, style = MaterialTheme.typography.headlineSmall)
+                }
+
+                // Playing field with 5 boxes
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    repeat(5) { index ->
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp) // Size of each box
+                                .background(
+                                    if (boxes[index] != null) Color.Magenta else Color.Gray
+                                ) // Color purple if it has a card, else gray
+                                .border(1.dp, Color.Gray) // Border around each box
+                                .padding(8.dp)
+                                .clickable {
+                                    placeCardInBox(index) // Place card when box is clicked
                                 },
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .wrapContentSize(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (card == selectedCard) Color.Green else Color.Magenta // For background color
-                                )
-                            ) {
-                                Text(card, modifier = Modifier.padding(4.dp), color = Color.White)
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = boxes[index] ?: "",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp)) // Space between boxes
+                    }
+                }
+
+                // Drawn Cards display
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    for (row in drawnCards.chunked(5).reversed()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            row.forEach { card ->
+                                Button(
+                                    onClick = {
+                                        // Set the selected card when clicked
+                                        selectedCard = if (selectedCard == card) null else card
+                                    },
+                                    modifier = Modifier
+                                        .padding(4.dp)
+                                        .wrapContentSize(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (card == selectedCard) Color.Green else Color.Magenta // For background color
+                                    )
+                                ) {
+                                    Text(
+                                        card,
+                                        modifier = Modifier.padding(4.dp),
+                                        color = Color.White
+                                    )
+                                }
                             }
                         }
                     }
