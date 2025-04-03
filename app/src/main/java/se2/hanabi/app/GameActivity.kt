@@ -91,13 +91,20 @@ class GameActivity : ComponentActivity() {
             val boxValue = boxes[boxIndex]?.toIntOrNull()
 
             if (cardValue != null) {
+                if (boxValue == 5) {
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(("This stack is already complete!"))
+                    }
+                    return
+                }
+
                 val canPlace = when (boxValue) {
                     null -> cardValue == 1 //Only 1 can start a stack
                     else -> cardValue == boxValue + 1 //Stacking rule: next must be + 1
                 }
                 if (canPlace) {
                     boxes[boxIndex] = cardValue.toString()
-                    removeCard(selectedCard!!)
+                    drawnCards.removeAt(selectedCardIndex!!)
                     selectedCardIndex = null
 
                     if(cardValue == 5) {
@@ -110,9 +117,12 @@ class GameActivity : ComponentActivity() {
                     if(boxes.all { it == "5"}) {
                         context.startActivity(Intent(context, WinActivity::class.java))
                     }
+
                 } else {
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar("Invalid move! You must play ${boxValue?.plus(1) ?: 1}!")
+                        snackbarHostState.showSnackbar(
+                            "Invalid move! You must play ${boxValue?.plus(1) ?: 1}!"
+                        )
                     }
                 }
             }
