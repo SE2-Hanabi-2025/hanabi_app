@@ -33,7 +33,7 @@ class GameActivity : ComponentActivity() {
     @Composable
     fun GameScreen() {
         var drawnCard by remember { mutableStateOf("No card drawn yet") }
-        var selectedCard by remember { mutableStateOf<String?>(null) } // Track selected card
+        var selectedCardIndex by remember { mutableStateOf<Int?>(null) } // Track selected card
         var discardedCard by remember { mutableStateOf("No card discarded yet") }
         val drawnCards = remember { mutableStateListOf<String>() }
         val boxes = remember {
@@ -71,10 +71,10 @@ class GameActivity : ComponentActivity() {
         }
 
         fun discardCard() {
-            if (selectedCard != null) {
-                drawnCards.remove(selectedCard) // Remove the selected card from the hand
-                discardedCard = "Discarded card: $selectedCard"
-                selectedCard = null // Reset the selected card after discarding
+            if (selectedCardIndex != null) {
+                drawnCards.removeAt(selectedCardIndex!!) // Remove the selected card from the hand
+                discardedCard = "Discarded card: $selectedCardIndex"
+                selectedCardIndex = null // Reset the selected card after discarding
             } else {
                 discardedCard = "No card selected to discard" // Notify user if no card is selected
             }
@@ -86,6 +86,7 @@ class GameActivity : ComponentActivity() {
         }
 
         fun placeCardInBox(boxIndex: Int) {
+            val selectedCard = selectedCardIndex?.let { drawnCards[it] }
             val cardValue = selectedCard?.toIntOrNull()
             val boxValue = boxes[boxIndex]?.toIntOrNull()
 
@@ -97,7 +98,7 @@ class GameActivity : ComponentActivity() {
                 if (canPlace) {
                     boxes[boxIndex] = cardValue.toString()
                     removeCard(selectedCard!!)
-                    selectedCard = null
+                    selectedCardIndex = null
 
                     //WIN CHECK
                     if(boxes.all { it == "5"}) {
@@ -179,22 +180,22 @@ class GameActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    for (row in drawnCards.chunked(5).reversed()) {
+                    drawnCards.withIndex().chunked(5).reversed().forEach { chunk ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            row.forEach { card ->
+                            chunk.forEach { (index, card) ->
                                 Button(
                                     onClick = {
                                         // Set the selected card when clicked
-                                        selectedCard = if (selectedCard == card) null else card
+                                        selectedCardIndex = if (selectedCardIndex == index) null else index
                                     },
                                     modifier = Modifier
                                         .padding(4.dp)
                                         .wrapContentSize(),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (card == selectedCard) Color.Green else Color.Magenta // For background color
+                                        containerColor = if (selectedCardIndex == index) Color.Green else Color.Magenta // For background color
                                     )
                                 ) {
                                     Text(
