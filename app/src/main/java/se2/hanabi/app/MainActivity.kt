@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -58,6 +59,7 @@ class MainActivity : ComponentActivity() {
         val client = remember { HttpClient(CIO) }
         val urlEmulator = "http://10.0.2.2:8080"
         val urlLocalHost = "http://localhost:8080"
+        val context = LocalContext.current
 
 
 
@@ -84,6 +86,8 @@ class MainActivity : ComponentActivity() {
                 try {
                     val response: HttpResponse = client.get("$urlEmulator/connect")
                     statusMessage = response.body()
+                    //After connecting, navigate to LobbyScreen
+                    context.startActivity(Intent(context, LobbyActivity::class.java))
                 } catch (e: Exception) {
                     statusMessage = "Failed to connect"
                 }
@@ -170,6 +174,17 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                //test button for lobby
+                //TODO delete later and implement server connection to it
+                Button(
+                    onClick = {
+                        context.startActivity(Intent(context, LobbyActivity::class.java))
+                    },
+                    modifier = Modifier.fillMaxWidth().height(60.dp)
+                ) {
+                    Text ("Temporary: Go to lobby")
+                }
 
             }
 
