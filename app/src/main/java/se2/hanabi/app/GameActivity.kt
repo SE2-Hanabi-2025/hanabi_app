@@ -50,6 +50,7 @@ class GameActivity : ComponentActivity() {
         val urlEmulator = "http://10.0.2.2:8080"
         val snackbarHostState = remember { SnackbarHostState() }
         val context = LocalContext.current
+        var deckSize by remember { mutableStateOf(50)} //50 card deck
 
         fun drawCard() {
             coroutineScope.launch {
@@ -63,6 +64,7 @@ class GameActivity : ComponentActivity() {
                         val cardValue = cardText.substringAfter(": ").trim()
                         drawnCard = "Drew a card: $cardValue"
                         drawnCards.add(cardValue)
+                        deckSize-- // Decrease deck size
                     }
                 } catch (e: Exception) {
                     drawnCard = "Failed to draw a card"
@@ -138,6 +140,11 @@ class GameActivity : ComponentActivity() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Cards Remaining: $deckSize",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = Color.Black
+                    )
                     Button(
                         onClick = { drawCard() },
                         modifier = Modifier.fillMaxWidth().padding(8.dp)
