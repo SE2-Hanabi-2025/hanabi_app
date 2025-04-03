@@ -132,7 +132,17 @@ class GameActivity : ComponentActivity() {
         }
 
         Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) }
+            snackbarHost = {
+                SnackbarHost(snackbarHostState) { data ->
+                    val isSuccess = data.visuals.message.startsWith("\uD83C\uDF89") || data.visuals.message.contains("completed", ignoreCase = true)
+
+                    Snackbar(
+                        snackbarData = data,
+                        containerColor = if (isSuccess) Color(0xFF4CAF50) else Color (0xFFF44336), //green or red
+                        contentColor = Color.White
+                    )
+                }
+            }
         ) { paddingValues ->
             Column(
                 modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
