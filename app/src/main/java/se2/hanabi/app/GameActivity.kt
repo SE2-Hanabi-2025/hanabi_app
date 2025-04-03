@@ -100,6 +100,12 @@ class GameActivity : ComponentActivity() {
                     removeCard(selectedCard!!)
                     selectedCardIndex = null
 
+                    if(cardValue == 5) {
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar("\uD83C\uDF89 Stack ${boxIndex + 1} completed!")
+                        }
+                    }
+
                     //WIN CHECK
                     if(boxes.all { it == "5"}) {
                         context.startActivity(Intent(context, WinActivity::class.java))
