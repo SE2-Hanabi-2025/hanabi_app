@@ -155,8 +155,19 @@ class GameActivity : ComponentActivity() {
                         style = MaterialTheme.typography.headlineSmall,
                         color = Color.Black
                     )
+
+                    if (deckSize == 0) {
+                        Text(
+                            text = "No more cards left in the deck.",
+                            color = Color.Red,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
                     Button(
                         onClick = { drawCard() },
+                        enabled = deckSize > 0, //Disable when deck is empty
                         modifier = Modifier.fillMaxWidth().padding(8.dp)
                     ) {
                         Text("Draw Card")
