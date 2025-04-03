@@ -1,5 +1,6 @@
 package se2.hanabi.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -47,6 +49,7 @@ class GameActivity : ComponentActivity() {
         val client = remember { HttpClient(CIO) }
         val urlEmulator = "http://10.0.2.2:8080"
         val snackbarHostState = remember { SnackbarHostState() }
+        val context = LocalContext.current
 
         fun drawCard() {
             coroutineScope.launch {
@@ -95,6 +98,11 @@ class GameActivity : ComponentActivity() {
                     boxes[boxIndex] = cardValue.toString()
                     removeCard(selectedCard!!)
                     selectedCard = null
+
+                    //WIN CHECK
+                    if(boxes.all { it == "5"}) {
+                        context.startActivity(Intent(context, WinActivity::class.java))
+                    }
                 } else {
                     coroutineScope.launch {
                         snackbarHostState.showSnackbar("Invalid move! You must play ${boxValue?.plus(1) ?: 1}!")
