@@ -1,11 +1,17 @@
 package se2.hanabi.app.screens
 
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,6 +39,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -47,240 +54,300 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.launch
+import se2.hanabi.app.GameActivity
+import se2.hanabi.app.LobbyActivity
 import se2.hanabi.app.R
-import se2.hanabi.app.ui.theme.AppTheme
+import se2.hanabi.app.ui.theme.ClientTheme
 
-@Composable
-fun StartMenuScreen() {
-    var showConnectDialog by remember { mutableStateOf(false) }
-    var showStartDialog by remember { mutableStateOf(false) }
-    var showStatusDialog by remember { mutableStateOf(false) }
-    var showJoinDialog by remember { mutableStateOf(false) }
-    var lobbyCode by remember { mutableStateOf("") }
-    var statusMessage by remember { mutableStateOf("Fetching status...") }
-    var isLoading by remember { mutableStateOf(false) }
-    var isConnected by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-    val client = remember { HttpClient(CIO) }
-    val urlEmulator = "http://10.0.2.2:8080"
-    val urlLocalHost = "http://localhost:8080"
 
-    fun fetchStatus() {
-        coroutineScope.launch {
-            isLoading = true // Show loading spinner
-            try {
-                val response: HttpResponse = client.get("$urlEmulator/status")
-                statusMessage = response.body()
-            } catch (e: Exception) {
-                statusMessage = "Failed to fetch status"
+class StartMenuActivity: ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            ClientTheme {
+                StartMenuScreen()
             }
-            showStatusDialog = true
-            isLoading = false // Hide loading spinner
         }
     }
 
-    fun connectToServer() {
-        coroutineScope.launch {
-            isLoading = true // Show loading spinner
-            try {
-                val response: HttpResponse = client.get("$urlEmulator/connect")
-                statusMessage = response.body()
-            } catch (e: Exception) {
-                statusMessage = "Failed to connect"
-            }
-            showStatusDialog = true
-            isLoading = false // Hide loading spinner
-        }
-    }
+    @Composable
+    fun StartMenuScreen() {
+        var showConnectDialog by remember { mutableStateOf(false) }
+        var showStartDialog by remember { mutableStateOf(false) }
+        var showStatusDialog by remember { mutableStateOf(false) }
+        var showJoinDialog by remember { mutableStateOf(false) }
+        var lobbyCode by remember { mutableStateOf("") }
+        var statusMessage by remember { mutableStateOf("Fetching status...") }
+        var isLoading by remember { mutableStateOf(false) }
+        var isConnected by remember { mutableStateOf(false) }
+        val coroutineScope = rememberCoroutineScope()
+        val client = remember { HttpClient(CIO) }
+        val urlEmulator = "http://10.0.2.2:8080"
+        val urlLocalHost = "http://localhost:8080"
+        val context = LocalContext.current
 
-    fun startGame() {
-        coroutineScope.launch {
-            isLoading = true // Show loading spinner
-            try {
-                val response: HttpResponse = client.get("$urlEmulator/start-game")
-                statusMessage = response.body()
-            } catch (e: Exception) {
-                statusMessage = "Failed to start the game"
+        fun fetchStatus() {
+            coroutineScope.launch {
+                isLoading = true // Show loading spinner
+                try {
+                    val response: HttpResponse = client.get("$urlEmulator/status")
+                    statusMessage = response.body()
+                } catch (e: Exception) {
+                    statusMessage = "Failed to fetch status"
+                }
+                showStatusDialog = true
+                isLoading = false // Hide loading spinner
             }
-            showStatusDialog = true
-            isLoading = false // Hide loading spinner
         }
-    }
 
-    fun joinLobby(code: String) {
-        coroutineScope.launch {
-            isLoading = true
-            try {
-                val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code")
-                statusMessage = response.body()
-                isConnected = true
-            } catch (e: Exception) {
-                statusMessage = "Failed to join lobby"
+        fun connectToServer() {
+            coroutineScope.launch {
+                isLoading = true // Show loading spinner
+                try {
+                    val response: HttpResponse = client.get("$urlEmulator/connect")
+                    statusMessage = response.body()
+                    //After connecting, navigate to LobbyScreen
+                    context.startActivity(Intent(context, LobbyActivity::class.java))
+                } catch (e: Exception) {
+                    statusMessage = "Failed to connect"
+                }
+                showStatusDialog = true
+                isLoading = false // Hide loading spinner
             }
-            showStatusDialog = true
-            isLoading = false
         }
-    }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(id = R.drawable.backgroundimage), // Replace with your image
-            contentDescription = "Background Image",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop // or ContentScale.FillBounds for different scaling
-        )
-        Text(
-            text = "Hanabi!",
-            fontFamily = FontFamily.Cursive,
-            color = Color(0xFFF2FF90),
-            fontSize = 100.sp,
-            fontWeight = FontWeight.Bold,
-            style = TextStyle(
-                shadow = Shadow(
-                    color = Color.Black.copy(alpha = 100f),
-                    offset = Offset(-0f, 0f),
-                    blurRadius = 50f
-                )
-            ),
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 50.dp)
-        )
-        Column(
-            modifier = Modifier.align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) { {
+        fun startGame() {
+            coroutineScope.launch {
+                isLoading = true
+                try {
+                    val response: io.ktor.client.statement.HttpResponse =
+                        client.get("$urlEmulator/game/start") // FIXED URL
+                    statusMessage = response.body()
+                    startActivity(Intent(this@StartMenuActivity, GameActivity::class.java))
+                } catch (e: Exception) {
+                    statusMessage = "Failed to start the game: ${e.localizedMessage}"
+                    showStatusDialog = true
+                }
+                isLoading = false
+            }
         }
-            Button(
-                onClick = { showJoinDialog = true },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2ecc71),
-                    contentColor = Color.White
+
+        fun joinLobby(code: String) {
+            coroutineScope.launch {
+                isLoading = true
+                try {
+                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code")
+                    statusMessage = response.body()
+                    isConnected = true
+                } catch (e: Exception) {
+                    statusMessage = "Failed to join lobby"
+                }
+                showStatusDialog = true
+                isLoading = false
+            }
+        }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = R.drawable.backgroundimage),
+                contentDescription = "Background Image",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Text(
+                text = "Hanabi!",
+                fontFamily = FontFamily.Cursive,
+                color = Color(0xFFF2FF90),
+                fontSize = 100.sp,
+                fontWeight = FontWeight.Bold,
+                style = TextStyle(
+                    shadow = Shadow(
+                        color = Color.Black.copy(alpha = 100f),
+                        offset = Offset(-0f, 0f),
+                        blurRadius = 50f
+                    )
                 ),
-                border = BorderStroke(5.dp, Color.White),
                 modifier = Modifier
-                    .padding(top = 350.dp)
-                    .width(200.dp)
-                    .height(60.dp)
+                    .align(Alignment.TopCenter)
+                    .padding(top = 50.dp)
+            )
+            Column(
+                modifier = Modifier.align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Join Lobby",
-                    textAlign = TextAlign.Center
-                )
-            }
+                {
+                }
+                Button(
+                    onClick = { showJoinDialog = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2ecc71),
+                        contentColor = Color.White
+                    ),
+                    border = BorderStroke(5.dp, Color.White),
+                    modifier = Modifier
+                        .padding(top = 350.dp)
+                        .width(200.dp)
+                        .height(60.dp)
+                ) {
+                    Text(
+                        text = "Join Lobby",
+                        textAlign = TextAlign.Center
+                    )
+                }
 
-            Button(onClick = { /*todo*/ },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.DarkGray,
-                    contentColor = Color.White
-                ),
-                border = BorderStroke(5.dp, Color.White),
+                Button(
+                    onClick = {context.startActivity(
+                        Intent(
+                            context,
+                            LobbyActivity::class.java
+                        )
+                    )},
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.DarkGray,
+                        contentColor = Color.White
+                    ),
+                    border = BorderStroke(5.dp, Color.White),
+                    modifier = Modifier
+                        .padding(top = 10.dp)
+                        .width(200.dp)
+                        .height(60.dp)
+                ) {
+                    Text("Create Lobby")
+                }
+                Button(
+                    onClick = { startGame() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.DarkGray,
+                        contentColor = Color.White
+                    ),
+                    border = BorderStroke(5.dp, Color.White),
+                    modifier = Modifier
+                        .padding(top = 10.dp)
+                        .width(200.dp)
+                        .height(60.dp)
+                ) {
+                    Text("Start Game")
+                }
+                /*Button(
+                    onClick = {
+                        context.startActivity(
+                            Intent(
+                                context,
+                                LobbyActivity::class.java
+                            )
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth().height(60.dp)
+                ) {
+                    Text("Temporary: Go to lobby")
+                }*/
+            }
+            Surface(
                 modifier = Modifier
-                    .padding(top = 10.dp)
-                    .width(200.dp)
-                    .height(60.dp)
+                    .padding(16.dp)
+                    .size(48.dp)
+                    .align(Alignment.BottomEnd),
+                shape = RoundedCornerShape(25.dp),
+                color = Color.White,
+                tonalElevation = 4.dp
             ) {
-                Text("Create Lobby")
+                IconButton(
+                    onClick = { fetchStatus() }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Status",
+                        tint = Color.DarkGray,
+                        modifier = Modifier.size(50.dp)
+                    )
+                }
             }
         }
-        Surface(
-            modifier = Modifier
-                .padding(16.dp)
-                .size(48.dp)
-                .align(Alignment.BottomEnd),
-            shape = RoundedCornerShape(25.dp),
-            color = Color.White,
-            tonalElevation = 4.dp
-        ) {
-            IconButton(
-                onClick = { fetchStatus() }
+
+
+        // Show Loading Spinner
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Color.Black.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = "Status",
-                    tint = Color.DarkGray,
-                    modifier = Modifier.size(50.dp)
-                )
+                CircularProgressIndicator(color = Color.White)
             }
         }
-    }
 
-    if (isLoading) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.5f), shape = RoundedCornerShape(16.dp))
-                .padding(32.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(color = Color.White)
+        if (showConnectDialog) {
+            PopupDialog("Connecting...", "Attempting to connect to server.") {
+                showConnectDialog = false
+            }
         }
-    }
 
-    if (showConnectDialog) {
-        PopupDialog("Connecting...", "Attempting to connect to server.") {
-            showConnectDialog = false
+        if (showStartDialog) {
+            PopupDialog("Starting Game...", "Preparing game lobby.") {
+                showStartDialog = false
+            }
         }
-    }
 
-    if (showStartDialog) {
-        PopupDialog("Starting Game...", "Preparing game lobby.") {
-            showStartDialog = false
+        if (showStatusDialog) {
+            PopupDialog("Server Status", statusMessage) {
+                showStatusDialog = false
+            }
         }
-    }
 
-    if (showStatusDialog) {
-         PopupDialog("Server Status", statusMessage) {
-            showStatusDialog = false
-        }
-    }
-
-    if (showJoinDialog) {
-        AlertDialog(
-            onDismissRequest = { showJoinDialog = false },
-            title = { Text("Join Lobby") },
-            text = {
-                androidx.compose.material3.TextField(
-                    value = lobbyCode,
-                    onValueChange = { lobbyCode = it },
-                    label = { Text("Enter Lobby Code") }
-                )
-            },
-            confirmButton = {
-                Button(onClick = {
-                    if (lobbyCode.isNotEmpty()) {
-                        joinLobby(lobbyCode)
-                        showJoinDialog = false
+        if (showJoinDialog) {
+            AlertDialog(
+                onDismissRequest = { showJoinDialog = false },
+                title = { Text("Join Lobby") },
+                text = {
+                    androidx.compose.material3.TextField(
+                        value = lobbyCode,
+                        onValueChange = { lobbyCode = it },
+                        label = { Text("Enter Lobby Code") }
+                    )
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        if (lobbyCode.isNotEmpty()) {
+                            joinLobby(lobbyCode)
+                            showJoinDialog = false
+                        }
+                    }) {
+                        Text("Join")
                     }
-                }) {
-                    Text("Join")
+                },
+                dismissButton = {
+                    Button(onClick = { showJoinDialog = false }) {
+                        Text("Cancel")
+                    }
                 }
-            },
-            dismissButton = {
-                Button(onClick = { showJoinDialog = false }) {
-                    Text("Cancel")
+            )
+        }
+    }
+
+    @Preview(showBackground = true)
+    @Composable
+    fun StartMenuScreenPreview() {
+        ClientTheme {
+            StartMenuScreen()
+        }
+    }
+
+    @Composable
+    fun PopupDialog(title: String, message: String, onDismiss: () -> Unit) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+            text = { Text(message, fontSize = 16.sp) },
+            confirmButton = {
+                Button(onClick = onDismiss) {
+                    Text("OK")
                 }
             }
         )
     }
-}
-@Preview(showBackground = true)
-@Composable
-fun StartMenuScreenPreview() {
-    AppTheme {
-        StartMenuScreen()
-    }
-}
-@Composable
-fun PopupDialog(title: String, message: String, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
-        text = { Text(message, fontSize = 16.sp) },
-        confirmButton = {
-            Button(onClick = onDismiss) {
-                Text("OK")
-            }
-        }
-    )
 }
