@@ -38,5 +38,3 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           ./gradlew build sonar --info
-          # Disable SonarCloud tests for specific classes
-          ./gradlew -Dsonar.exclusions="**/LobbyActivity.kt,**/StartMenue.kt"
