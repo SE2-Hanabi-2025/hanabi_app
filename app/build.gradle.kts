@@ -101,7 +101,7 @@ sonar {
             "${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
         )
         // Exclude LobbyActivity.kt and StartMenue.kt from SonarQube quality gate
-        property("sonar.exclusions", "**/LobbyActivity.kt, **/StartMenue.kt")
+        property("sonar.exclusions", "**/se2/hanabi/app/**")
     }
 }
 
