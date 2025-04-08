@@ -1,9 +1,7 @@
 package se2.hanabi.app.EndAnimations
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -11,7 +9,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.endanimations.Particle
 import kotlin.math.pow
 import kotlin.random.Random
 
@@ -48,9 +45,7 @@ fun Burst(
 
     var animationProgress: Float
     // animate progress after delay for the given duration
-    if (time<startTimeOffset || time>(startTimeOffset+duration)) {
-
-    } else {
+    if (!(time<startTimeOffset || time>(startTimeOffset+duration))) {
         animationProgress = (time-startTimeOffset)/duration
         Canvas(modifier = Modifier
             .fillMaxSize()
