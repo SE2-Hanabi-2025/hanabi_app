@@ -1,4 +1,4 @@
-package se2.hanabi.app.Card
+package se2.hanabi.app.card
 
 /**
  * Represents a single Hanabi Card

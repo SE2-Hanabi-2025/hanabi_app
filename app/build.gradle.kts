@@ -117,7 +117,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.firebase.crashlytics.buildtools)
-    testImplementation(libs.junit)
+    //testImplementation(libs.junit)
     testImplementation(libs.junit.jupiter.api)  // HINZUFÜGEN
     testRuntimeOnly(libs.junit.jupiter.engine)  // HINZUFÜGEN
     androidTestImplementation(libs.androidx.junit)
