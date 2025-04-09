@@ -68,10 +68,10 @@ class GameManager {
             boxes[boxIndex] = cardValue.toString()
             drawnCards.removeAt(selectedCardIndex!!)
             selectedCardIndex = null
-            if (cardValue == 5) {
-                PlaceCardResult.StackCompleted
-            } else if (boxes.all { it == "5" }) {
+            if (boxes.all { it == "5"}) {
                 PlaceCardResult.GameWon
+            } else if (cardValue == 5) {
+                PlaceCardResult.StackCompleted
             } else {
                 PlaceCardResult.Valid
             }
