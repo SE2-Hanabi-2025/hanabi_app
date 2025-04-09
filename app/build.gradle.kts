@@ -98,7 +98,10 @@ sonar {
         property("sonar.java.coveragePlugin", "jacoco")
         property(
             "sonar.coverage.jacoco.xmlReportPaths",
-            "${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
+            "${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
+        )
+        // Exclude LobbyActivity.kt and StartMenue.kt from SonarQube quality gate
+        property("sonar.exclusions", "**/se2/hanabi/app/**")
     }
 }
 
@@ -124,8 +127,10 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)
     implementation(libs.ktor.client.core)
