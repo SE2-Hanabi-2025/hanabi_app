@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import se2.hanabi.app.logic.PlaceCardResultType
+import se2.hanabi.app.logic.PlaceCardResult
 
 
 class GameManagerTest {
@@ -55,5 +57,80 @@ class GameManagerTest {
         val result = gameManager.discardSelectedCard()
         assertFalse(result)
     }
+
+    @Test
+    fun placeCardInBox_returnsInvalidMoveForWrongNumber() {
+        gameManager.drawCard("2")
+        gameManager.selectCard(0)
+        val result = gameManager.placeCardInBox(0)
+        assertTrue(result is PlaceCardResult.InvalidMove)
+    }
+
+    @Test
+    fun placeCardInBox_returnStackFullIfBoxHas5() {
+        gameManager.boxes[0] = "5"
+        gameManager.drawCard("1")
+        gameManager.selectCard(0)
+        val result = gameManager.placeCardInBox(0)
+        assertEquals(PlaceCardResultType.StackFull, result.type)
+    }
+
+    @Test
+    fun placeCardInBox_returnsStackCompletedWhenPlacing5NotGameWon() {
+        gameManager.drawCard("1")
+        gameManager.selectCard(0)
+        gameManager.placeCardInBox(0)
+
+        gameManager.drawCard("2")
+        gameManager.selectCard(0)
+        gameManager.placeCardInBox(0)
+
+        gameManager.drawCard("3")
+        gameManager.selectCard(0)
+        gameManager.placeCardInBox(0)
+
+        gameManager.drawCard("4")
+        gameManager.selectCard(0)
+        gameManager.placeCardInBox(0)
+
+        gameManager.drawCard("5")
+        gameManager.selectCard(0)
+        val result = gameManager.placeCardInBox(0)
+        assertEquals(PlaceCardResultType.StackCompleted, result.type)
+    }
+
+    @Test
+    fun placeCardInBox_returnsGameWonWhenAllBoxesAre5() {
+        repeat(4) {
+            gameManager.boxes[it] = "5"
+        }
+        gameManager.drawCard("1")
+        gameManager.selectCard(0)
+        gameManager.placeCardInBox(4)
+
+        gameManager.drawCard("2")
+        gameManager.selectCard(0)
+        gameManager.placeCardInBox(4)
+
+        gameManager.drawCard("3")
+        gameManager.selectCard(0)
+        gameManager.placeCardInBox(4)
+
+        gameManager.drawCard("4")
+        gameManager.selectCard(0)
+        gameManager.placeCardInBox(4)
+
+        gameManager.drawCard("5")
+        gameManager.selectCard(0)
+        val result = gameManager.placeCardInBox(4)
+        assertEquals(PlaceCardResultType.GameWon, result.type)
+    }
+
+    @Test
+    fun placeCardInBox_returnsInvalidSelectionWhenNoCardSelected() {
+        val result = gameManager.placeCardInBox(0)
+        assertEquals(PlaceCardResultType.InvalidSelection, result.type)
+    }
+
 }
 
