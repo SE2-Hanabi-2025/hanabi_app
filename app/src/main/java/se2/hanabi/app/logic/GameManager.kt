@@ -37,10 +37,7 @@ class GameManager {
             false
         }
     }
-
-    fun removeCardByValue(cardValue: String): Boolean {
-        return drawnCards.remove(cardValue)
-    }
+    
 
     fun selectCard(index: Int) {
         selectedCardIndex = if (selectedCardIndex == index) null else index
