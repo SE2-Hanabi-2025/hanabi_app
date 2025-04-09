@@ -39,5 +39,21 @@ class GameManagerTest {
         gameManager.selectCard(0)
         assertNull(gameManager.selectedCardIndex)
     }
+
+    @Test
+    fun discardSelectedCard_removeSelectedCard() {
+        gameManager.drawCard("3")
+        gameManager.selectCard(0)
+        val result = gameManager.discardSelectedCard()
+        assertTrue(result)
+        assertTrue(gameManager.drawnCards.isEmpty())
+        assertNull(gameManager.selectedCardIndex)
+    }
+
+    @Test
+    fun discardSelectedCard_doesNothingIfNoSelection() {
+        val result = gameManager.discardSelectedCard()
+        assertFalse(result)
+    }
 }
 
