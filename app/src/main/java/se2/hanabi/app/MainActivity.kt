@@ -33,9 +33,9 @@ import se2.hanabi.app.ui.theme.ClientTheme
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.client.engine.cio.*
 import kotlinx.coroutines.launch
+import se2.hanabi.app.lobby.LobbyActivity
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
