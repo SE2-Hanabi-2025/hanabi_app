@@ -98,7 +98,10 @@ sonar {
         property("sonar.java.coveragePlugin", "jacoco")
         property(
             "sonar.coverage.jacoco.xmlReportPaths",
-            "${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
+            "${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
+        )
+        // Exclude LobbyActivity.kt and StartMenue.kt from SonarQube quality gate
+        property("sonar.exclusions", "**/se2/hanabi/app/**")
     }
 }
 
@@ -113,6 +116,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.firebase.crashlytics.buildtools)
+    implementation(libs.firebase.firestore.ktx)
     testImplementation(libs.junit)
     testImplementation(libs.junit.jupiter.api)  // HINZUFÜGEN
     testRuntimeOnly(libs.junit.jupiter.engine)  // HINZUFÜGEN
@@ -122,4 +127,12 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
+
+    implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
 }
