@@ -118,7 +118,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.firebase.firestore.ktx)
-    //testImplementation(libs.junit)
+    testImplementation(libs.junit)
     testImplementation(libs.junit.jupiter.api)  // HINZUFÜGEN
     testRuntimeOnly(libs.junit.jupiter.engine)  // HINZUFÜGEN
     androidTestImplementation(libs.androidx.junit)
