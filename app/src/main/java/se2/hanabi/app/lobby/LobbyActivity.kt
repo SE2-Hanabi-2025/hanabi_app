@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import se2.hanabi.app.ui.theme.ClientTheme
+import se2.hanabi.app.lobby.LobbyPlayerItem
 
 class LobbyActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
