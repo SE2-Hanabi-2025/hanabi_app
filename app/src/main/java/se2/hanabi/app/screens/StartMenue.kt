@@ -291,7 +291,7 @@ class StartMenuActivity: ComponentActivity() {
                     onClick = { /*todo*/ }
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.rules2),
+                        painter = painterResource(id = R.drawable.rules2), //probably Filler for now!
                         contentDescription = "Rules",
                         modifier = Modifier.size(50.dp),
                         tint = Color.Unspecified // Verhindert, dass das Bild schwarz eingefärbt wird
