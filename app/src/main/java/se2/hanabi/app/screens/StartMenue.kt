@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.imageLoader
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -277,6 +278,26 @@ class StartMenuActivity: ComponentActivity() {
                     )
                 }
             }
+            Surface(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .size(45.dp)
+                    .align(Alignment.BottomStart),
+                //shape = RoundedCornerShape(25.dp),
+
+                color = Color.Transparent,
+            ) {
+                IconButton(
+                    onClick = { /*todo*/ }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.rules2),
+                        contentDescription = "Rules",
+                        modifier = Modifier.size(50.dp),
+                        tint = Color.Unspecified // Verhindert, dass das Bild schwarz eingefärbt wird
+                    )
+                }
+            }
         }
 
 
@@ -366,3 +387,4 @@ class StartMenuActivity: ComponentActivity() {
         )
     }
 }
+
