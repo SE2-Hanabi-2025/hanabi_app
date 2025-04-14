@@ -17,6 +17,7 @@
         <activity android:name=".WinActivity" />
         <activity android:name=".screens.StartMenuActivity" />
         <activity android:name=".lobby.LobbyActivity"/>
+        <activity android:name=".screens.components.RulesActivity" />
 
         <activity
             android:name=".MainActivity"

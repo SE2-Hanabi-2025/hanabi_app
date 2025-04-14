@@ -13,7 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun HanabiRulesScreen() {
+fun HanabiRulesScreen() : Unit {
     Column(
         modifier = Modifier
             .fillMaxSize()

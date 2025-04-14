@@ -1,5 +1,6 @@
 package se2.hanabi.app.screens
 
+import HanabiRulesScreen
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -59,6 +60,7 @@ import se2.hanabi.app.EndAnimations.FireworkLauncher
 import se2.hanabi.app.GameActivity
 import se2.hanabi.app.lobby.LobbyActivity
 import se2.hanabi.app.R
+import se2.hanabi.app.screens.components.RulesActivity
 import se2.hanabi.app.ui.theme.ClientTheme
 
 
@@ -283,18 +285,18 @@ class StartMenuActivity: ComponentActivity() {
                     .padding(16.dp)
                     .size(45.dp)
                     .align(Alignment.BottomStart),
-                //shape = RoundedCornerShape(25.dp),
-
                 color = Color.Transparent,
             ) {
                 IconButton(
-                    onClick = { /*todo*/ }
+                    onClick = {
+                        context.startActivity(Intent(context, RulesActivity::class.java))
+                    }
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.rules2), //probably Filler for now!
+                        painter = painterResource(id = R.drawable.rules2),
                         contentDescription = "Rules",
                         modifier = Modifier.size(50.dp),
-                        tint = Color.Unspecified // Verhindert, dass das Bild schwarz eingefärbt wird
+                        tint = Color.Unspecified
                     )
                 }
             }
@@ -387,4 +389,3 @@ class StartMenuActivity: ComponentActivity() {
         )
     }
 }
-
