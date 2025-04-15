@@ -267,7 +267,7 @@ class StartMenuActivity: ComponentActivity() {
                     .align(Alignment.BottomEnd),
                 shape = RoundedCornerShape(25.dp),
                 color = Color.White,
-                tonalElevation = 4.dp
+                shadowElevation = 8.dp,
             ) {
                 IconButton(
                     onClick = { fetchStatus() }
@@ -282,10 +282,12 @@ class StartMenuActivity: ComponentActivity() {
             }
             Surface(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .size(45.dp)
-                    .align(Alignment.BottomStart),
-                color = Color.Transparent,
+                    .padding(bottom = 70.dp, end = 16.dp)
+                    .align(Alignment.BottomEnd),
+                shape = RoundedCornerShape(25.dp),
+                color = Color.White,
+                shadowElevation = 8.dp,
+
             ) {
                 IconButton(
                     onClick = {
@@ -293,9 +295,8 @@ class StartMenuActivity: ComponentActivity() {
                     }
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.rules2),
+                        painter = painterResource(id = R.drawable.rules3),
                         contentDescription = "Rules",
-                        modifier = Modifier.size(50.dp),
                         tint = Color.Unspecified
                     )
                 }
