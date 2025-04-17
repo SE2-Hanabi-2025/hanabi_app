@@ -33,13 +33,18 @@ fun getCardImageName(card: Card): String {
  * @param flipCardState True -> "Backside", False -> "Frontside"
  */
 @Composable
-fun CardItem(card: Card, modifier: Modifier = Modifier, flipCardState: Boolean) {
+fun CardItem(
+    modifier: Modifier = Modifier,
+    card: Card,
+    flipCardState: Boolean,
+    rotationAmountZ: Float = 0f
+) {
     val aspectRatio = 1.51f
     val cardWidth = 66.dp
     val cardHeight = cardWidth.times(aspectRatio)
 
     var isFlipped by remember { mutableStateOf(flipCardState) } // track the current side of the card
-    val rotation by animateFloatAsState(
+    val rotationAmountY by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
         label = "cardFlip"  // for debugging
     ) // animation progress, where 0f (front), 180f (back)
@@ -49,11 +54,12 @@ fun CardItem(card: Card, modifier: Modifier = Modifier, flipCardState: Boolean) 
             .size(cardWidth,cardHeight)
             .clickable { isFlipped = !isFlipped } //toggle when clicked
             .graphicsLayer {
-                rotationY = rotation
+                rotationY = rotationAmountY
+                rotationZ = rotationAmountZ
                 cameraDistance = 12f * density
             }
     ) {
-        if (rotation <= 90f) {
+        if (rotationAmountY <= 90f) {
             //FRONT side
             val imageName = getCardImageName(card)
             val imageID = androidx.compose.ui.platform.LocalContext.current.resources.getIdentifier(
@@ -71,10 +77,7 @@ fun CardItem(card: Card, modifier: Modifier = Modifier, flipCardState: Boolean) 
                 painter = painterResource(id = R.drawable.card_backside),
                 contentDescription = "Card back",
                 modifier = Modifier
-                    .size(cardWidth,cardHeight)
-                    .graphicsLayer {
-                        rotationY = 180f //flip to backside
-                    },
+                    .size(cardWidth,cardHeight),
                 contentScale = ContentScale.Fit
             )
         }
