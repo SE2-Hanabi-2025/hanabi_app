@@ -21,15 +21,18 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.client.engine.cio.*
 import kotlinx.coroutines.launch
+import se2.hanabi.app.gameBoardUI.GameBoard
 import se2.hanabi.app.logic.GameManager
 import se2.hanabi.app.logic.PlaceCardResult
-import se2.hanabi.app.logic.PlaceCardResultType
 
 class GameActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            GameScreen()
+            // UI will be developed on GameBoard
+            // GameBoard will eventually replace GameScreen
+            GameBoard()
+            // GameScreen()
         }
     }
 

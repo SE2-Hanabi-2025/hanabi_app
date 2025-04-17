@@ -10,7 +10,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        startActivity(Intent(this, StartMenuActivity::class.java))
+        startActivity(Intent(this, GameActivity::class.java))
         finish() // Optional: Schließt MainActivity, damit der Benutzer nicht zurückkehren kann
     }
 }
