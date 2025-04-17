@@ -34,6 +34,9 @@ fun getCardImageName(card: Card): String {
  */
 @Composable
 fun CardItem(card: Card, modifier: Modifier = Modifier, flipCardState: Boolean) {
+    val aspectRatio = 1.51f
+    val cardWidth = 66.dp
+    val cardHeight = cardWidth.times(aspectRatio)
 
     var isFlipped by remember { mutableStateOf(flipCardState) } // track the current side of the card
     val rotation by animateFloatAsState(
@@ -43,7 +46,7 @@ fun CardItem(card: Card, modifier: Modifier = Modifier, flipCardState: Boolean) 
 
     Box(
         modifier = modifier
-            .size(100.dp)
+            .size(cardWidth,cardHeight)
             .clickable { isFlipped = !isFlipped } //toggle when clicked
             .graphicsLayer {
                 rotationY = rotation
@@ -59,7 +62,7 @@ fun CardItem(card: Card, modifier: Modifier = Modifier, flipCardState: Boolean) 
             Image(
                 painter = painterResource(id = imageID),
                 contentDescription = "Front side: $imageName image",
-                modifier = Modifier.size(100.dp),
+                modifier = Modifier.size(cardWidth,cardHeight),
                 contentScale = ContentScale.Fit
             )
         } else {
@@ -68,7 +71,7 @@ fun CardItem(card: Card, modifier: Modifier = Modifier, flipCardState: Boolean) 
                 painter = painterResource(id = R.drawable.card_backside),
                 contentDescription = "Card back",
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(cardWidth,cardHeight)
                     .graphicsLayer {
                         rotationY = 180f //flip to backside
                     },
