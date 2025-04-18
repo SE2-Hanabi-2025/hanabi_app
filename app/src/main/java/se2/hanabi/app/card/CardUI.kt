@@ -68,7 +68,6 @@ fun CardItem(
             Image(
                 painter = painterResource(id = imageID),
                 contentDescription = "Front side: $imageName image",
-                modifier = Modifier.size(cardWidth,cardHeight),
                 contentScale = ContentScale.Fit
             )
         } else {
@@ -76,8 +75,6 @@ fun CardItem(
             Image(
                 painter = painterResource(id = R.drawable.card_backside),
                 contentDescription = "Card back",
-                modifier = Modifier
-                    .size(cardWidth,cardHeight),
                 contentScale = ContentScale.Fit
             )
         }

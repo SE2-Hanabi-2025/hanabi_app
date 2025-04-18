@@ -10,6 +10,9 @@ import androidx.compose.ui.graphics.Color
 import se2.hanabi.app.card.Card
 import kotlin.random.Random
 
+// eventually to be linked to Color Enum in backend
+val colors = listOf("red","green","yellow","blue","white")
+
 /*
 displays screen that will be active in gameplay.
 This includes:
@@ -29,6 +32,7 @@ fun GamePlayUI() {
     ) {
         val hands = generateTestHands(5)
         PlayersCardsUI(hands)
+        GameBoardUI()
     }
 }
 
@@ -44,7 +48,6 @@ fun generateTestHands(numPlayers: Int): List<List<Card>> {
 }
 
 fun randomHand(numCards: Int): List<Card> {
-    val colors = listOf("red","green","blue","white","yellow")
 
     val hand = mutableListOf<Card>()
     for (i in 0 until numCards) {
