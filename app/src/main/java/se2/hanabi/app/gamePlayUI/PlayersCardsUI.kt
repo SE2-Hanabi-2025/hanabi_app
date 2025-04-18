@@ -1,6 +1,5 @@
-package se2.hanabi.app.gameBoardUI
+package se2.hanabi.app.gamePlayUI
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -18,33 +17,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import se2.hanabi.app.card.Card
 import se2.hanabi.app.card.CardItem
 import kotlin.math.roundToInt
-import kotlin.random.Random
 
+/*
+Displays all the players hands based on a set of hands of cards.
+ */
 @Composable
-fun GameBoard() {
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .background(
-            Brush.verticalGradient(
-                listOf(Color(0xFF282828), Color(0xFF000000))
-            )
-        )
-    ) {
-        PlayersHand(randomHand(4))
-        OtherPlayersHands(listOf(randomHand(5),randomHand(4),randomHand(4),randomHand(5)))
-    }
+fun PlayersCardsUI(hands: List<List<Card>>) {
+    // assumes player's hand will be index 0.
+    // will probobaly need editing to integrate with game logic.
+    PlayersHand(hands[0])
+    OtherPlayersHands(hands.slice(1..hands.lastIndex))
 }
 
 @Composable
@@ -81,26 +71,26 @@ fun OtherPlayersHands(hands: List<List<Card>>) {
 
     ) {
 
-    var rotationAmountZ = remember { mutableFloatStateOf(0f) }
-    var handOffsetX by remember { mutableStateOf(0f) }
-    var handOffsetY by remember { mutableStateOf(0f) }
+        var rotationAmountZ = remember { mutableFloatStateOf(0f) }
+        var handOffsetX by remember { mutableStateOf(0f) }
+        var handOffsetY by remember { mutableStateOf(0f) }
 
-    hands.forEachIndexed() {index, hand ->
-        if (index%2 ==0) {// right hand side of screen
-            rotationAmountZ.floatValue = -90f
-            handOffsetX = boxSize.width.toFloat()
-        } else {
-            rotationAmountZ.floatValue = 90f
-            handOffsetX = 0f
-        }
+        hands.forEachIndexed() {index, hand ->
+            if (index%2 ==0) {// right hand side of screen
+                rotationAmountZ.floatValue = -90f
+                handOffsetX = boxSize.width.toFloat()
+            } else {
+                rotationAmountZ.floatValue = 90f
+                handOffsetX = 0f
+            }
 
-        handOffsetY = if (index>1) {// offset top two hands to be at third of the screen down form top
-            boxSize.height*0.25f
-        } else {
-            boxSize.height*0.6f
-        }
-        val handOffset = Offset(handOffsetX, handOffsetY)
-        OtherPlayersHand(handOffset, hand, rotationAmountZ.floatValue)
+            handOffsetY = if (index>1) {// offset top two hands to be at third of the screen down form top
+                boxSize.height*0.25f
+            } else {
+                boxSize.height*0.6f
+            }
+            val handOffset = Offset(handOffsetX, handOffsetY)
+            OtherPlayersHand(handOffset, hand, rotationAmountZ.floatValue)
         }
     }
 
@@ -133,14 +123,4 @@ fun OtherPlayersHand(
             )
         }
     }
-}
-
-fun randomHand(numCards: Int): List<Card> {
-    val colors = listOf("red","green","blue","white","yellow")
-
-    val hand = mutableListOf<Card>()
-    for (i in 0..numCards) {
-        hand.add( Card( colors[Random.nextInt(colors.size)], Random.nextInt(4)+1))
-    }
-    return hand
 }
