@@ -4,6 +4,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,8 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import se2.hanabi.app.R
+
+const val aspectRatio = 1.51f
+val cardWidth = 66.dp
+val cardHeight = cardWidth.times(aspectRatio)
 
 // Returns name of the corresponding card image, following the schema "color_number"
 fun getCardImageName(card: Card): String {
@@ -37,12 +44,9 @@ fun CardItem(
     modifier: Modifier = Modifier,
     card: Card,
     flipCardState: Boolean,
+    isPortrait: Boolean = true,
     rotationAmountZ: Float = 0f
 ) {
-    val aspectRatio = 1.51f
-    val cardWidth = 66.dp
-    val cardHeight = cardWidth.times(aspectRatio)
-
     var isFlipped by remember { mutableStateOf(flipCardState) } // track the current side of the card
     val rotationAmountY by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
@@ -51,7 +55,7 @@ fun CardItem(
 
     Box(
         modifier = modifier
-            .size(cardWidth,cardHeight)
+            .size( if (isPortrait) DpSize(cardWidth,cardHeight) else DpSize(cardHeight, cardWidth))
             .clickable { isFlipped = !isFlipped } //toggle when clicked
             .graphicsLayer {
                 rotationY = rotationAmountY
@@ -66,6 +70,13 @@ fun CardItem(
                 imageName, "drawable", androidx.compose.ui.platform.LocalContext.current.packageName
             )
             Image(
+                modifier =
+                    Modifier
+                        .requiredSize(cardWidth, cardHeight)
+                        .graphicsLayer {
+                            rotationZ = if (isPortrait) 0f else 90f
+                        }
+                        .offset(x = 0.dp, y = if (!isPortrait) (-(cardHeight-cardWidth)/2) else 0.dp),
                 painter = painterResource(id = imageID),
                 contentDescription = "Front side: $imageName image",
                 contentScale = ContentScale.Fit
@@ -73,6 +84,13 @@ fun CardItem(
         } else {
             //BACK side
             Image(
+                modifier =
+                    Modifier
+                        .requiredSize(cardWidth, cardHeight)
+                        .graphicsLayer {
+                            rotationZ = if (isPortrait) 0f else 90f
+                        }
+                        .offset(x = 0.dp, y = if (!isPortrait) (-(cardHeight-cardWidth)/2) else 0.dp),
                 painter = painterResource(id = R.drawable.card_backside),
                 contentDescription = "Card back",
                 contentScale = ContentScale.Fit

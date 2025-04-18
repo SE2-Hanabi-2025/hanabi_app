@@ -32,8 +32,16 @@ fun GamePlayUI() {
     ) {
         val hands = generateTestHands(5)
         PlayersCardsUI(hands)
-        GameBoardUI()
+        GameBoardUI(generateTestColorStackValues())
     }
+}
+
+fun generateTestColorStackValues(): IntArray {
+    var values = IntArray(5)
+    for (i in colors.indices) {
+        values[i] = Random.nextInt(6)
+    }
+    return values
 }
 
 fun generateTestHands(numPlayers: Int): List<List<Card>> {
