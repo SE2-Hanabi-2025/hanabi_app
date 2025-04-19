@@ -1,7 +1,6 @@
 package se2.hanabi.app.gamePlayUI
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,10 +10,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -31,15 +26,23 @@ import se2.hanabi.app.card.CardItem
 import se2.hanabi.app.card.cardHeight
 import se2.hanabi.app.card.cardWidth
 
-/*
-displays common game board elements such as: fuse/hint tokens, discard/draw pile, color stacks
+/**
+ * GameBoardUI display the features of the game board.
+ * These include: fuse/hint tokens, discard/draw pile, and color stacks
+ *
+ *@param stackValues IntArray of the highest value in each stack. In the order of GamePlayUI.colors
+ *@param numRemainingCards Int representing the remaining cards that can be drawn.
+ *@param lastDiscardedCard Card will be shown on the top of the discarded card pile.
+ *@param numRemainingHintTokens Used to display the how many hint tokens are still available to the players.
+ *@param numRemainingFuseTokens Used to display the remaining fuse token are left before game over.
  */
 @Composable
 fun GameBoardUI(
     stackValues: IntArray,
     numRemainingCards: Int,
     lastDiscardedCard: Card,
-    numRemainingHintTokens: Int
+    numRemainingHintTokens: Int,
+    numRemainingFuseTokens: Int,
     ) {
     Row(
         modifier = Modifier
@@ -48,21 +51,15 @@ fun GameBoardUI(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        var numRemainingTokens by remember { mutableIntStateOf(3) }
-        Column( //left colomn
+        //left column
+        Column(
             modifier = Modifier
-//                .background(Color.Green.copy(alpha = 0.5f)) // for testing
-                .padding(boardElementPadding)
-                .clickable { numRemainingTokens = (numRemainingTokens+3)%4    },
+                .padding(boardElementPadding),
             verticalArrangement = Arrangement.spacedBy(boardElementPadding)
-
         ) {
-            FuseTokens(numRemaining = numRemainingTokens)
+            FuseTokens(numRemaining = numRemainingFuseTokens)
             Column(
-//                modifier = Modifier
-//                    .background(Color.White.copy(alpha = 0.5f)), // for testing
                 verticalArrangement = Arrangement.spacedBy(cardSpacing)
-
             ) {
                 RemainingCardsStack(numRemainingCards = numRemainingCards)
                 DiscardedCardsStack(lastDiscardedCard = lastDiscardedCard)
@@ -111,8 +108,6 @@ fun HintTokens(numRemaining: Int) {
             }
         }
     }
-
-
 }
 
 @Composable
@@ -179,7 +174,6 @@ fun DiscardedCardsStack(
         flipCardState = false,
         isPortrait = false,
     )
-
 }
 
 
@@ -203,7 +197,6 @@ fun ColorStacks(
 ) {
     Column(
         modifier = Modifier
-//            .background(Color.White.copy(alpha = 0.5f)) // for testing
             .padding(boardElementPadding),
         verticalArrangement = Arrangement.spacedBy(cardSpacing),
     ) {

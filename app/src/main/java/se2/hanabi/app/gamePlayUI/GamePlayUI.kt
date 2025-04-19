@@ -14,12 +14,12 @@ import kotlin.random.Random
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
 
-/*
-displays screen that will be active in gameplay.
-This includes:
-- all players' hands
-- fuse/hint tokens, discard/draw pile, color stacks
-- (?) game title at top
+/**
+ * GamePlayUI displays screen that will be active in gameplay.
+ * This includes:
+ * - the cards from all players' hands
+ * - fuse/hint tokens, discard/draw pile, color stacks
+ * - game title at top
  */
 @Composable
 fun GamePlayUI() {
@@ -38,7 +38,8 @@ fun GamePlayUI() {
             stackValues = generateTestColorStackValues(),
             numRemainingCards = Random.nextInt(35),
             lastDiscardedCard = randomCard(),
-            numRemainingHintTokens = Random.nextInt(9)
+            numRemainingHintTokens = Random.nextInt(9),
+            numRemainingFuseTokens = Random.nextInt(4),
         )
     }
 }

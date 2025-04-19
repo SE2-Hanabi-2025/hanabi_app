@@ -26,8 +26,11 @@ import se2.hanabi.app.card.Card
 import se2.hanabi.app.card.CardItem
 import kotlin.math.roundToInt
 
-/*
-Displays all the players hands based on a set of hands of cards.
+/**
+ * PlayersCardsUI displays all the players hands based on a set of hands of cards.
+ * this includes:
+ * - player's hand at the bottom of the screen with card faces not visible
+ * - other players hands on the side of the screen with the card faces visible.
  */
 @Composable
 fun PlayersCardsUI(hands: List<List<Card>>) {
