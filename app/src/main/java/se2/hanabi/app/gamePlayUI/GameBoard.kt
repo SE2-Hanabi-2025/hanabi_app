@@ -96,12 +96,17 @@ fun RemainingCardsStack(
     numRemainingCards: Int
 ) {
     Box(contentAlignment = Alignment.Center ) {
-        CardItem(
-            card = Card("red", 1),
-            flipCardState = true,
-            isPortrait = false,
-        )
+        if (numRemainingCards==0) {
+            EmptyStack()
+        } else {
+            CardItem(
+                card = Card("red", 1),
+                flipCardState = true,
+                isPortrait = false,
+            )
+        }
         Text(
+            modifier = Modifier.alpha(if (numRemainingCards==0) 0.5f else 1f),
             text = "$numRemainingCards",
             fontFamily = FontFamily.Cursive,
             color = Color(0xFFF2FF90),
@@ -133,7 +138,7 @@ fun DiscardedCardsStack(
 @Composable
 fun EmptyStack(
     modifier: Modifier = Modifier,
-    isPortrait: Boolean = true,
+    isPortrait: Boolean = false,
 ) {
     CardItem(
         modifier = Modifier.alpha(0.3f),
