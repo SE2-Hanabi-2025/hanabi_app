@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -28,7 +29,8 @@ fun GamePlayUI() {
             Brush.verticalGradient(
                 listOf(Color(0xFF282828), Color(0xFF000000))
             )
-        )
+        ),
+        contentAlignment = Alignment.Center
     ) {
         val hands = generateTestHands(5)
         PlayersCardsUI(hands)
