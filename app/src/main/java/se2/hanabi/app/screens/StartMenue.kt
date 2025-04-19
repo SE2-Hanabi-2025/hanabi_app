@@ -162,29 +162,16 @@ class StartMenuActivity: ComponentActivity() {
                     showFireworksCounter.intValue = 0
                 })
             }
-            Text(
-                text = "Hanabi!",
-                fontFamily = FontFamily.Cursive,
-                color = Color(0xFFF2FF90),
-                fontSize = 100.sp,
-                fontWeight = FontWeight.Bold,
-                style = TextStyle(
-                    shadow = Shadow(
-                        color = Color.Black.copy(alpha = 100f),
-                        offset = Offset(-0f, 0f),
-                        blurRadius = 50f
-                    )
-                ),
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 50.dp)
-                    .clickable(
+            val titleModifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 50.dp)
+                .clickable(
 //                        interactionSource = remember { MutableInteractionSource() },
 //                        indication = null
-                    ) {
-                        showFireworksCounter.intValue += 1
-                    }
-            )
+                ) {
+                    showFireworksCounter.intValue += 1
+                }
+            Title(modifier = titleModifier)
 
             Column(
                 modifier = Modifier.align(Alignment.Center),
@@ -365,4 +352,23 @@ class StartMenuActivity: ComponentActivity() {
             }
         )
     }
+}
+
+@Composable
+fun Title(modifier: Modifier = Modifier) {
+    Text(
+        text = "Hanabi!",
+        fontFamily = FontFamily.Cursive,
+        color = Color(0xFFF2FF90),
+        fontSize = 100.sp,
+        fontWeight = FontWeight.Bold,
+        style = TextStyle(
+            shadow = Shadow(
+                color = Color.Black.copy(alpha = 100f),
+                offset = Offset(-0f, 0f),
+                blurRadius = 50f
+            )
+        ),
+        modifier = modifier
+    )
 }

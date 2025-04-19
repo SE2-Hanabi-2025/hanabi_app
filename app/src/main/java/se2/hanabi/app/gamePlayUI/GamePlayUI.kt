@@ -1,14 +1,18 @@
 package se2.hanabi.app.gamePlayUI
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import se2.hanabi.app.card.Card
+import se2.hanabi.app.screens.Title
 import kotlin.random.Random
 
 // eventually to be linked to Color Enum in backend
@@ -32,8 +36,17 @@ fun GamePlayUI() {
         ),
         contentAlignment = Alignment.Center
     ) {
-        val hands = generateTestHands(5)
-        PlayersCardsUI(hands)
+        val titleModifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(top = 20.dp)
+            .clickable(
+//                        interactionSource = remember { MutableInteractionSource() },
+//                        indication = null
+            ) {
+                // show win screen/overlay
+            }
+        Title(modifier = titleModifier)
+        PlayersCardsUI(generateTestHands(5))
         GameBoardUI(
             stackValues = generateTestColorStackValues(),
             numRemainingCards = Random.nextInt(35),
