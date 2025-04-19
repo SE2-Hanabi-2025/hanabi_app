@@ -28,9 +28,8 @@ val hintTokenSize = 30.dp
 fun Token(
     modifier: Modifier = Modifier,
     type: TokenType = TokenType.hint,
-    isFlippedState: Boolean
+    isFlipped: Boolean
 ) {
-    var isFlipped by remember { mutableStateOf(isFlippedState) }
     val rotationAmountY by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
         label = "tokenFlip"
@@ -45,7 +44,6 @@ fun Token(
     Image(
         modifier = Modifier
             .size(if (type==TokenType.hint) hintTokenSize else fuseTokenSize)
-            .clickable { isFlipped = !isFlipped }
             .graphicsLayer {
                 rotationY = rotationAmountY
                 cameraDistance = 12f * density

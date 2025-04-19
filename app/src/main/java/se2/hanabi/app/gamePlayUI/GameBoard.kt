@@ -1,6 +1,7 @@
 package se2.hanabi.app.gamePlayUI
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -42,10 +47,12 @@ fun GameBoardUI(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
+        var numRemainingTokens by remember { mutableIntStateOf(5) }
         Column( //left colomn
             modifier = Modifier
 //                .background(Color.Green.copy(alpha = 0.5f)) // for testing
-                .padding(boardElementPadding),
+                .padding(boardElementPadding)
+                .clickable { numRemainingTokens = (numRemainingTokens+1)%9    },
             verticalArrangement = Arrangement.spacedBy(boardElementPadding)
 
         ) {
@@ -59,7 +66,7 @@ fun GameBoardUI(
                 RemainingCardsStack(numRemainingCards = numRemainingCards)
                 DiscardedCardsStack(lastDiscardedCard = lastDiscardedCard)
             }
-            HintTokens()
+            HintTokens(numRemaining = numRemainingTokens)
         }
         // right column
         ColorStacks(stackValues = stackValues)
@@ -71,29 +78,52 @@ val boardElementPadding = 10.dp
 val tokenAreaHeight = ( cardWidth.times(3) + cardSpacing.times(3) - boardElementPadding.times(2) ).div(2)
 
 @Composable
-fun HintTokens() {
-    Box(modifier = Modifier
-        .size(cardHeight, tokenAreaHeight)
-//        .background(Color.Red.copy(alpha = 0.5f)) // for testing
-        ) {
-        Token(
-            type = TokenType.hint,
-            isFlippedState = false
-        )
+fun HintTokens(numRemaining: Int) {
+    val totalNumTokens = 8
+    Column(modifier = Modifier
+        .size(cardHeight, tokenAreaHeight),
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(){ // tokens 7,8 on top row
+            for (tokenIndex in 7..8) {
+                Token(
+                    type = TokenType.hint,
+                    isFlipped = tokenIndex > numRemaining
+                )
+            }
+        }
+        Row(){ // tokens 4,5,6 on mid row
+            for (tokenIndex in 4..6) {
+                Token(
+                    type = TokenType.hint,
+                    isFlipped = tokenIndex > numRemaining
+                )
+            }
+        }
+        Row(){ // tokens 1,2,3 on bottom row
+            for (tokenIndex in 1..3) {
+                Token(
+                    type = TokenType.hint,
+                    isFlipped = tokenIndex > numRemaining
+                )
+            }
+        }
     }
+
+
 }
 
 @Composable
-fun FuseTokens(
-    modifier: Modifier = Modifier,
-) {
-    Box(modifier = modifier
+fun FuseTokens() {
+    val totalNumTokens = 3
+    Box(modifier = Modifier
         .size(cardHeight, tokenAreaHeight)
 //        .background(Color.Red.copy(alpha = 0.5f)) // for testing
     ) {
         Token(
             type = TokenType.fuse,
-            isFlippedState = true
+            isFlipped = true
         )
     }
 }
