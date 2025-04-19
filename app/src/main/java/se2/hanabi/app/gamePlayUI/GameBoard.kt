@@ -49,7 +49,7 @@ fun GameBoardUI(
             verticalArrangement = Arrangement.spacedBy(boardElementPadding)
 
         ) {
-            FuseTokens(modifier = Modifier) // .weight(1f)
+            FuseTokens()
             Column(
 //                modifier = Modifier
 //                    .background(Color.White.copy(alpha = 0.5f)), // for testing
@@ -76,17 +76,25 @@ fun HintTokens() {
         .size(cardHeight, tokenAreaHeight)
 //        .background(Color.Red.copy(alpha = 0.5f)) // for testing
         ) {
-        //TODO show Tokens
+        Token(
+            type = TokenType.hint,
+            isFlippedState = false
+        )
     }
 }
 
 @Composable
-fun FuseTokens(modifier: Modifier) {
+fun FuseTokens(
+    modifier: Modifier = Modifier,
+) {
     Box(modifier = modifier
         .size(cardHeight, tokenAreaHeight)
 //        .background(Color.Red.copy(alpha = 0.5f)) // for testing
     ) {
-        //TODO show Tokens
+        Token(
+            type = TokenType.fuse,
+            isFlippedState = true
+        )
     }
 }
 
