@@ -38,7 +38,8 @@ displays common game board elements such as: fuse/hint tokens, discard/draw pile
 fun GameBoardUI(
     stackValues: IntArray,
     numRemainingCards: Int,
-    lastDiscardedCard: Card
+    lastDiscardedCard: Card,
+    numRemainingHintTokens: Int
     ) {
     Row(
         modifier = Modifier
@@ -47,16 +48,16 @@ fun GameBoardUI(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        var numRemainingTokens by remember { mutableIntStateOf(5) }
+        var numRemainingTokens by remember { mutableIntStateOf(3) }
         Column( //left colomn
             modifier = Modifier
 //                .background(Color.Green.copy(alpha = 0.5f)) // for testing
                 .padding(boardElementPadding)
-                .clickable { numRemainingTokens = (numRemainingTokens+1)%9    },
+                .clickable { numRemainingTokens = (numRemainingTokens+3)%4    },
             verticalArrangement = Arrangement.spacedBy(boardElementPadding)
 
         ) {
-            FuseTokens()
+            FuseTokens(numRemaining = numRemainingTokens)
             Column(
 //                modifier = Modifier
 //                    .background(Color.White.copy(alpha = 0.5f)), // for testing
@@ -66,7 +67,7 @@ fun GameBoardUI(
                 RemainingCardsStack(numRemainingCards = numRemainingCards)
                 DiscardedCardsStack(lastDiscardedCard = lastDiscardedCard)
             }
-            HintTokens(numRemaining = numRemainingTokens)
+            HintTokens(numRemaining = numRemainingHintTokens)
         }
         // right column
         ColorStacks(stackValues = stackValues)
@@ -115,16 +116,25 @@ fun HintTokens(numRemaining: Int) {
 }
 
 @Composable
-fun FuseTokens() {
+fun FuseTokens(numRemaining: Int) {
     val totalNumTokens = 3
-    Box(modifier = Modifier
-        .size(cardHeight, tokenAreaHeight)
-//        .background(Color.Red.copy(alpha = 0.5f)) // for testing
+    Column(modifier = Modifier
+        .size(cardHeight, tokenAreaHeight),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Token(
+        Token( // fuse token num 3 on top row
             type = TokenType.fuse,
-            isFlipped = true
+            isFlipped = 3 > numRemaining
         )
+        Row() { // fuse token num 1 and 2 on bottom row
+            for (tokenIndex in 1..2) {
+                Token(
+                    type = TokenType.fuse,
+                    isFlipped = tokenIndex > numRemaining
+                )
+            }
+        }
     }
 }
 

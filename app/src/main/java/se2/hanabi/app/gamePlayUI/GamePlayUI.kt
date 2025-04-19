@@ -37,7 +37,8 @@ fun GamePlayUI() {
         GameBoardUI(
             stackValues = generateTestColorStackValues(),
             numRemainingCards = Random.nextInt(35),
-            lastDiscardedCard = randomCard()
+            lastDiscardedCard = randomCard(),
+            numRemainingHintTokens = Random.nextInt(9)
         )
     }
 }
