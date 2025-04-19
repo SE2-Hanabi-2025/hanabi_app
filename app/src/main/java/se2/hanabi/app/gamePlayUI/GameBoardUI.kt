@@ -204,9 +204,24 @@ fun ColorStacks(
             if (stackValues[index]==0) {
                 EmptyStack(isPortrait = false)
             } else {
-                CardItem(card = Card(color, stackValues[index]), flipCardState = false, isPortrait = false)
+                CardItem(
+                    card = Card(color,
+                    stackValues[index]),
+                    flipCardState = false,
+                    isPortrait = false,
+                    highlightColor = colorFromString(color))
             }
         }
+    }
+}
+
+fun colorFromString(colorName: String): Color {
+    return when (colorName.lowercase()) {
+        "red" -> Color.Red
+        "green" -> Color.Green
+        "yellow" -> Color.Yellow
+        "blue" -> Color.Cyan
+        else -> Color.White // White by default
     }
 }
 

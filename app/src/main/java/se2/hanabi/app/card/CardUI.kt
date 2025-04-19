@@ -57,10 +57,12 @@ fun CardItem(
     ) // animation progress, where 0f (front), 180f (back)
 
     var isSelected by remember { mutableStateOf(false) }
+    var actualCardWidth = if (isPortrait) cardWidth else cardHeight
+    var actualCardHeight = if (isPortrait) cardHeight else cardWidth
 
     Box(
         modifier = modifier
-            .size( if (isPortrait) DpSize(cardWidth,cardHeight) else DpSize(cardHeight, cardWidth))
+            .size(actualCardWidth, actualCardHeight )
             .clickable {
                 isSelected = !isSelected
 //                isFlipped = !isFlipped
@@ -73,8 +75,8 @@ fun CardItem(
     ) {
         if (isSelected) {
             BackGlow(
-                width = cardWidth,
-                height = cardHeight,
+                width = actualCardWidth,
+                height = actualCardHeight,
                 glowSize = 12.dp,
                 glowColor = highlightColor,
             )
