@@ -13,12 +13,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import se2.hanabi.app.R
+import se2.hanabi.app.gamePlayUI.BackGlow
 
 const val aspectRatio = 1.51f
 val cardWidth = 66.dp
@@ -45,7 +47,8 @@ fun CardItem(
     card: Card,
     flipCardState: Boolean,
     isPortrait: Boolean = true,
-    rotationAmountZ: Float = 0f
+    rotationAmountZ: Float = 0f,
+    highlightColor: Color = Color.White
 ) {
     var isFlipped by remember { mutableStateOf(flipCardState) } // track the current side of the card
     val rotationAmountY by animateFloatAsState(
@@ -53,16 +56,30 @@ fun CardItem(
         label = "cardFlip"  // for debugging
     ) // animation progress, where 0f (front), 180f (back)
 
+    var isSelected by remember { mutableStateOf(false) }
+
     Box(
         modifier = modifier
             .size( if (isPortrait) DpSize(cardWidth,cardHeight) else DpSize(cardHeight, cardWidth))
-            .clickable { isFlipped = !isFlipped } //toggle when clicked
+            .clickable {
+                isSelected = !isSelected
+//                isFlipped = !isFlipped
+            } //toggle when clicked
             .graphicsLayer {
                 rotationY = rotationAmountY
                 rotationZ = rotationAmountZ
                 cameraDistance = 12f * density
             }
     ) {
+        if (isSelected) {
+            BackGlow(
+                width = cardWidth,
+                height = cardHeight,
+                glowSize = 12.dp,
+                glowColor = highlightColor,
+            )
+        }
+
         if (rotationAmountY <= 90f) {
             //FRONT side
             val imageName = getCardImageName(card)
