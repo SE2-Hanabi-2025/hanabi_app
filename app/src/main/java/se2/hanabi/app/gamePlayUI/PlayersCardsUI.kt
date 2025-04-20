@@ -57,7 +57,7 @@ fun PlayersHand(hand: List<Card>) {
             hand.forEachIndexed() {index, card ->
                 CardItem(
                     card = card,
-                    flipCardState = true,
+                    isFlipped = true,
                     isSelected = index == selectedCardIndex,
                     onClick = {
                         selectedCardIndex = if (index == selectedCardIndex) -1 else index
@@ -122,7 +122,7 @@ fun OtherPlayersHand(
         hand.forEachIndexed() { index, card ->
             CardItem(
                 card = card,
-                flipCardState = false,
+                isFlipped = false,
                 rotationAmountZ = -30f + index*(60/hand.size) //60 degree arc
             )
         }

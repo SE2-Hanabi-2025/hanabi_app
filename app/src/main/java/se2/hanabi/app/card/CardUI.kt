@@ -20,7 +20,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import se2.hanabi.app.R
 import se2.hanabi.app.gamePlayUI.BackGlow
 
 const val aspectRatio = 1.51f
@@ -40,13 +39,13 @@ fun getCardImageName(card: Card): String {
  *
  * @param card The Card model with color and number.
  * @param modifier Composable object, default
- * @param flipCardState True -> "Backside", False -> "Frontside"
+ * @param isFlipped True -> "Backside", False -> "Frontside"
  */
 @Composable
 fun CardItem(
     modifier: Modifier = Modifier,
     card: Card,
-    flipCardState: Boolean,
+    isFlipped: Boolean,
     isPortrait: Boolean = true,
     rotationAmountZ: Float = 0f,
     isSelected: Boolean = false,
@@ -54,7 +53,6 @@ fun CardItem(
     onClick: () -> Unit = {},
     highlightColor: Color = Color.White
 ) {
-    var isFlipped by remember { mutableStateOf(flipCardState) } // track the current side of the card
     val rotationAmountY by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
         label = "cardFlip"  // for debugging
@@ -88,38 +86,21 @@ fun CardItem(
             )
         }
 
-        if (rotationAmountY <= 90f) {
-            //FRONT side
-            val imageName = getCardImageName(card)
-            val imageID = LocalContext.current.resources.getIdentifier(
-                imageName, "drawable", LocalContext.current.packageName
-            )
-            Image(
-                modifier =
-                    Modifier
-                        .requiredSize(cardWidth, cardHeight)
-                        .graphicsLayer {
-                            rotationZ = if (isPortrait) 0f else 90f
-                        }
-                        .offset(x = 0.dp, y = if (!isPortrait) (-(cardHeight-cardWidth)/2) else 0.dp),
-                painter = painterResource(id = imageID),
-                contentDescription = "Front side: $imageName image",
-                contentScale = ContentScale.Fit
-            )
-        } else {
-            //BACK side
-            Image(
-                modifier =
-                    Modifier
-                        .requiredSize(cardWidth, cardHeight)
-                        .graphicsLayer {
-                            rotationZ = if (isPortrait) 0f else 90f
-                        }
-                        .offset(x = 0.dp, y = if (!isPortrait) (-(cardHeight-cardWidth)/2) else 0.dp),
-                painter = painterResource(id = R.drawable.card_backside),
-                contentDescription = "Card back",
-                contentScale = ContentScale.Fit
-            )
-        }
+        val imageName = if(rotationAmountY <= 90f) getCardImageName(card) else "card_backside"
+        val imageID = LocalContext.current.resources.getIdentifier(
+            imageName, "drawable", LocalContext.current.packageName
+        )
+        Image(
+            modifier =
+                Modifier
+                    .requiredSize(cardWidth, cardHeight)
+                    .graphicsLayer {
+                        rotationZ = if (isPortrait) 0f else 90f
+                    }
+                    .offset(x = 0.dp, y = if (!isPortrait) (-(cardHeight-cardWidth)/2) else 0.dp),
+            painter = painterResource(id = imageID),
+            contentDescription = "Front side: $imageName image",
+            contentScale = ContentScale.Fit
+        )
     }
 }

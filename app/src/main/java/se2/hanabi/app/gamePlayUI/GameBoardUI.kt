@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -144,7 +148,7 @@ fun RemainingCardsStack(
         } else {
             CardItem(
                 card = Card("red", 1),
-                flipCardState = true,
+                isFlipped = true,
                 isPortrait = false,
             )
         }
@@ -171,7 +175,7 @@ fun DiscardedCardsStack(
 ) {
     CardItem(
         card = Card(lastDiscardedCard.color,lastDiscardedCard.number),
-        flipCardState = false,
+        isFlipped = false,
         isPortrait = false,
     )
 }
@@ -185,7 +189,7 @@ fun EmptyStack(
     CardItem(
         modifier = Modifier.alpha(0.3f),
         card = Card("red",1),
-        flipCardState = true,
+        isFlipped = true,
         isPortrait = isPortrait,
     )
 }
@@ -204,12 +208,15 @@ fun ColorStacks(
             if (stackValues[index]==0) {
                 EmptyStack(isPortrait = false)
             } else {
+                var isFlipped by remember { mutableStateOf(false) }
                 CardItem(
                     card = Card(color,
                     stackValues[index]),
-                    flipCardState = false,
+                    isFlipped = isFlipped,
                     isPortrait = false,
-                    highlightColor = colorFromString(color))
+                    highlightColor = colorFromString(color),
+                    onClick = {isFlipped = !isFlipped},
+                )
             }
         }
     }

@@ -34,7 +34,7 @@ class CardTestActivity : ComponentActivity() {
             cards.forEach { card ->
                 CardItem(
                     card = card,
-                    flipCardState = false  // frontside by default
+                    isFlipped = false  // frontside by default
                 )
             }
         }
