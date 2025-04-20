@@ -2,11 +2,11 @@ package se2.hanabi.app.card
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,8 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import se2.hanabi.app.R
 import se2.hanabi.app.gamePlayUI.BackGlow
@@ -48,6 +49,9 @@ fun CardItem(
     flipCardState: Boolean,
     isPortrait: Boolean = true,
     rotationAmountZ: Float = 0f,
+    isSelected: Boolean = false,
+    isHighlighted: Boolean = isSelected,
+    onClick: () -> Unit = {},
     highlightColor: Color = Color.White
 ) {
     var isFlipped by remember { mutableStateOf(flipCardState) } // track the current side of the card
@@ -56,24 +60,26 @@ fun CardItem(
         label = "cardFlip"  // for debugging
     ) // animation progress, where 0f (front), 180f (back)
 
-    var isSelected by remember { mutableStateOf(false) }
     var actualCardWidth = if (isPortrait) cardWidth else cardHeight
     var actualCardHeight = if (isPortrait) cardHeight else cardWidth
+
+
 
     Box(
         modifier = modifier
             .size(actualCardWidth, actualCardHeight )
-            .clickable {
-                isSelected = !isSelected
-//                isFlipped = !isFlipped
-            } //toggle when clicked
+            .selectable(
+                selected = isSelected,
+                onClick = onClick,
+                role = Role.RadioButton,
+            ) //toggle when clicked
             .graphicsLayer {
                 rotationY = rotationAmountY
                 rotationZ = rotationAmountZ
                 cameraDistance = 12f * density
             }
     ) {
-        if (isSelected) {
+        if (isHighlighted) {
             BackGlow(
                 width = actualCardWidth,
                 height = actualCardHeight,
@@ -85,8 +91,8 @@ fun CardItem(
         if (rotationAmountY <= 90f) {
             //FRONT side
             val imageName = getCardImageName(card)
-            val imageID = androidx.compose.ui.platform.LocalContext.current.resources.getIdentifier(
-                imageName, "drawable", androidx.compose.ui.platform.LocalContext.current.packageName
+            val imageID = LocalContext.current.resources.getIdentifier(
+                imageName, "drawable", LocalContext.current.packageName
             )
             Image(
                 modifier =

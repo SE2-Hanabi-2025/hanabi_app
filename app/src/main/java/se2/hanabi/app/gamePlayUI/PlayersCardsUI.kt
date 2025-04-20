@@ -53,10 +53,15 @@ fun PlayersHand(hand: List<Card>) {
                 .fillMaxWidth(),
             Arrangement.SpaceEvenly,
         ) {
-            hand.forEach { card ->
+            var selectedCardIndex by remember { mutableStateOf(-1) }
+            hand.forEachIndexed() {index, card ->
                 CardItem(
                     card = card,
-                    flipCardState = true
+                    flipCardState = true,
+                    isSelected = index == selectedCardIndex,
+                    onClick = {
+                        selectedCardIndex = if (index == selectedCardIndex) -1 else index
+                    }
                 )
             }
         }
@@ -70,8 +75,6 @@ fun OtherPlayersHands(hands: List<List<Card>>) {
         modifier = Modifier
             .fillMaxSize()
             .onSizeChanged { newSize -> boxSize = newSize }
-
-
     ) {
 
         var rotationAmountZ = remember { mutableFloatStateOf(0f) }
@@ -96,8 +99,6 @@ fun OtherPlayersHands(hands: List<List<Card>>) {
             OtherPlayersHand(handOffset, hand, rotationAmountZ.floatValue)
         }
     }
-
-
 }
 
 @Composable
