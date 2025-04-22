@@ -9,9 +9,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -66,16 +63,16 @@ fun CardItem(
     Box(
         modifier = modifier
             .size(actualCardWidth, actualCardHeight )
-            .selectable(
-                selected = isSelected,
-                onClick = onClick,
-                role = Role.RadioButton,
-            ) //toggle when clicked
             .graphicsLayer {
                 rotationY = rotationAmountY
                 rotationZ = rotationAmountZ
                 cameraDistance = 12f * density
             }
+            .selectable(
+                selected = isSelected,
+                onClick = onClick,
+                role = Role.RadioButton,
+            ) //toggle when clicked
     ) {
         if (isHighlighted) {
             BackGlow(

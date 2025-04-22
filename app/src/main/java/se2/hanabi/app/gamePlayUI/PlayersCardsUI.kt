@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -19,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -71,6 +71,8 @@ fun PlayersHand(hand: List<Card>) {
 @Composable
 fun OtherPlayersHands(hands: List<List<Card>>) {
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
+    var selectedHandIndex by remember { mutableStateOf(-1) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -96,7 +98,13 @@ fun OtherPlayersHands(hands: List<List<Card>>) {
                 boxSize.height*0.6f
             }
             val handOffset = Offset(handOffsetX, handOffsetY)
-            OtherPlayersHand(handOffset, hand, rotationAmountZ.floatValue)
+            OtherPlayersHand(
+                offset = handOffset,
+                hand = hand,
+                rotationAmountZ = rotationAmountZ.floatValue,
+                isSelected = index == selectedHandIndex,
+                onClick = {selectedHandIndex = if (index == selectedHandIndex) -1 else index}
+            )
         }
     }
 }
@@ -105,26 +113,41 @@ fun OtherPlayersHands(hands: List<List<Card>>) {
 fun OtherPlayersHand(
     offset: Offset,
     hand: List<Card>,
-    rotationAmountZ: Float) {
+    rotationAmountZ: Float,
+    isSelected: Boolean = false,
+    onClick: () -> Unit = {},
+) {
     var rowSize by remember { mutableStateOf(IntSize.Zero) }
-    Row(
+
+    Box(
         modifier = Modifier
-            .wrapContentSize()
             .offset { IntOffset((offset.x-rowSize.width/2).roundToInt(), offset.y.roundToInt()) } //-rowSize.width/2).dp
             .graphicsLayer {
                 rotationZ = rotationAmountZ
             }
             .onSizeChanged { newSize -> rowSize = newSize },
-        horizontalArrangement = Arrangement.spacedBy((-45.dp)),
-        verticalAlignment = Alignment.CenterVertically,
+        contentAlignment = Alignment.Center
 
         ) {
-        hand.forEachIndexed() { index, card ->
-            CardItem(
-                card = card,
-                isFlipped = false,
-                rotationAmountZ = -30f + index*(60/hand.size) //60 degree arc
-            )
+        if (isSelected) {
+            BackGlow(
+                width = with (LocalDensity.current) {rowSize.width.toDp() - 20.dp},
+                height = with (LocalDensity.current) {rowSize.height.toDp() - 20.dp },
+                glowSize = 30.dp,
+                )
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy((-45.dp)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            hand.forEachIndexed() { index, card ->
+                CardItem(
+                    card = card,
+                    isFlipped = false,
+                    rotationAmountZ = -30f + index * (60 / hand.size), //60 degree arc
+                    onClick = onClick
+                )
+            }
         }
     }
 }
