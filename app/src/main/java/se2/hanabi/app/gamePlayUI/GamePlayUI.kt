@@ -46,7 +46,6 @@ fun GamePlayUI() {
                 // show win screen/overlay
             }
         Title(modifier = titleModifier)
-        PlayersCardsUI(generateTestHands(5))
         GameBoardUI(
             stackValues = generateTestColorStackValues(),
             numRemainingCards = Random.nextInt(35),
@@ -54,6 +53,7 @@ fun GamePlayUI() {
             numRemainingHintTokens = Random.nextInt(9),
             numRemainingFuseTokens = Random.nextInt(4),
         )
+        PlayersCardsUI(generateTestHands(5))
     }
 }
 

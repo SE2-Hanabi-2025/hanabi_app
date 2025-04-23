@@ -105,6 +105,11 @@ fun OtherPlayersHands(hands: List<List<Card>>) {
                 isSelected = index == selectedHandIndex,
                 onClick = {selectedHandIndex = if (index == selectedHandIndex) -1 else index}
             )
+            if (selectedHandIndex!=-1) {
+                HintSelecter(
+                    modifier = Modifier.align(alignment = Alignment.Center)
+                )
+            }
         }
     }
 }
