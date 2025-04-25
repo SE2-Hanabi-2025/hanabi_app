@@ -1,5 +1,6 @@
 package se2.hanabi.app.lobby
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import se2.hanabi.app.R
@@ -9,7 +10,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,6 +38,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import se2.hanabi.app.GameActivity
 import se2.hanabi.app.ui.theme.ClientTheme
 
 class LobbyActivity : ComponentActivity() {
@@ -45,15 +49,22 @@ class LobbyActivity : ComponentActivity() {
                 LobbyScreen(
                     //TODO: add dynamic data
                     playerList = listOf("Player1","Player2","Player3", "Player4", "Player5"),
-                    onLeaveLobby = { finish()}
+                    onLeaveLobby = { finish()},
+                    onStartGame = {navigateToGame()}
                 )
             }
         }
     }
+    private fun navigateToGame(){
+        val intent = Intent(this, GameActivity::class.java)
+        startActivity(intent)
+    }
 }
 
 @Composable
-fun LobbyScreen (playerList: List<String>, onLeaveLobby: () -> Unit){
+fun LobbyScreen (playerList: List<String>,
+                 onLeaveLobby: () -> Unit,
+                 onStartGame: () -> Unit){
     Box(modifier = Modifier.fillMaxSize()){
         Image(painter = painterResource(id = R.drawable.lobbyscreen_bg),
             contentDescription = null,
@@ -64,8 +75,7 @@ fun LobbyScreen (playerList: List<String>, onLeaveLobby: () -> Unit){
         Box(modifier = Modifier.fillMaxWidth().height(56.dp).background(Color.DarkGray), contentAlignment = Alignment.TopCenter)
                { Text (
             text = "Lobby",
-            color = Color.White,
-                   modifier = Modifier.padding(start = 16.dp)
+            color = Color.White
         )}
 
                 //Player list Placeholder
@@ -92,24 +102,40 @@ fun LobbyScreen (playerList: List<String>, onLeaveLobby: () -> Unit){
                                 modifier = Modifier.weight(1f),
                                 textAlign = TextAlign.Start
                         )
-                        }}
+              }}
             }
            }
-                //leave Lobby button
+        //Buttons
+    Column (modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally){
 
+        //start game
+        Button(
+            onClick = onStartGame,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Green),
+            border = BorderStroke(2.dp, Color.White),
+            modifier = Modifier.width(200.dp).height(60.dp)
+        ) {
+            Text("Start Game", color = Color.White)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        //leave Lobby
         Button(
             onClick = onLeaveLobby,
             colors = ButtonDefaults.buttonColors(
            containerColor = Color.DarkGray),
             border = BorderStroke(2.dp, Color.White),
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp).width(200.dp).height(60.dp)
+            modifier = Modifier.width(200.dp).height(60.dp)
         ) {
             Text("Leave Lobby", color = Color.White)
         }
 
     }
 }
-
+}
 
 @Preview(showBackground = true)
 @Composable
@@ -117,6 +143,7 @@ fun LobbyScreenPreview(){
     ClientTheme {
         LobbyScreen(
         playerList = listOf("Player 1", "Player 2", "Player 3", "Player 4", "Player 5"),
-        onLeaveLobby = {}
+        onLeaveLobby = {},
+            onStartGame = {}
     ) }
 }
