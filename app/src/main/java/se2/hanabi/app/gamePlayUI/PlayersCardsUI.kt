@@ -53,14 +53,14 @@ fun PlayersHand(hand: List<Card>) {
                 .fillMaxWidth(),
             Arrangement.SpaceEvenly,
         ) {
-            var selectedCardIndex by remember { mutableStateOf(-1) }
-            hand.forEachIndexed() {index, card ->
+            var selectedCard by remember { mutableStateOf<Card?>(null) }
+            hand.forEach() { card ->
                 CardItem(
                     card = card,
                     isFlipped = true,
-                    isSelected = index == selectedCardIndex,
+                    isSelected = card == selectedCard,
                     onClick = {
-                        selectedCardIndex = if (index == selectedCardIndex) -1 else index
+                        selectedCard = if (card == selectedCard) null else card
                     }
                 )
             }
