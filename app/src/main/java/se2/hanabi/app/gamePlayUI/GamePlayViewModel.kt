@@ -7,6 +7,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import se2.hanabi.app.card.Card
 import kotlin.random.Random
 
+/**
+ * GamePlayViewModel stores the current game state and handles event such as button clicks.
+ *
+ */
 class GamePlayViewModel: ViewModel() {
 
     // game state info
