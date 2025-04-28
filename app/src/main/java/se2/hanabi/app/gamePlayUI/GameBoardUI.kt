@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.card.Card
 import se2.hanabi.app.card.CardItem
 import se2.hanabi.app.card.cardHeight
@@ -42,12 +43,13 @@ import se2.hanabi.app.card.cardWidth
  */
 @Composable
 fun GameBoardUI(
-    stackValues: IntArray,
     numRemainingCards: Int,
     lastDiscardedCard: Card?,
     numRemainingHintTokens: Int,
     numRemainingFuseTokens: Int,
     ) {
+    val viewModel: GamePlayViewModel = viewModel()
+
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(10.dp))
@@ -71,7 +73,10 @@ fun GameBoardUI(
             HintTokens(numRemaining = numRemainingHintTokens)
         }
         // right column
-        ColorStacks(stackValues = stackValues)
+        ColorStacks(
+            stackValues = viewModel.stackValues,
+            onColorStackClick = viewModel::onColorStackClick,
+        )
     }
 }
 
@@ -189,19 +194,22 @@ fun DiscardedCardsStack(
 fun EmptyStack(
     modifier: Modifier = Modifier,
     isPortrait: Boolean = false,
+    onClick: () -> Unit = {}
 ) {
     CardItem(
         modifier = Modifier.alpha(0.3f),
         card = Card("red",1),
         isFlipped = true,
         isPortrait = isPortrait,
+        onClick = onClick
     )
 }
 
 @Composable
 fun ColorStacks(
     modifier: Modifier = Modifier,
-    stackValues: IntArray,
+    stackValues: List<Int>,
+    onColorStackClick: (String) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -210,16 +218,17 @@ fun ColorStacks(
     ) {
         colors.forEachIndexed() {index, color ->
             if (stackValues[index]==0) {
-                EmptyStack(isPortrait = false)
+                EmptyStack(
+                    isPortrait = false,
+                    onClick = { onColorStackClick(color) }
+                )
             } else {
-                var isFlipped by remember { mutableStateOf(false) }
                 CardItem(
                     card = Card(color,
                     stackValues[index]),
-                    isFlipped = isFlipped,
                     isPortrait = false,
                     highlightColor = colorFromString(color),
-                    onClick = {isFlipped = !isFlipped},
+                    onClick = { onColorStackClick(color) },
                 )
             }
         }

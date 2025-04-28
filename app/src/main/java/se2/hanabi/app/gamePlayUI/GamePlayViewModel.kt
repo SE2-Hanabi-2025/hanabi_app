@@ -1,5 +1,6 @@
 package se2.hanabi.app.gamePlayUI
 
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import se2.hanabi.app.card.Card
@@ -8,11 +9,12 @@ import kotlin.random.Random
 class GamePlayViewModel: ViewModel() {
 
     // game state info
-    private val _hands = MutableStateFlow(generateTestHands(5))
+    val testHand1 = listOf(Card("red",1),Card("red",2),Card("red",3),Card("red",4),)
+    private val _hands = MutableStateFlow(listOf(testHand1,testHand1,testHand1,testHand1,testHand1,))
     val hands: MutableStateFlow<List<List<Card>>> = _hands
 
-    private val _stackValues = MutableStateFlow(generateTestColorStackValues())
-    val stackValues: MutableStateFlow<IntArray> = _stackValues
+    private val _stackValues = mutableStateListOf(0,2,3,4,5)
+    val stackValues:  List<Int> = _stackValues
 
     private val _numRemainingCard = MutableStateFlow(Random.nextInt(35))
     val numRemainingCard: MutableStateFlow<Int> = _numRemainingCard
@@ -51,6 +53,17 @@ class GamePlayViewModel: ViewModel() {
 
     fun onHintClick(hint: String) {
         _selectedHint.value = if (hint == selectedHint.value) "" else hint
+    }
+
+    fun onColorStackClick(color: String) {
+        _selectedCard.value?.let { card ->
+            val colorIndex = colors.indexOf(color)
+            if (card.color == color && card.number == _stackValues[colorIndex] + 1) {
+                _stackValues[colorIndex]++
+                _selectedCard.value = null
+            }
+        }
+        // more logic: discard selected card, draw next one
     }
 
 }

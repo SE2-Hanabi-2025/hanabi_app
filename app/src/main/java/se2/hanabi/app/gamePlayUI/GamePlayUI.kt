@@ -49,7 +49,6 @@ fun GamePlayUI() {
             }
         Title(modifier = titleModifier)
         GameBoardUI(
-            stackValues = viewModel.stackValues.collectAsState().value,
             numRemainingCards = viewModel.numRemainingCard.collectAsState().value,
             lastDiscardedCard = viewModel.lastDiscardedCard.collectAsState().value,
             numRemainingHintTokens = viewModel.numRemainingHintTokens.collectAsState().value,

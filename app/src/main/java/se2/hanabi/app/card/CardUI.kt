@@ -42,7 +42,7 @@ fun getCardImageName(card: Card): String {
 fun CardItem(
     modifier: Modifier = Modifier,
     card: Card,
-    isFlipped: Boolean,
+    isFlipped: Boolean = false,
     isPortrait: Boolean = true,
     rotationAmountZ: Float = 0f,
     isSelected: Boolean = false,
