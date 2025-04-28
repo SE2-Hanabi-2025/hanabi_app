@@ -39,11 +39,13 @@ class GamePlayViewModel: ViewModel() {
 
     fun onPlayersCardClick(card: Card?) {
         _selectedHandIndex.value = -1
+        _selectedHint.value = ""
          _selectedCard.value = if (card == selectedCard.value) null else card
     }
 
     fun onOtherPlayersHandClick(handIndex: Int) {
         _selectedCard.value = null
+        _selectedHint.value = ""
         _selectedHandIndex.value = if (handIndex == selectedHandIndex.value) -1 else handIndex
     }
 

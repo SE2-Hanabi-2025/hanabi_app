@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -140,6 +141,7 @@ fun OtherPlayersHand(
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
 ) {
+    val viewModel: GamePlayViewModel = viewModel()
     var rowSize by remember { mutableStateOf(IntSize.Zero) }
 
     Box(
@@ -168,7 +170,12 @@ fun OtherPlayersHand(
                     card = card,
                     isFlipped = false,
                     rotationAmountZ = -30f + index * (60 / hand.size), //60 degree arc
-                    onClick = onClick
+                    onClick = onClick,
+                    isHighlighted = isSelected && (
+                            card.color == viewModel.selectedHint.collectAsState().value ||
+                                    card.number.toString() == viewModel.selectedHint.collectAsState().value
+                            ),
+                    highlightColor = if (card.color == viewModel.selectedHint.collectAsState().value) colorFromString(card.color) else Color.White
                 )
             }
         }
