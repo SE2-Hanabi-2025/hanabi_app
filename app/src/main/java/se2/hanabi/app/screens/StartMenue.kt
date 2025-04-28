@@ -187,7 +187,7 @@ class StartMenuActivity: ComponentActivity() {
             )
 
             Column(
-                modifier = Modifier.align(Alignment.Center),
+                modifier = Modifier.align(Alignment.Center).padding(bottom = 62.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 {
@@ -198,7 +198,7 @@ class StartMenuActivity: ComponentActivity() {
                         containerColor = Color(0xFF2ecc71),
                         contentColor = Color.White
                     ),
-                    border = BorderStroke(5.dp, Color.White),
+                    border = BorderStroke(2.dp, Color.White),
                     modifier = Modifier
                         .padding(top = 350.dp)
                         .width(200.dp)
@@ -206,7 +206,8 @@ class StartMenuActivity: ComponentActivity() {
                 ) {
                     Text(
                         text = "Join Lobby",
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp
                     )
                 }
 
@@ -221,13 +222,15 @@ class StartMenuActivity: ComponentActivity() {
                         containerColor = Color.DarkGray,
                         contentColor = Color.White
                     ),
-                    border = BorderStroke(5.dp, Color.White),
+                    border = BorderStroke(2.dp, Color.White),
                     modifier = Modifier
                         .padding(top = 10.dp)
                         .width(200.dp)
                         .height(60.dp)
                 ) {
-                    Text("Create Lobby")
+                    Text(text = "Create Lobby",
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp)
                 }
                 Button(
                     onClick = { startGame() },
@@ -235,13 +238,15 @@ class StartMenuActivity: ComponentActivity() {
                         containerColor = Color.DarkGray,
                         contentColor = Color.White
                     ),
-                    border = BorderStroke(5.dp, Color.White),
+                    border = BorderStroke(2.dp, Color.White),
                     modifier = Modifier
                         .padding(top = 10.dp)
                         .width(200.dp)
                         .height(60.dp)
                 ) {
-                    Text("Start Game")
+                    Text(text = "Start game",
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp)
                 }
                 /*Button(
                     onClick = {

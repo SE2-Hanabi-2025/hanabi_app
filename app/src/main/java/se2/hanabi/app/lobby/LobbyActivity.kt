@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import se2.hanabi.app.R
+import androidx.compose.ui.unit.sp
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -29,6 +30,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,18 +73,21 @@ fun LobbyScreen (playerList: List<String>,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop)
 
-    //TODO: change this I dont like it
-        Box(modifier = Modifier.fillMaxWidth().height(56.dp).background(Color.DarkGray), contentAlignment = Alignment.TopCenter)
-               { Text (
-            text = "Lobby",
-            color = Color.White
-        )}
+        //Lobby code
+        val lobbyCode = remember { (100000..999990).random() }
 
+    //TODO: Implement server connection
+        Box(modifier = Modifier.fillMaxWidth(0.8f).height(60.dp).offset(x = 33.dp, y = 100.dp).clip(RoundedCornerShape(30.dp)).background(Color.Black.copy(alpha = 0.7f)), contentAlignment = Alignment.Center)
+               { Text (
+            text = "Lobby Code: $lobbyCode",
+            color = Color.White,
+                   fontSize = 22.sp
+        )}
                 //Player list Placeholder
-                Box(modifier = Modifier.fillMaxWidth(0.8f).heightIn(max = 400.dp).offset(y = 250.dp, x = 42.dp).clip(
+                Box(modifier = Modifier.fillMaxWidth(0.7f).heightIn(max = 400.dp).offset(y = 200.dp, x = 55.dp).clip(
                     RoundedCornerShape(40.dp))
                     .background(Color.Black.copy(alpha = 0.6f))
-                    .padding(horizontal = 30.dp, vertical = 10.dp))
+                    .padding(horizontal = 30.dp, vertical = 50.dp))
                 {
                  LazyColumn (
                  modifier = Modifier.fillMaxWidth()
@@ -90,7 +95,7 @@ fun LobbyScreen (playerList: List<String>,
                     items(playerList) { player ->
                         Row (modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(20.dp))
+                            horizontalArrangement = Arrangement.spacedBy(30.dp))
                         {
                             Box(
                                 modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.DarkGray)
@@ -100,24 +105,26 @@ fun LobbyScreen (playerList: List<String>,
                             text = player,
                             color = Color.White,
                                 modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.Start
+                                textAlign = TextAlign.Start,
+                                fontSize = 20.sp
                         )
               }}
             }
            }
         //Buttons
-    Column (modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp),
+    Column (modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 62.dp),
         horizontalAlignment = Alignment.CenterHorizontally){
 
         //start game
         Button(
             onClick = onStartGame,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Green),
+                containerColor = Color(0xFF2ecc71),
+                contentColor = Color.White),
             border = BorderStroke(2.dp, Color.White),
             modifier = Modifier.width(200.dp).height(60.dp)
         ) {
-            Text("Start Game", color = Color.White)
+            Text("Start Game", color = Color.White,fontSize = 20.sp)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -130,7 +137,7 @@ fun LobbyScreen (playerList: List<String>,
             border = BorderStroke(2.dp, Color.White),
             modifier = Modifier.width(200.dp).height(60.dp)
         ) {
-            Text("Leave Lobby", color = Color.White)
+            Text("Leave Lobby", color = Color.White, fontSize = 20.sp)
         }
 
     }
