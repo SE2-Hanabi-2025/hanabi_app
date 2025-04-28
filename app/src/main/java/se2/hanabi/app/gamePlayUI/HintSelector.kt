@@ -85,7 +85,8 @@ fun HintSelector(
            height = hintItemSize,
            modifier = Modifier
                .clip(RoundedCornerShape(paddingAmount)),
-           isAvailable = viewModel.isValidHint.collectAsState().value
+           isAvailable = viewModel.isValidHint.collectAsState().value,
+           onClick = viewModel::onGiveHintClick
        )
     }
 }
@@ -95,7 +96,8 @@ fun GiveHintButton(
     modifier: Modifier = Modifier,
     width: Dp,
     height: Dp,
-    isAvailable: Boolean = false
+    isAvailable: Boolean = false,
+    onClick: () -> Unit
 ) {
     val backgroundBrush = Brush.verticalGradient(
         if (isAvailable) {
@@ -111,7 +113,7 @@ fun GiveHintButton(
             .background(
                 brush = backgroundBrush
             )
-            .clickable {  },
+            .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Text(

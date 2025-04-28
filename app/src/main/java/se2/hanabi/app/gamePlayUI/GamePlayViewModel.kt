@@ -43,15 +43,13 @@ class GamePlayViewModel: ViewModel() {
 
     fun onPlayersCardClick(card: Card?) {
         _selectedHandIndex.value = -1
-        _selectedHint.value = ""
-        _isValidHint.value =false
+        hintReset()
          _selectedCard.value = if (card == selectedCard.value) null else card
     }
 
     fun onOtherPlayersHandClick(handIndex: Int) {
         _selectedCard.value = null
-        _selectedHint.value = ""
-        _isValidHint.value =false
+        hintReset()
         _selectedHandIndex.value = if (handIndex == selectedHandIndex.value) -1 else handIndex
     }
 
@@ -72,6 +70,7 @@ class GamePlayViewModel: ViewModel() {
     }
 
     fun onColorStackClick(color: String) {
+        //TODO send place card request to server
         _selectedCard.value?.let { card ->
             val colorIndex = colors.indexOf(color)
             if (card.color == color && card.number == _stackValues[colorIndex] + 1) {
@@ -80,6 +79,25 @@ class GamePlayViewModel: ViewModel() {
             }
         }
         // more logic: discard selected card, draw next one
+    }
+
+    fun onGiveHintClick() {
+        if (isValidHint.value) {
+            //TODO send hint to server
+            reset()
+        }
+    }
+
+    //
+    private fun reset() {
+        _selectedCard.value = null
+        _selectedHandIndex.value = -1
+        hintReset()
+    }
+
+    private fun hintReset() {
+        _selectedHint.value = ""
+        _isValidHint.value = false
     }
 
 }
