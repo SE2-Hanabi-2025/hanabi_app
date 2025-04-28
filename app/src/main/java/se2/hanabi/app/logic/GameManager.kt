@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
+// !! GamePlayViewModel Replaces this !!
 class GameManager {
 
     var deckSize by mutableStateOf(50)

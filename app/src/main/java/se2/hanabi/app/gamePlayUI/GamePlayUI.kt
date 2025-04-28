@@ -41,12 +41,6 @@ fun GamePlayUI() {
         val titleModifier = Modifier
             .align(Alignment.TopCenter)
             .padding(top = 20.dp)
-            .clickable(
-//                        interactionSource = remember { MutableInteractionSource() },
-//                        indication = null
-            ) {
-                // show win screen/overlay
-            }
         Title(modifier = titleModifier)
         GameBoardUI(
             numRemainingCards = viewModel.numRemainingCard.collectAsState().value,
@@ -54,11 +48,8 @@ fun GamePlayUI() {
             numRemainingHintTokens = viewModel.numRemainingHintTokens.collectAsState().value,
             numRemainingFuseTokens = viewModel.numRemainingFuzeTokens.collectAsState().value,
         )
-// bug. See issue #72
-//        val testHand = listOf(Card("red",1),Card("red",1),Card("red",1),Card("red",1),)
         PlayersCardsUI(
             viewModel.hands.collectAsState().value
-//            listOf(testHand,testHand,testHand,testHand)
         )
     }
 }

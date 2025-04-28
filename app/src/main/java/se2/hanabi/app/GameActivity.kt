@@ -50,7 +50,7 @@ class GameActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             // UI will be developed on GamePlayUI
-            // GamePlayUI will eventually replace GameScreen
+            // !! GamePlayUI replaces GameScreen !!
             GamePlayUI()
             // GameScreen()
         }
