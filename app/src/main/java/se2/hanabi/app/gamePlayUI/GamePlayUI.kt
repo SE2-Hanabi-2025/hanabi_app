@@ -53,7 +53,12 @@ fun GamePlayUI() {
             numRemainingHintTokens = Random.nextInt(9),
             numRemainingFuseTokens = Random.nextInt(4),
         )
-        PlayersCardsUI(generateTestHands(5))
+// bug. See issue #72
+//        val testHand = listOf(Card("red",1),Card("red",1),Card("red",1),Card("red",1),)
+        PlayersCardsUI(
+            generateTestHands(5)
+//            listOf(testHand,testHand,testHand,testHand)
+        )
     }
 }
 

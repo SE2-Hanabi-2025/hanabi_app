@@ -135,4 +135,6 @@ dependencies {
     implementation(libs.coil.svg)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
 }

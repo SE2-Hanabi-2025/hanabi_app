@@ -29,12 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun HintSelecter(
-    modifier: Modifier
+fun HintSelector(
+    onHintClick: (String) -> Unit,
+    selectedHint: String = ""
 ) {
-    var selectedHint by remember { mutableStateOf("") }
     Row(
-        modifier = modifier
+        modifier = Modifier
             .clip(RoundedCornerShape(15.dp))
             .background(Brush.verticalGradient(colors = listOf(Color.Black.copy(alpha = 0.2f),Color.Black.copy(alpha = 0.4f))))
             .padding(15.dp),
@@ -45,13 +45,11 @@ fun HintSelecter(
         Column(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            colors.forEachIndexed() { index, color ->
+            colors.forEach() { color ->
                 HintItem(
                     colorAsString = color,
                     isSelected = color.compareTo(selectedHint)==0,
-                    onClick = {
-                        selectedHint = if (color.compareTo(selectedHint)==0) "" else color
-                    }
+                    onClick = { onHintClick(color) }
                 )
             }
         }
@@ -63,9 +61,7 @@ fun HintSelecter(
                 HintItem(
                     value = i,
                     isSelected = i.toString().compareTo(selectedHint)==0,
-                    onClick = {
-                        selectedHint = if (i.toString().compareTo(selectedHint)==0) "" else i.toString()
-                    }
+                    onClick = { onHintClick(i.toString()) }
                 )
             }
         }

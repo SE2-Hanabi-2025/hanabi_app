@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +23,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.card.Card
 import se2.hanabi.app.card.CardItem
 import kotlin.math.roundToInt
@@ -33,15 +35,35 @@ import kotlin.math.roundToInt
  * - other players hands on the side of the screen with the card faces visible.
  */
 @Composable
-fun PlayersCardsUI(hands: List<List<Card>>) {
+fun PlayersCardsUI(
+    hands: List<List<Card>>
+) {
+    val viewModel: GamePlayViewModel = viewModel()
     // assumes player's hand will be index 0.
-    // will probobaly need editing to integrate with game logic.
-    PlayersHand(hands[0])
-    OtherPlayersHands(hands.slice(1..hands.lastIndex))
+    PlayersHand(
+        hand = hands[0],
+        onCardClick = viewModel::onPlayersCardClick,
+        selectedCard = viewModel.selectedCard.collectAsState().value
+    )
+    OtherPlayersHands(
+        hands.slice(1..hands.lastIndex),
+        onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
+        selectedHandIndex = viewModel.selectedHandIndex.collectAsState().value
+    )
+    if (viewModel.selectedHandIndex.collectAsState().value != -1) {
+        HintSelector(
+            selectedHint = viewModel.selectedHint.collectAsState().value,
+            onHintClick = viewModel::onHintClick,
+        )
+    }
 }
 
 @Composable
-fun PlayersHand(hand: List<Card>) {
+fun PlayersHand(
+    hand: List<Card>,
+    onCardClick: (Card?) -> Unit,
+    selectedCard: Card?
+) {
     Box(
         modifier = Modifier
             .fillMaxSize(),
@@ -53,15 +75,13 @@ fun PlayersHand(hand: List<Card>) {
                 .fillMaxWidth(),
             Arrangement.SpaceEvenly,
         ) {
-            var selectedCard by remember { mutableStateOf<Card?>(null) }
             hand.forEach() { card ->
                 CardItem(
                     card = card,
                     isFlipped = true,
                     isSelected = card == selectedCard,
-                    onClick = {
-                        selectedCard = if (card == selectedCard) null else card
-                    }
+                    onClick = { onCardClick(card) },
+
                 )
             }
         }
@@ -69,9 +89,12 @@ fun PlayersHand(hand: List<Card>) {
 }
 
 @Composable
-fun OtherPlayersHands(hands: List<List<Card>>) {
+fun OtherPlayersHands(
+    hands: List<List<Card>>,
+    onOtherPlayersHandClick: (Int) -> Unit,
+    selectedHandIndex: Int,
+) {
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
-    var selectedHandIndex by remember { mutableStateOf(-1) }
 
     Box(
         modifier = Modifier
@@ -103,13 +126,8 @@ fun OtherPlayersHands(hands: List<List<Card>>) {
                 hand = hand,
                 rotationAmountZ = rotationAmountZ.floatValue,
                 isSelected = index == selectedHandIndex,
-                onClick = {selectedHandIndex = if (index == selectedHandIndex) -1 else index}
+                onClick = { onOtherPlayersHandClick(index) }
             )
-            if (selectedHandIndex!=-1) {
-                HintSelecter(
-                    modifier = Modifier.align(alignment = Alignment.Center)
-                )
-            }
         }
     }
 }
