@@ -44,7 +44,7 @@ import se2.hanabi.app.card.cardWidth
 fun GameBoardUI(
     stackValues: IntArray,
     numRemainingCards: Int,
-    lastDiscardedCard: Card,
+    lastDiscardedCard: Card?,
     numRemainingHintTokens: Int,
     numRemainingFuseTokens: Int,
     ) {
@@ -171,13 +171,17 @@ fun RemainingCardsStack(
 
 @Composable
 fun DiscardedCardsStack(
-    lastDiscardedCard: Card
+    lastDiscardedCard: Card?
 ) {
-    CardItem(
-        card = Card(lastDiscardedCard.color,lastDiscardedCard.number),
-        isFlipped = false,
-        isPortrait = false,
-    )
+    if (lastDiscardedCard == null) {
+        EmptyStack()
+    } else {
+        CardItem(
+            card = Card(lastDiscardedCard.color,lastDiscardedCard.number),
+            isFlipped = false,
+            isPortrait = false,
+        )
+    }
 }
 
 
