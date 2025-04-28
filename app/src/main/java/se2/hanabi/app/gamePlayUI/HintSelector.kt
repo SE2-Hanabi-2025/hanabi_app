@@ -1,21 +1,21 @@
 package se2.hanabi.app.gamePlayUI
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,44 +27,99 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun HintSelector(
     onHintClick: (String) -> Unit,
     selectedHint: String = ""
 ) {
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(15.dp))
-            .background(Brush.verticalGradient(colors = listOf(Color.Black.copy(alpha = 0.2f),Color.Black.copy(alpha = 0.4f))))
-            .padding(15.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    val viewModel: GamePlayViewModel = viewModel()
+    val hintItemSize = 60.dp
+    val paddingAmount = 15.dp
+    Column() {
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(paddingAmount))
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.5f),
+                            Color.Black.copy(alpha = 0.7f)
+                        )
+                    )
+                )
+                .padding(paddingAmount),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(paddingAmount)
+        ) {
+            // colors hints
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                colors.forEach() { color ->
+                    HintItem(
+                        colorAsString = color,
+                        size = hintItemSize,
+                        isSelected = color.compareTo(selectedHint) == 0,
+                        onClick = { onHintClick(color) }
+                    )
+                }
+            }
+            // number hints
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                for (i in 1..5) {
+                    HintItem(
+                        value = i,
+                        size = hintItemSize,
+                        isSelected = i.toString().compareTo(selectedHint) == 0,
+                        onClick = { onHintClick(i.toString()) }
+                    )
+                }
+            }
+        }
+       GiveHintButton(
+           width = hintItemSize.times(2) + paddingAmount.times(3),
+           height = hintItemSize,
+           modifier = Modifier
+               .clip(RoundedCornerShape(paddingAmount)),
+           isAvailable = viewModel.isValidHint.collectAsState().value
+       )
+    }
+}
+
+@Composable
+fun GiveHintButton(
+    modifier: Modifier = Modifier,
+    width: Dp,
+    height: Dp,
+    isAvailable: Boolean = false
+) {
+    val backgroundBrush = Brush.verticalGradient(
+        if (isAvailable) {
+            listOf(Color(0xFF282828), Color(0xFF282828).copy(alpha = 0.9f))
+        } else {
+            listOf(Color(0xFF282828).copy(alpha = 0.7f), Color(0xFF282828).copy(alpha = 0.6f))
+        }
+    )
+    Box(
+        modifier = modifier
+            .width(width)
+            .height(height)
+            .background(
+                brush = backgroundBrush
+            )
+            .clickable {  },
+        contentAlignment = Alignment.Center
     ) {
-        // colors hints
-        Column(
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            colors.forEach() { color ->
-                HintItem(
-                    colorAsString = color,
-                    isSelected = color.compareTo(selectedHint)==0,
-                    onClick = { onHintClick(color) }
-                )
-            }
-        }
-        // number hints
-        Column(
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            for (i in 1 .. 5) {
-                HintItem(
-                    value = i,
-                    isSelected = i.toString().compareTo(selectedHint)==0,
-                    onClick = { onHintClick(i.toString()) }
-                )
-            }
-        }
+        Text(
+            text = "Give hint",
+            fontSize = (width.value/5).sp,
+            fontFamily = FontFamily.Cursive,
+            color = if (!isAvailable) Color(0x566290FF) else Color(0xFFF2FF90),
+        )
     }
 }
 

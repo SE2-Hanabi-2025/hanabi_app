@@ -1,6 +1,7 @@
 package se2.hanabi.app.gamePlayUI
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import se2.hanabi.app.card.Card
@@ -9,11 +10,10 @@ import kotlin.random.Random
 class GamePlayViewModel: ViewModel() {
 
     // game state info
-    val testHand1 = listOf(Card("red",1),Card("red",2),Card("red",3),Card("red",4),)
-    private val _hands = MutableStateFlow(listOf(testHand1,testHand1,testHand1,testHand1,testHand1,))
+    private val _hands = MutableStateFlow(generateTestHands(5))
     val hands: MutableStateFlow<List<List<Card>>> = _hands
 
-    private val _stackValues = mutableStateListOf(0,2,3,4,5)
+    private val _stackValues = generateTestColorStackValues()
     val stackValues:  List<Int> = _stackValues
 
     private val _numRemainingCard = MutableStateFlow(Random.nextInt(35))
@@ -38,21 +38,37 @@ class GamePlayViewModel: ViewModel() {
     private val _selectedHint = MutableStateFlow("")
     val selectedHint: MutableStateFlow<String> = _selectedHint
 
+    private val _isValidHint = MutableStateFlow(false)
+    val isValidHint: MutableStateFlow<Boolean> = _isValidHint
 
     fun onPlayersCardClick(card: Card?) {
         _selectedHandIndex.value = -1
         _selectedHint.value = ""
+        _isValidHint.value =false
          _selectedCard.value = if (card == selectedCard.value) null else card
     }
 
     fun onOtherPlayersHandClick(handIndex: Int) {
         _selectedCard.value = null
         _selectedHint.value = ""
+        _isValidHint.value =false
         _selectedHandIndex.value = if (handIndex == selectedHandIndex.value) -1 else handIndex
     }
 
     fun onHintClick(hint: String) {
         _selectedHint.value = if (hint == selectedHint.value) "" else hint
+        if (_selectedHint.value != "") {
+            var validHint = false;
+            _hands.value[selectedHandIndex.value+1].forEach() { card -> // issue with which hand is selected
+                if (card.color == _selectedHint.value || card.number.toString() == _selectedHint.value) {
+                    validHint = true
+                }
+            }
+            _isValidHint.value = validHint
+        } else {
+            _isValidHint.value = false
+        }
+
     }
 
     fun onColorStackClick(color: String) {
@@ -69,12 +85,8 @@ class GamePlayViewModel: ViewModel() {
 }
 
 // functions to produce game state for demo/development
-fun generateTestColorStackValues(): IntArray {
-    var values = IntArray(5)
-    for (i in colors.indices) {
-        values[i] = Random.nextInt(6)
-    }
-    return values
+fun generateTestColorStackValues(): SnapshotStateList<Int> {
+    return mutableStateListOf(Random.nextInt(6),Random.nextInt(6),Random.nextInt(6),Random.nextInt(6),Random.nextInt(6),)
 }
 
 fun randomCard(): Card {
