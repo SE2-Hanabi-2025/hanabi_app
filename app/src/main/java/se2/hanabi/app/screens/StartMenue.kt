@@ -82,6 +82,8 @@ class StartMenuActivity: ComponentActivity() {
         var isLoading by remember { mutableStateOf(false) }
         var isConnected by remember { mutableStateOf(false) }
         var username by remember { mutableStateOf("") }
+        var isUsernameError by remember { mutableStateOf(false) }
+        var isError by remember { mutableStateOf(false) }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
         val urlEmulator = "http://10.0.2.2:8080"
@@ -323,11 +325,36 @@ class StartMenuActivity: ComponentActivity() {
                     Column {
                     androidx.compose.material3.TextField(
                         value = username,
-                        onValueChange = {username = it},
+                        onValueChange = {newValue ->
+                            val allowedChars = "a-zA-Z0.,!-_"
+                            val maxLength = 6
+                            val regex = Regex("^[$allowedChars]*$")
+                            if (newValue.length <= maxLength){
+                                if (newValue.matches(regex)){
+                                    username = newValue
+                                    isUsernameError = false
+                                }
+                                else{
+                                    if (newValue.length < username.length || newValue.isEmpty()){
+                                        username = newValue
+                                    }
+                                    isUsernameError = newValue.isNotEmpty()
+                                }}
+                                else {
+                                    isUsernameError = true
+                            }
+                        },
                         label = { Text("Enter Username") },
-                        singleLine = true)
+                        singleLine = true,
+                        isError = isUsernameError,
+                        supportingText = {
+                            if (isUsernameError){
+                                Text("Wrong input!")
+                            }
+                        })
                         androidx.compose.material3.TextField(
                         value = lobbyCode,
+                            enabled = username.isNotBlank() && !isUsernameError,
                         onValueChange = { lobbyCode = it },
                         label = { Text("Enter Lobby Code") }
                     )
