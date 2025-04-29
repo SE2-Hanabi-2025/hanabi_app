@@ -81,6 +81,7 @@ class StartMenuActivity: ComponentActivity() {
         var statusMessage by remember { mutableStateOf("Fetching status...") }
         var isLoading by remember { mutableStateOf(false) }
         var isConnected by remember { mutableStateOf(false) }
+        var username by remember { mutableStateOf("") }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
         val urlEmulator = "http://10.0.2.2:8080"
@@ -319,12 +320,18 @@ class StartMenuActivity: ComponentActivity() {
                 onDismissRequest = { showJoinDialog = false },
                 title = { Text("Join Lobby") },
                 text = {
+                    Column {
                     androidx.compose.material3.TextField(
+                        value = username,
+                        onValueChange = {username = it},
+                        label = { Text("Enter Username") },
+                        singleLine = true)
+                        androidx.compose.material3.TextField(
                         value = lobbyCode,
                         onValueChange = { lobbyCode = it },
                         label = { Text("Enter Lobby Code") }
                     )
-                },
+                    } },
                 confirmButton = {
                     Button(onClick = {
                         if (lobbyCode.isNotEmpty()) {
