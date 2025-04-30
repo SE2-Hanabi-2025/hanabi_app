@@ -68,7 +68,10 @@ fun GameBoardUI(
                 verticalArrangement = Arrangement.spacedBy(cardSpacing)
             ) {
                 RemainingCardsStack(numRemainingCards = numRemainingCards)
-                DiscardedCardsStack(lastDiscardedCard = lastDiscardedCard)
+                DiscardedCardsStack(
+                    lastDiscardedCard = lastDiscardedCard,
+                    onClick = viewModel::onDiscardStackClick
+                )
             }
             HintTokens(numRemaining = numRemainingHintTokens)
         }
@@ -176,7 +179,8 @@ fun RemainingCardsStack(
 
 @Composable
 fun DiscardedCardsStack(
-    lastDiscardedCard: Card?
+    lastDiscardedCard: Card?,
+    onClick: () -> Unit
 ) {
     if (lastDiscardedCard == null) {
         EmptyStack()
@@ -185,6 +189,7 @@ fun DiscardedCardsStack(
             card = Card(lastDiscardedCard.color,lastDiscardedCard.number),
             isFlipped = false,
             isPortrait = false,
+            onClick = onClick
         )
     }
 }

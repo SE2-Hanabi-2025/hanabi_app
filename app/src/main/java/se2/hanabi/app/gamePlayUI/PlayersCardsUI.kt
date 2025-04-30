@@ -36,20 +36,18 @@ import kotlin.math.roundToInt
  * - other players hands on the side of the screen with the card faces visible.
  */
 @Composable
-fun PlayersCardsUI(
-    hands: List<List<Card>>
-) {
+fun PlayersCardsUI() {
     val viewModel: GamePlayViewModel = viewModel()
-    // assumes player's hand will be index 0.
     PlayersHand(
-        hand = hands[0],
+        hand = viewModel.hands.collectAsState().value[viewModel.thisPlayerIndex.collectAsState().value],
         onCardClick = viewModel::onPlayersCardClick,
         selectedCard = viewModel.selectedCard.collectAsState().value
     )
     OtherPlayersHands(
-        hands.slice(1..hands.lastIndex),
+        viewModel.hands.collectAsState().value,
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
-        selectedHandIndex = viewModel.selectedHandIndex.collectAsState().value
+        selectedHandIndex = viewModel.selectedHandIndex.collectAsState().value,
+        thisPlayerIndex = viewModel.thisPlayerIndex.collectAsState().value
     )
     if (viewModel.selectedHandIndex.collectAsState().value != -1) {
         HintSelector(
@@ -94,6 +92,7 @@ fun OtherPlayersHands(
     hands: List<List<Card>>,
     onOtherPlayersHandClick: (Int) -> Unit,
     selectedHandIndex: Int,
+    thisPlayerIndex: Int,
 ) {
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
 
@@ -107,28 +106,33 @@ fun OtherPlayersHands(
         var handOffsetX by remember { mutableStateOf(0f) }
         var handOffsetY by remember { mutableStateOf(0f) }
 
+        var positionIndex = 0
         hands.forEachIndexed() {index, hand ->
-            if (index%2 ==0) {// right hand side of screen
-                rotationAmountZ.floatValue = -90f
-                handOffsetX = boxSize.width.toFloat()
-            } else {
-                rotationAmountZ.floatValue = 90f
-                handOffsetX = 0f
-            }
+            if (index != thisPlayerIndex) {
+                if (positionIndex % 2 == 0) {// right hand side of screen
+                    rotationAmountZ.floatValue = -90f
+                    handOffsetX = boxSize.width.toFloat()
+                } else {
+                    rotationAmountZ.floatValue = 90f
+                    handOffsetX = 0f
+                }
 
-            handOffsetY = if (index>1) {// offset top two hands to be at third of the screen down form top
-                boxSize.height*0.25f
-            } else {
-                boxSize.height*0.6f
+                handOffsetY =
+                    if (positionIndex > 1) {// offset top two hands to be at third of the screen down form top
+                        boxSize.height * 0.25f
+                    } else {
+                        boxSize.height * 0.6f
+                    }
+                val handOffset = Offset(handOffsetX, handOffsetY)
+                OtherPlayersHand(
+                    offset = handOffset,
+                    hand = hand,
+                    rotationAmountZ = rotationAmountZ.floatValue,
+                    isSelected = index == selectedHandIndex,
+                    onClick = { onOtherPlayersHandClick(index) }
+                )
+                positionIndex++
             }
-            val handOffset = Offset(handOffsetX, handOffsetY)
-            OtherPlayersHand(
-                offset = handOffset,
-                hand = hand,
-                rotationAmountZ = rotationAmountZ.floatValue,
-                isSelected = index == selectedHandIndex,
-                onClick = { onOtherPlayersHandClick(index) }
-            )
         }
     }
 }

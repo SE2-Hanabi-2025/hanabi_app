@@ -48,8 +48,6 @@ fun GamePlayUI() {
             numRemainingHintTokens = viewModel.numRemainingHintTokens.collectAsState().value,
             numRemainingFuseTokens = viewModel.numRemainingFuzeTokens.collectAsState().value,
         )
-        PlayersCardsUI(
-            viewModel.hands.collectAsState().value
-        )
+        PlayersCardsUI()
     }
 }

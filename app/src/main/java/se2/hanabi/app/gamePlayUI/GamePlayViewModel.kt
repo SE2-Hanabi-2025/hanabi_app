@@ -14,7 +14,13 @@ import kotlin.random.Random
 class GamePlayViewModel: ViewModel() {
 
     // game state info
-    private val _hands = MutableStateFlow(generateTestHands(5))
+    private val _numPlayers = MutableStateFlow(5)
+    val numPlayers: MutableStateFlow<Int> = _numPlayers
+
+    private val _thisPlayerIndex = MutableStateFlow(Random.nextInt(numPlayers.value))
+    val thisPlayerIndex: MutableStateFlow<Int> = _thisPlayerIndex
+
+    private val _hands = MutableStateFlow(generateTestHands(numPlayers.value))
     val hands: MutableStateFlow<List<List<Card>>> = _hands
 
     private val _stackValues = generateTestColorStackValues()
@@ -61,7 +67,7 @@ class GamePlayViewModel: ViewModel() {
         _selectedHint.value = if (hint == selectedHint.value) "" else hint
         if (_selectedHint.value != "") {
             var validHint = false;
-            _hands.value[selectedHandIndex.value+1].forEach() { card -> // issue with which hand is selected
+            _hands.value[selectedHandIndex.value].forEach() { card -> // issue with which hand is selected
                 if (card.color == _selectedHint.value || card.number.toString() == _selectedHint.value) {
                     validHint = true
                 }
@@ -89,6 +95,13 @@ class GamePlayViewModel: ViewModel() {
         if (isValidHint.value) {
             //TODO send hint to server
             reset()
+        }
+    }
+
+    fun onDiscardStackClick() {
+        if (_selectedCard.value!= null) {
+            // to demo Hands correctly adjusting to thisPlayerIndex value
+            thisPlayerIndex.value = (thisPlayerIndex.value+1)%5
         }
     }
 
