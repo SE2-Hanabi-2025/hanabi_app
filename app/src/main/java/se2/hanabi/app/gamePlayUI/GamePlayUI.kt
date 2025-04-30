@@ -36,18 +36,11 @@ fun GamePlayUI() {
         ),
         contentAlignment = Alignment.Center
     ) {
-        val viewModel: GamePlayViewModel = viewModel()
-
         val titleModifier = Modifier
             .align(Alignment.TopCenter)
             .padding(top = 20.dp)
         Title(modifier = titleModifier)
-        GameBoardUI(
-            numRemainingCards = viewModel.numRemainingCard.collectAsState().value,
-            lastDiscardedCard = viewModel.lastDiscardedCard.collectAsState().value,
-            numRemainingHintTokens = viewModel.numRemainingHintTokens.collectAsState().value,
-            numRemainingFuseTokens = viewModel.numRemainingFuzeTokens.collectAsState().value,
-        )
+        GameBoardUI()
         PlayersCardsUI()
     }
 }

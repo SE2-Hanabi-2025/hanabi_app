@@ -10,10 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -35,19 +32,9 @@ import se2.hanabi.app.card.cardWidth
  * GameBoardUI display the features of the game board.
  * These include: fuse/hint tokens, discard/draw pile, and color stacks
  *
- *@param stackValues IntArray of the highest value in each stack. In the order of GamePlayUI.colors
- *@param numRemainingCards Int representing the remaining cards that can be drawn.
- *@param lastDiscardedCard Card will be shown on the top of the discarded card pile.
- *@param numRemainingHintTokens Used to display the how many hint tokens are still available to the players.
- *@param numRemainingFuseTokens Used to display the remaining fuse token are left before game over.
  */
 @Composable
-fun GameBoardUI(
-    numRemainingCards: Int,
-    lastDiscardedCard: Card?,
-    numRemainingHintTokens: Int,
-    numRemainingFuseTokens: Int,
-    ) {
+fun GameBoardUI() {
     val viewModel: GamePlayViewModel = viewModel()
 
     Row(
@@ -63,17 +50,17 @@ fun GameBoardUI(
                 .padding(boardElementPadding),
             verticalArrangement = Arrangement.spacedBy(boardElementPadding)
         ) {
-            FuseTokens(numRemaining = numRemainingFuseTokens)
+            FuseTokens(numRemaining = viewModel.numRemainingFuzeTokens.collectAsState().value)
             Column(
                 verticalArrangement = Arrangement.spacedBy(cardSpacing)
             ) {
-                RemainingCardsStack(numRemainingCards = numRemainingCards)
+                RemainingCardsStack(numRemainingCards = viewModel.numRemainingCard.collectAsState().value)
                 DiscardedCardsStack(
-                    lastDiscardedCard = lastDiscardedCard,
+                    lastDiscardedCard = viewModel.lastDiscardedCard.collectAsState().value,
                     onClick = viewModel::onDiscardStackClick
                 )
             }
-            HintTokens(numRemaining = numRemainingHintTokens)
+            HintTokens(numRemaining = viewModel.numRemainingHintTokens.collectAsState().value)
         }
         // right column
         ColorStacks(

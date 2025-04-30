@@ -35,8 +35,8 @@ class GamePlayViewModel: ViewModel() {
     private val _numRemainingHintTokens = MutableStateFlow(Random.nextInt(9))
     val numRemainingHintTokens: MutableStateFlow<Int> = _numRemainingHintTokens
 
-    private val _numRemainingFuzeTokens = MutableStateFlow(Random.nextInt(4))
-    val numRemainingFuzeTokens: MutableStateFlow<Int> = _numRemainingFuzeTokens
+    private val _numRemainingFuseTokens = MutableStateFlow(Random.nextInt(4))
+    val numRemainingFuzeTokens: MutableStateFlow<Int> = _numRemainingFuseTokens
 
     // game play info
     private val _selectedCard = MutableStateFlow<Card?>(null)
@@ -100,8 +100,7 @@ class GamePlayViewModel: ViewModel() {
 
     fun onDiscardStackClick() {
         if (_selectedCard.value!= null) {
-            // to demo Hands correctly adjusting to thisPlayerIndex value
-            thisPlayerIndex.value = (thisPlayerIndex.value+1)%5
+            //TODO send that thisPlayer wants to discard SelectedCard
         }
     }
 
