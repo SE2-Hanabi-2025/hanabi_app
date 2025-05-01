@@ -82,8 +82,7 @@ class StartMenuActivity: ComponentActivity() {
         var isLoading by remember { mutableStateOf(false) }
         var isConnected by remember { mutableStateOf(false) }
         var username by remember { mutableStateOf("") }
-        var isUsernameError by remember { mutableStateOf(false) }
-        var isError by remember { mutableStateOf(false) }
+        var isValidUsername by remember { mutableStateOf(false) }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
         val urlEmulator = "http://10.0.2.2:8080"
@@ -323,38 +322,37 @@ class StartMenuActivity: ComponentActivity() {
                 title = { Text("Join Lobby") },
                 text = {
                     Column {
+                        var invalidUsernameMsg by remember { mutableStateOf("Invalid username") }
+                        var isUsernameInputError by remember { mutableStateOf(false) }
+                        isUsernameInputError = !isValidUsername && username.isNotEmpty()
                     androidx.compose.material3.TextField(
                         value = username,
                         onValueChange = {newValue ->
-                            val allowedChars = "a-zA-Z0.,!-_"
-                            val maxLength = 6
-                            val regex = Regex("^[$allowedChars]*$")
-                            if (newValue.length <= maxLength){
-                                if (newValue.matches(regex)){
-                                    username = newValue
-                                    isUsernameError = false
-                                }
-                                else{
-                                    if (newValue.length < username.length || newValue.isEmpty()){
-                                        username = newValue
-                                    }
-                                    isUsernameError = newValue.isNotEmpty()
-                                }}
-                                else {
-                                    isUsernameError = true
+                            val usernameAllowedChars = "a-zA-Z0-9_\\-.,"
+                            val usernameMaxLength = 6
+                            val regex = Regex("^[$usernameAllowedChars]+$")
+                            username = newValue
+                            if (newValue.length > usernameMaxLength){
+                                isValidUsername =false
+                                invalidUsernameMsg = "Max length: $usernameMaxLength"
+                            } else if (!newValue.matches(regex)) {
+                                isValidUsername = false
+                                invalidUsernameMsg = "Use only letters, numbers or \"_ - . ,\""
+                            } else {
+                                isValidUsername = true
                             }
                         },
                         label = { Text("Enter Username") },
                         singleLine = true,
-                        isError = isUsernameError,
+                        isError = isUsernameInputError,
                         supportingText = {
-                            if (isUsernameError){
-                                Text("Wrong input!")
+                            if (isUsernameInputError){
+                                Text(invalidUsernameMsg)
                             }
                         })
                         androidx.compose.material3.TextField(
                         value = lobbyCode,
-                            enabled = username.isNotBlank() && !isUsernameError,
+                            enabled = isValidUsername,
                         onValueChange = { lobbyCode = it },
                         label = { Text("Enter Lobby Code") }
                     )
