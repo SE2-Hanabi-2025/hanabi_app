@@ -186,14 +186,16 @@ fun DiscardedCardsStack(
 fun EmptyStack(
     modifier: Modifier = Modifier,
     isPortrait: Boolean = false,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    color: String = "white"
 ) {
     CardItem(
         modifier = Modifier.alpha(0.3f),
-        card = Card("red",1),
+        card = Card(color,1),
         isFlipped = true,
         isPortrait = isPortrait,
-        onClick = onClick
+        onClick = onClick,
+        showColorHint = true
     )
 }
 
@@ -212,7 +214,8 @@ fun ColorStacks(
             if (stackValues[index]==0) {
                 EmptyStack(
                     isPortrait = false,
-                    onClick = { onColorStackClick(color) }
+                    onClick = { onColorStackClick(color) },
+                    color = color,
                 )
             } else {
                 CardItem(

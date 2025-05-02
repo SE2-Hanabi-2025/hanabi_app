@@ -23,7 +23,7 @@ class GamePlayViewModel: ViewModel() {
     private val _hands = MutableStateFlow(generateTestHands(numPlayers.value))
     val hands: MutableStateFlow<List<List<Card>>> = _hands
 
-    private val _stackValues = generateTestColorStackValues()
+    private val _stackValues = mutableListOf(0,0,0,0,0) //generateTestColorStackValues()
     val stackValues:  List<Int> = _stackValues
 
     private val _numRemainingCard = MutableStateFlow(Random.nextInt(35))
