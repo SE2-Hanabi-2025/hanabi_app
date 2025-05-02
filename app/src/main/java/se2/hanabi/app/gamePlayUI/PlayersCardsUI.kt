@@ -60,7 +60,7 @@ fun PlayersCardsUI() {
 @Composable
 fun PlayersHand(
     hand: List<Card>,
-    onCardClick: (Card?) -> Unit,
+    onCardClick: (Card) -> Unit,
     selectedCard: Card?
 ) {
     val viewModel: GamePlayViewModel = viewModel()

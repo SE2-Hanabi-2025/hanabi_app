@@ -23,7 +23,7 @@ class GamePlayViewModel: ViewModel() {
     private val _hands = MutableStateFlow(generateTestHands(numPlayers.value))
     val hands: MutableStateFlow<List<List<Card>>> = _hands
 
-    private val _stackValues = mutableListOf(0,0,0,0,0) //generateTestColorStackValues()
+    private val _stackValues = generateTestColorStackValues()
     val stackValues:  List<Int> = _stackValues
 
     private val _numRemainingCard = MutableStateFlow(Random.nextInt(35))
@@ -56,7 +56,7 @@ class GamePlayViewModel: ViewModel() {
     private val _shownValueHints = SnapshotStateList<Int>()
     val shownValueHints: List<Int> = _shownValueHints
 
-    fun onPlayersCardClick(card: Card?) {
+    fun onPlayersCardClick(card: Card) {
         _selectedHandIndex.value = -1
         hintReset()
          _selectedCard.value = if (card == selectedCard.value) null else card
@@ -144,7 +144,13 @@ fun generateTestHands(numPlayers: Int): List<List<Card>> {
     val handSize = if (numPlayers<=3) 5 else 4
 
     for (i in 0 until numPlayers) {
-        hands.add(randomHand(handSize))
+//        hands.add(randomHand(handSize))
+        val card1 = Card("red", 1)
+        val card2 = Card("red", 1)
+        val card3 = Card("blue", 1)
+        val card4 = Card("white", 1)
+
+        hands.add(listOf(card1,card2,card3,card4))
     }
     return hands
 }
