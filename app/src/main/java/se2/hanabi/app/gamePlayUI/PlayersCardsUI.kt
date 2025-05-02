@@ -63,6 +63,7 @@ fun PlayersHand(
     onCardClick: (Card?) -> Unit,
     selectedCard: Card?
 ) {
+    val viewModel: GamePlayViewModel = viewModel()
     Box(
         modifier = Modifier
             .fillMaxSize(),
@@ -80,7 +81,8 @@ fun PlayersHand(
                     isFlipped = true,
                     isSelected = card == selectedCard,
                     onClick = { onCardClick(card) },
-
+                    showColorHint = viewModel.shownColorHints.contains(card.getID()),
+                    showValueHint = viewModel.shownValueHints.contains(card.getID())
                 )
             }
         }
@@ -179,7 +181,9 @@ fun OtherPlayersHand(
                             card.color == viewModel.selectedHint.collectAsState().value ||
                                     card.number.toString() == viewModel.selectedHint.collectAsState().value
                             ),
-                    highlightColor = if (card.color == viewModel.selectedHint.collectAsState().value) colorFromString(card.color) else Color.White
+                    highlightColor = if (card.color == viewModel.selectedHint.collectAsState().value) colorFromString(card.color) else Color.White,
+                    showColorHint = viewModel.shownColorHints.contains(card.getID()),
+                    showValueHint = viewModel.shownValueHints.contains(card.getID())
                 )
             }
         }

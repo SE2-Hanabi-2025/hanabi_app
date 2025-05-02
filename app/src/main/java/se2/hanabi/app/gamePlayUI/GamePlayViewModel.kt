@@ -51,6 +51,11 @@ class GamePlayViewModel: ViewModel() {
     private val _isValidHint = MutableStateFlow(false)
     val isValidHint: MutableStateFlow<Boolean> = _isValidHint
 
+    private val _shownColorHints = SnapshotStateList<Int>()
+    val shownColorHints: List<Int> = _shownColorHints
+    private val _shownValueHints = SnapshotStateList<Int>()
+    val shownValueHints: List<Int> = _shownValueHints
+
     fun onPlayersCardClick(card: Card?) {
         _selectedHandIndex.value = -1
         hintReset()
@@ -76,7 +81,20 @@ class GamePlayViewModel: ViewModel() {
         } else {
             _isValidHint.value = false
         }
+    }
 
+    fun onGiveHintClick() {
+        if (isValidHint.value) {
+            //TODO send hint to server and recieve update to shownHints
+            _hands.value[_selectedHandIndex.value].forEach() {card ->
+                if (card.color == _selectedHint.value) {
+                    _shownColorHints.add(card.getID())
+                } else if (card.number.toString() == _selectedHint.value) {
+                    _shownValueHints.add(card.getID())
+                }
+            }
+            resetSelection()
+        }
     }
 
     fun onColorStackClick(color: String) {
@@ -91,13 +109,6 @@ class GamePlayViewModel: ViewModel() {
         // more logic: discard selected card, draw next one
     }
 
-    fun onGiveHintClick() {
-        if (isValidHint.value) {
-            //TODO send hint to server
-            reset()
-        }
-    }
-
     fun onDiscardStackClick() {
         if (_selectedCard.value!= null) {
             //TODO send that thisPlayer wants to discard SelectedCard
@@ -105,7 +116,7 @@ class GamePlayViewModel: ViewModel() {
     }
 
     //
-    private fun reset() {
+    private fun resetSelection() {
         _selectedCard.value = null
         _selectedHandIndex.value = -1
         hintReset()

@@ -58,8 +58,8 @@ fun CardItem(
     isHighlighted: Boolean = isSelected,
     onClick: () -> Unit = {},
     highlightColor: Color = Color.White,
-    showColorHint: Boolean = true,
-    showValueHint: Boolean = true,
+    showColorHint: Boolean = false,
+    showValueHint: Boolean = false,
 ) {
     var actualCardWidth = if (isPortrait) cardWidth else cardHeight
     var actualCardHeight = if (isPortrait) cardHeight else cardWidth
