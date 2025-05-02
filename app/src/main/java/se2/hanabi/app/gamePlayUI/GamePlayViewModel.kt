@@ -144,13 +144,7 @@ fun generateTestHands(numPlayers: Int): List<List<Card>> {
     val handSize = if (numPlayers<=3) 5 else 4
 
     for (i in 0 until numPlayers) {
-//        hands.add(randomHand(handSize))
-        val card1 = Card("red", 1)
-        val card2 = Card("red", 1)
-        val card3 = Card("blue", 1)
-        val card4 = Card("white", 1)
-
-        hands.add(listOf(card1,card2,card3,card4))
+        hands.add(randomHand(handSize))
     }
     return hands
 }
