@@ -41,7 +41,6 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.launch
-import se2.hanabi.app.gamePlayUI.GamePlayUI
 import se2.hanabi.app.logic.GameManager
 import se2.hanabi.app.logic.PlaceCardResult
 
@@ -51,32 +50,41 @@ class GameActivity : ComponentActivity() {
         setContent {
             // UI will be developed on GamePlayUI
             // !! GamePlayUI replaces GameScreen !!
-            GamePlayUI()
-            // GameScreen()
+//            GamePlayUI()
+             GameScreen()
+        }
+    }
+
+    class GamePlayService() {
+        private val baseURL = "http://10.145.212.9:8080" // "http://10.0.2.2:8080" // for emulator
+        val client = HttpClient(CIO)
+
+        suspend fun drawCard(gameManager: GameManager) {
+            try {
+                val response: HttpResponse = client.get("$baseURL/game/draw")
+                val cardText = response.body<String>()
+
+                val cardValue = cardText.substringAfter(": ").trim()
+                gameManager.drawCard(cardValue)
+
+            } catch (e: Exception) {
+            }
         }
     }
 
     @Composable
     fun GameScreen() {
+        val gamePlayService = remember { GamePlayService() }
         val gameManager = remember { GameManager() }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
-        val urlEmulator = "http://10.0.2.2:8080"
+        val urlEmulator = "http://10.145.212.9:8080"
         val snackbarHostState = remember { SnackbarHostState() }
         val context = LocalContext.current
 
         fun drawCard() {
             coroutineScope.launch {
-                try {
-                    val response: HttpResponse = client.get("$urlEmulator/game/draw")
-                    val cardText = response.body<String>()
-
-                    val cardValue = cardText.substringAfter(": ").trim()
-                    gameManager.drawCard(cardValue)
-
-                } catch (e: Exception) {
-
-                }
+                gamePlayService.drawCard(gameManager)
             }
         }
 
