@@ -41,6 +41,7 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.launch
+import se2.hanabi.app.gamePlayUI.GamePlayUI
 import se2.hanabi.app.logic.GameManager
 import se2.hanabi.app.logic.PlaceCardResult
 
@@ -50,8 +51,8 @@ class GameActivity : ComponentActivity() {
         setContent {
             // UI will be developed on GamePlayUI
             // !! GamePlayUI replaces GameScreen !!
-//            GamePlayUI()
-             GameScreen()
+            GamePlayUI()
+//             GameScreen()
         }
     }
 

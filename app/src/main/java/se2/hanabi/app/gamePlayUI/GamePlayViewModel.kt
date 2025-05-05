@@ -3,7 +3,10 @@ package se2.hanabi.app.gamePlayUI
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import se2.hanabi.app.Services.GamePlayService
 import se2.hanabi.app.card.Card
 import kotlin.random.Random
 
@@ -12,6 +15,7 @@ import kotlin.random.Random
  *
  */
 class GamePlayViewModel: ViewModel() {
+    private val gamePlayService: GamePlayService = GamePlayService()
 
     // game state info
     private val _numPlayers = MutableStateFlow(5)
@@ -110,8 +114,9 @@ class GamePlayViewModel: ViewModel() {
     }
 
     fun onDiscardStackClick() {
-        if (_selectedCard.value!= null) {
-            //TODO send that thisPlayer wants to discard SelectedCard
+        //TODO send that thisPlayer wants to discard SelectedCard
+        viewModelScope.launch {
+            gamePlayService.updateGameStatus()
         }
     }
 
