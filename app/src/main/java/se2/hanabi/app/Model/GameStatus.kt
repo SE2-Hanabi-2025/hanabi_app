@@ -9,6 +9,7 @@ data class GameStatus(
     val visibleHands: Map<Int, List<Card>>,
     val playedCards: Map<Card.Color, Int>,
     val discardPile: List<Card>,
+    val numRemainingCard: Int,
     val shownHints: Map<Int, Hint>,
     val hintTokens: Int,
     val strikes: Int,

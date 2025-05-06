@@ -61,7 +61,7 @@ fun GameBoardUI() {
         }
         // right column
         ColorStacks(
-            stackValues = viewModel.stackValues,
+            stackValues = viewModel.stackValues.collectAsState().value,
             onColorStackClick = viewModel::onColorStackClick,
         )
     }
@@ -199,7 +199,7 @@ fun EmptyStack(
 @Composable
 fun ColorStacks(
     modifier: Modifier = Modifier,
-    stackValues: List<Int>,
+    stackValues: Map<Card.Color, Int>,
     onColorStackClick: (Card.Color) -> Unit,
 ) {
     Column(
@@ -207,8 +207,8 @@ fun ColorStacks(
             .padding(boardElementPadding),
         verticalArrangement = Arrangement.spacedBy(cardSpacing),
     ) {
-        Card.Color.entries.forEachIndexed() { index, color ->
-            if (stackValues[index]==0) {
+        Card.Color.entries.forEach() { color ->
+            if (stackValues[color]==0) {
                 EmptyStack(
                     isPortrait = false,
                     onClick = { onColorStackClick(color) },
@@ -217,7 +217,7 @@ fun ColorStacks(
             } else {
                 CardItem(
                     card = Card(color,
-                    stackValues[index]),
+                    stackValues[color]?:0),
                     isPortrait = false,
                     highlightColor = colorFromColorEnum(color),
                     onClick = { onColorStackClick(color) },

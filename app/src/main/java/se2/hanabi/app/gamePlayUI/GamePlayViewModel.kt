@@ -36,19 +36,19 @@ class GamePlayViewModel: ViewModel() {
     private val _otherPlayersHands = MutableStateFlow(gameStatus.visibleHands)
     val otherPlayersHands: MutableStateFlow<Map<Int, List<Card>>> = _otherPlayersHands
 
-    private val _stackValues = generateTestColorStackValues()
-    val stackValues:  List<Int> = _stackValues
+    private val _stackValues = MutableStateFlow<Map<Card.Color, Int>>(gameStatus.playedCards)
+    val stackValues: MutableStateFlow<Map<Card.Color, Int>> = _stackValues
 
-    private val _numRemainingCard = MutableStateFlow(Random.nextInt(35))
+    private val _numRemainingCard = MutableStateFlow(gameStatus.numRemainingCard)
     val numRemainingCard: MutableStateFlow<Int> = _numRemainingCard
 
-    private val _lastDiscardedCard = MutableStateFlow<Card?>(randomCard())
+    private val _lastDiscardedCard = MutableStateFlow<Card?>(gameStatus.discardPile.last())
     val lastDiscardedCard: MutableStateFlow<Card?> = _lastDiscardedCard
 
-    private val _numRemainingHintTokens = MutableStateFlow(Random.nextInt(9))
+    private val _numRemainingHintTokens = MutableStateFlow(gameStatus.hintTokens)
     val numRemainingHintTokens: MutableStateFlow<Int> = _numRemainingHintTokens
 
-    private val _numRemainingFuseTokens = MutableStateFlow(Random.nextInt(4))
+    private val _numRemainingFuseTokens = MutableStateFlow(gameStatus.strikes)
     val numRemainingFuseTokens: MutableStateFlow<Int> = _numRemainingFuseTokens
 
     // game play info
@@ -183,29 +183,29 @@ fun generateTestGameStatus(): GameStatus {
     val players = listOf(player1, player2, player3)
 
     val hand1 = listOf(
-        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.RED, value = 1),
-        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.BLUE, value = 3),
-        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.GREEN, value = 2)
+        Card(color = Card.Color.RED, value = 1),
+        Card(color = Card.Color.BLUE, value = 3),
+        Card(color = Card.Color.GREEN, value = 2)
     )
     val hand2 = listOf(
-        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.YELLOW, value = 1),
-        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.WHITE, value = 5),
-        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.RED, value = 2)
+        Card(color = Card.Color.YELLOW, value = 1),
+        Card(color = Card.Color.WHITE, value = 5),
+        Card(color = Card.Color.RED, value = 2)
     )
     // cat's hand is not visable
     val visibleHands = mapOf(0 to hand1, 1 to hand2)
 
     val playedCards = mapOf(
-        se2.hanabi.app.Model.Card.Color.RED to 1,
-        se2.hanabi.app.Model.Card.Color.BLUE to 0,
-        se2.hanabi.app.Model.Card.Color.GREEN to 0,
-        se2.hanabi.app.Model.Card.Color.YELLOW to 4,
-        se2.hanabi.app.Model.Card.Color.WHITE to 0
+        Card.Color.RED to 1,
+        Card.Color.BLUE to 0,
+        Card.Color.GREEN to 0,
+        Card.Color.YELLOW to 4,
+        Card.Color.WHITE to 0
     )
 
     val discardPile = listOf(
-        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.RED, value = 1),
-        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.BLUE, value = 2)
+        Card(color = Card.Color.RED, value = 1),
+        Card(color = Card.Color.BLUE, value = 2)
     )
 
     return GameStatus(
@@ -214,6 +214,7 @@ fun generateTestGameStatus(): GameStatus {
         visibleHands = visibleHands,
         playedCards = playedCards,
         discardPile = discardPile,
+        numRemainingCard = Random.nextInt(16),
         shownHints = HashMap<Int, Hint>(),
         hintTokens = 8,
         strikes = 0,
