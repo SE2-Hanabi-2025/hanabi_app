@@ -19,23 +19,3 @@ data class Player(
     val name: String,
     private val id: Int
 )
-
-@Serializable
-data class Card(
-    val color: Color,
-    val value: Int
-) {
-
-    override fun toString(): String {
-        return "Card{value=$value, color=$color}"
-    }
-
-    @Serializable
-    enum class Color {
-        RED,
-        BLUE,
-        GREEN,
-        YELLOW,
-        WHITE
-    }
-}

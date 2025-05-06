@@ -1,6 +1,6 @@
 package se2.hanabi.app.gamePlayUI
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose. foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,8 +25,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import se2.hanabi.app.card.Card
-import se2.hanabi.app.card.CardItem
+import se2.hanabi.app.Model.Card
+import se2.hanabi.app.Model.HintType
 import kotlin.math.roundToInt
 
 /**
@@ -178,10 +178,10 @@ fun OtherPlayersHand(
                     rotationAmountZ = -30f + index * (60 / hand.size), //60 degree arc
                     onClick = onClick,
                     isHighlighted = isSelected && (
-                            card.color == viewModel.selectedHint.collectAsState().value ||
-                                    card.number.toString() == viewModel.selectedHint.collectAsState().value
+                            card.color == viewModel.selectedHint.collectAsState().value?.getColor() ||
+                                    card.value == viewModel.selectedHint.collectAsState().value?.getValue()
                             ),
-                    highlightColor = if (card.color == viewModel.selectedHint.collectAsState().value) colorFromString(card.color) else Color.White,
+                    highlightColor = if (viewModel.selectedHint.collectAsState().value?.getHintType()==HintType.COLOR) colorFromColorEnum(card.color) else Color.White,
                     showColorHint = viewModel.shownColorHints.contains(card.getID()),
                     showValueHint = viewModel.shownValueHints.contains(card.getID())
                 )

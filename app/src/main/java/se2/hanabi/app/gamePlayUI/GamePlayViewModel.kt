@@ -9,7 +9,8 @@ import kotlinx.coroutines.launch
 import se2.hanabi.app.Model.GameStatus
 import se2.hanabi.app.Model.Player
 import se2.hanabi.app.Services.GamePlayService
-import se2.hanabi.app.card.Card
+import se2.hanabi.app.Model.Card
+import se2.hanabi.app.Model.Hint
 import kotlin.random.Random
 
 /**
@@ -52,8 +53,8 @@ class GamePlayViewModel: ViewModel() {
     private val _selectedHandIndex = MutableStateFlow(-1)
     val selectedHandIndex: MutableStateFlow<Int> = _selectedHandIndex
 
-    private val _selectedHint = MutableStateFlow("")
-    val selectedHint: MutableStateFlow<String> = _selectedHint
+    private val _selectedHint = MutableStateFlow<Hint?>(null)
+    val selectedHint: MutableStateFlow<Hint?> = _selectedHint
 
     private val _isValidHint = MutableStateFlow(false)
     val isValidHint: MutableStateFlow<Boolean> = _isValidHint
@@ -75,12 +76,12 @@ class GamePlayViewModel: ViewModel() {
         _selectedHandIndex.value = if (handIndex == selectedHandIndex.value) -1 else handIndex
     }
 
-    fun onHintClick(hint: String) {
-        _selectedHint.value = if (hint == selectedHint.value) "" else hint
-        if (_selectedHint.value != "") {
+    fun onHintClick(hint: Hint) {
+        _selectedHint.value = if (hint == selectedHint.value) null else hint
+        if (_selectedHint.value != null) {
             var validHint = false;
-            _hands.value[selectedHandIndex.value].forEach() { card -> // issue with which hand is selected
-                if (card.color == _selectedHint.value || card.number.toString() == _selectedHint.value) {
+            _hands.value[selectedHandIndex.value].forEach() { card ->
+                if (card.color == _selectedHint.value?.getColor() || card.value == _selectedHint.value?.getValue()) {
                     validHint = true
                 }
             }
@@ -94,9 +95,9 @@ class GamePlayViewModel: ViewModel() {
         if (isValidHint.value) {
             //TODO send hint to server and recieve update to shownHints
             _hands.value[_selectedHandIndex.value].forEach() {card ->
-                if (card.color == _selectedHint.value) {
+                if (card.color == _selectedHint.value?.getColor()) {
                     _shownColorHints.add(card.getID())
-                } else if (card.number.toString() == _selectedHint.value) {
+                } else if (card.value == _selectedHint.value?.getValue()) {
                     _shownValueHints.add(card.getID())
                 }
             }
@@ -104,11 +105,11 @@ class GamePlayViewModel: ViewModel() {
         }
     }
 
-    fun onColorStackClick(color: String) {
+    fun onColorStackClick(color: Card.Color) {
         //TODO send place card request to server
         _selectedCard.value?.let { card ->
-            val colorIndex = colors.indexOf(color)
-            if (card.color == color && card.number == _stackValues[colorIndex] + 1) {
+            val colorIndex = Card.Color.entries.indexOf(color)
+            if (card.color == color && card.value == _stackValues[colorIndex] + 1) {
                 _stackValues[colorIndex]++
                 _selectedCard.value = null
             }
@@ -131,7 +132,7 @@ class GamePlayViewModel: ViewModel() {
     }
 
     private fun hintReset() {
-        _selectedHint.value = ""
+        _selectedHint.value = null
         _isValidHint.value = false
     }
 
@@ -143,7 +144,7 @@ fun generateTestColorStackValues(): SnapshotStateList<Int> {
 }
 
 fun randomCard(): Card {
-    return Card(colors[Random.nextInt(colors.size)],Random.nextInt(5)+1)
+    return Card(Card.Color.entries[Random.nextInt(Card.Color.entries.size)],Random.nextInt(5)+1)
 }
 
 fun generateTestHands(numPlayers: Int): List<List<Card>> {
@@ -161,7 +162,7 @@ fun randomHand(numCards: Int): List<Card> {
 
     val hand = mutableListOf<Card>()
     for (i in 0 until numCards) {
-        hand.add( Card( colors[Random.nextInt(colors.size)], Random.nextInt(4)+1))
+        hand.add( randomCard())
     }
     return hand
 }
