@@ -50,7 +50,7 @@ fun GameBoardUI() {
                 .padding(boardElementPadding),
             verticalArrangement = Arrangement.spacedBy(boardElementPadding)
         ) {
-            FuseTokens(numRemaining = viewModel.numRemainingFuzeTokens.collectAsState().value)
+            FuseTokens(numRemaining = viewModel.numRemainingFuseTokens.collectAsState().value)
             Column(
                 verticalArrangement = Arrangement.spacedBy(cardSpacing)
             ) {

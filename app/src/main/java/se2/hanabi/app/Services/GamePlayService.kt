@@ -6,7 +6,7 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import kotlinx.serialization.json.Json
-import se2.hanabi.app.Model.GameState
+import se2.hanabi.app.Model.GameStatus
 
 class GamePlayService() {
     private val baseURL = "http://10.145.212.9:8080" // "http://10.0.2.2:8080" // for emulator
@@ -15,7 +15,7 @@ class GamePlayService() {
     suspend fun updateGameStatus() {
         try {
             val response: HttpResponse = client.get("$baseURL/game/state")
-            val gameState: GameState = Json.decodeFromString<GameState>(response.body())
+            val gameState: GameStatus = Json.decodeFromString<GameStatus>(response.body())
 
             println("Received Game State: $gameState")
             println("Current Player: ${gameState.currentPlayer}")

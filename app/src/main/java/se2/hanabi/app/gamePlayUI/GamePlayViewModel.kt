@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import se2.hanabi.app.Model.GameStatus
+import se2.hanabi.app.Model.Player
 import se2.hanabi.app.Services.GamePlayService
 import se2.hanabi.app.card.Card
 import kotlin.random.Random
@@ -21,8 +23,8 @@ class GamePlayViewModel: ViewModel() {
     private val _numPlayers = MutableStateFlow(5)
     val numPlayers: MutableStateFlow<Int> = _numPlayers
 
-    private val _thisPlayerIndex = MutableStateFlow(Random.nextInt(numPlayers.value))
-    val thisPlayerIndex: MutableStateFlow<Int> = _thisPlayerIndex
+    private val _thisPlayerId = MutableStateFlow(Random.nextInt(numPlayers.value))
+    val thisPlayerId: MutableStateFlow<Int> = _thisPlayerId
 
     private val _hands = MutableStateFlow(generateTestHands(numPlayers.value))
     val hands: MutableStateFlow<List<List<Card>>> = _hands
@@ -40,7 +42,7 @@ class GamePlayViewModel: ViewModel() {
     val numRemainingHintTokens: MutableStateFlow<Int> = _numRemainingHintTokens
 
     private val _numRemainingFuseTokens = MutableStateFlow(Random.nextInt(4))
-    val numRemainingFuzeTokens: MutableStateFlow<Int> = _numRemainingFuseTokens
+    val numRemainingFuseTokens: MutableStateFlow<Int> = _numRemainingFuseTokens
 
     // game play info
     private val _selectedCard = MutableStateFlow<Card?>(null)
