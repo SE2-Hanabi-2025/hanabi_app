@@ -12,7 +12,6 @@ import se2.hanabi.app.Model.Player
 import se2.hanabi.app.Services.GamePlayService
 import se2.hanabi.app.Model.Card
 import se2.hanabi.app.Model.Hint
-import se2.hanabi.app.Model.HintType
 import kotlin.random.Random
 
 /**
@@ -20,8 +19,8 @@ import kotlin.random.Random
  *
  */
 class GamePlayViewModel: ViewModel() {
-    private val gamePlayService: GamePlayService = GamePlayService()
-    private val gameStatus: GameStatus = generateTestGameStatus()
+    private val gamePlayService: GamePlayService = GamePlayService(lobbyId = 12345, playerId = 42)
+    private var gameStatus: GameStatus = generateTestGameStatus()
 
     // game state info
     private val _Players = MutableStateFlow(gameStatus.players)
@@ -69,7 +68,7 @@ class GamePlayViewModel: ViewModel() {
     private val _shownValueHints =  MutableStateFlow<MutableMap<Int, Int>>(mutableMapOf())
     val shownValueHints: StateFlow<MutableMap<Int,Int>> = _shownValueHints
 
-
+    // local functions
     fun onPlayersCardClick(cardId: Int) {
         _selectedPlayer.value = -1
         hintReset()
@@ -97,18 +96,27 @@ class GamePlayViewModel: ViewModel() {
         }
     }
 
+
+    // call server requests
     fun onGiveHintClick() {
         if (isValidHint.value) {
             //TODO send hint to server and recieve update to shownHints
-            _otherPlayersHands.value.get(_selectedPlayer.value)?.forEach() { card ->
-                _selectedHint.value?.let { hint ->
-                    if (card.color == hint.getColor()) {
-                        _shownColorHints.value.put(card.getID(), card.color)
-                    } else if (card.value == hint.getValue()){ // HintType == Value
-                        _shownValueHints.value.put(card.getID(), card.value)
-                    }
-                }
+            viewModelScope.launch {
+                gamePlayService.giveHint(toPlayer = selectedPlayer.value, hint = selectedHint.value!!)
+                gamePlayService.getGameStatus()
+                gameStatus = gamePlayService.getGameStatus()?: gameStatus
             }
+
+//            _otherPlayersHands.value.get(_selectedPlayer.value)?.forEach() { card ->
+//                _selectedHint.value?.let { hint ->
+//                    if (card.color == hint.getColor()) {
+//                        _shownColorHints.value.put(card.getID(), card.color)
+//                    } else if (card.value == hint.getValue()){ // HintType == Value
+//                        _shownValueHints.value.put(card.getID(), card.value)
+//                    }
+//                }
+//            }
+
             resetSelection()
         }
     }
@@ -116,23 +124,25 @@ class GamePlayViewModel: ViewModel() {
     fun onColorStackClick(color: Card.Color) {
         //TODO send place card request to server
         if (_selectedCard.value != -1) {
-//            val colorIndex = Card.Color.entries.indexOf(color)
-//            if (card.color == color && card.value == _stackValues[colorIndex] + 1) {
-//                _stackValues[colorIndex]++
-//                _selectedCard.value = null
-//            }
+            viewModelScope.launch {
+                gamePlayService.playCard(selectedCard.value)
+                // will draw card be call automical server side after a play attempt?
+                gamePlayService.drawCard()
+                gameStatus = gamePlayService.getGameStatus()?: gameStatus
+            }
         }
-        // more logic: discard selected card, draw next one
+
     }
 
     fun onDiscardStackClick() {
         //TODO send that thisPlayer wants to discard SelectedCard
         viewModelScope.launch {
-            gamePlayService.updateGameStatus()
+            gamePlayService.discardCard(cardId = selectedCard.value)
+            gameStatus = gamePlayService.getGameStatus()?: gameStatus
         }
     }
 
-    //
+    // helper functions
     private fun resetSelection() {
         _selectedCard.value = -1
         _selectedPlayer.value = -1
