@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.Model.Card
 import se2.hanabi.app.Model.HintType
+import kotlin.enums.enumEntries
 import kotlin.math.roundToInt
 
 /**
@@ -39,17 +40,17 @@ import kotlin.math.roundToInt
 fun PlayersCardsUI() {
     val viewModel: GamePlayViewModel = viewModel()
     PlayersHand(
-        hand = viewModel.hands.collectAsState().value[viewModel.thisPlayerId.collectAsState().value],
+        hand = viewModel.thisPlayersHand.collectAsState().value,
         onCardClick = viewModel::onPlayersCardClick,
         selectedCard = viewModel.selectedCard.collectAsState().value
     )
     OtherPlayersHands(
-        viewModel.hands.collectAsState().value,
+        hands = viewModel.otherPlayersHands.collectAsState().value,
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
-        selectedHandIndex = viewModel.selectedHandIndex.collectAsState().value,
-        thisPlayerIndex = viewModel.thisPlayerId.collectAsState().value
+        selectedHandIndex = viewModel.selectedPlayer.collectAsState().value,
+//        thisPlayerIndex = viewModel.thisPlayerId.collectAsState().value
     )
-    if (viewModel.selectedHandIndex.collectAsState().value != -1) {
+    if (viewModel.selectedPlayer.collectAsState().value != -1) {
         HintSelector(
             selectedHint = viewModel.selectedHint.collectAsState().value,
             onHintClick = viewModel::onHintClick,
@@ -59,9 +60,9 @@ fun PlayersCardsUI() {
 
 @Composable
 fun PlayersHand(
-    hand: List<Card>,
-    onCardClick: (Card) -> Unit,
-    selectedCard: Card?
+    hand: List<Int>,
+    onCardClick: (Int) -> Unit,
+    selectedCard: Int?
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     Box(
@@ -75,14 +76,18 @@ fun PlayersHand(
                 .fillMaxWidth(),
             Arrangement.SpaceEvenly,
         ) {
-            hand.forEach() { card ->
+            hand.forEach() { cardId ->
+                val colorHint = viewModel.shownColorHints.value[cardId]
+                val color: Card.Color = colorHint ?: Card.Color.WHITE // WHITE is dummy color
+                val valueHint = viewModel.shownValueHints.value[cardId]
+                val value: Int = valueHint ?: 1 // 1 is dummy value
                 CardItem(
-                    card = card,
+                    card = Card(color=color, value=value, id = -1), // dummy card id = -1
                     isFlipped = true,
-                    isSelected = card == selectedCard,
-                    onClick = { onCardClick(card) },
-                    showColorHint = viewModel.shownColorHints.contains(card.getID()),
-                    showValueHint = viewModel.shownValueHints.contains(card.getID())
+                    isSelected = cardId == selectedCard,
+                    onClick = { onCardClick(cardId) },
+                    showColorHint = colorHint!=null,
+                    showValueHint = valueHint!=null,
                 )
             }
         }
@@ -91,10 +96,9 @@ fun PlayersHand(
 
 @Composable
 fun OtherPlayersHands(
-    hands: List<List<Card>>,
+    hands: Map<Int, List<Card>>,
     onOtherPlayersHandClick: (Int) -> Unit,
     selectedHandIndex: Int,
-    thisPlayerIndex: Int,
 ) {
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
 
@@ -108,33 +112,29 @@ fun OtherPlayersHands(
         var handOffsetX by remember { mutableStateOf(0f) }
         var handOffsetY by remember { mutableStateOf(0f) }
 
-        var positionIndex = 0
-        hands.forEachIndexed() {index, hand ->
-            if (index != thisPlayerIndex) {
-                if (positionIndex % 2 == 0) {// right hand side of screen
-                    rotationAmountZ.floatValue = -90f
-                    handOffsetX = boxSize.width.toFloat()
-                } else {
-                    rotationAmountZ.floatValue = 90f
-                    handOffsetX = 0f
-                }
-
-                handOffsetY =
-                    if (positionIndex > 1) {// offset top two hands to be at third of the screen down form top
-                        boxSize.height * 0.25f
-                    } else {
-                        boxSize.height * 0.6f
-                    }
-                val handOffset = Offset(handOffsetX, handOffsetY)
-                OtherPlayersHand(
-                    offset = handOffset,
-                    hand = hand,
-                    rotationAmountZ = rotationAmountZ.floatValue,
-                    isSelected = index == selectedHandIndex,
-                    onClick = { onOtherPlayersHandClick(index) }
-                )
-                positionIndex++
+        hands.entries.forEachIndexed() { index, hand ->
+            if (index % 2 == 0) {// right hand side of screen
+                rotationAmountZ.floatValue = -90f
+                handOffsetX = boxSize.width.toFloat()
+            } else {
+                rotationAmountZ.floatValue = 90f
+                handOffsetX = 0f
             }
+
+            handOffsetY =
+                if (index > 1) {// offset top two hands to be at third of the screen down form top
+                    boxSize.height * 0.25f
+                } else {
+                    boxSize.height * 0.6f
+                }
+            val handOffset = Offset(handOffsetX, handOffsetY)
+            OtherPlayersHand(
+                offset = handOffset,
+                hand = hand,
+                rotationAmountZ = rotationAmountZ.floatValue,
+                isSelected = index == selectedHandIndex,
+                onClick = { onOtherPlayersHandClick(index) }
+            )
         }
     }
 }
@@ -142,7 +142,7 @@ fun OtherPlayersHands(
 @Composable
 fun OtherPlayersHand(
     offset: Offset,
-    hand: List<Card>,
+    hand: Map.Entry<Int, List<Card>>,
     rotationAmountZ: Float,
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
@@ -171,19 +171,19 @@ fun OtherPlayersHand(
             horizontalArrangement = Arrangement.spacedBy((-45.dp)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            hand.forEachIndexed() { index, card ->
+            hand.value.forEachIndexed() { index, card ->
                 CardItem(
                     card = card,
                     isFlipped = false,
-                    rotationAmountZ = -30f + index * (60 / hand.size), //60 degree arc
+                    rotationAmountZ = -30f + index * (60 / hand.value.size), //60 degree arc
                     onClick = onClick,
                     isHighlighted = isSelected && (
                             card.color == viewModel.selectedHint.collectAsState().value?.getColor() ||
                                     card.value == viewModel.selectedHint.collectAsState().value?.getValue()
                             ),
-                    highlightColor = if (viewModel.selectedHint.collectAsState().value?.getHintType()==HintType.COLOR) colorFromColorEnum(card.color) else Color.White,
-                    showColorHint = viewModel.shownColorHints.contains(card.getID()),
-                    showValueHint = viewModel.shownValueHints.contains(card.getID())
+                    highlightColor = if (viewModel.selectedHint.collectAsState().value?.getColor()!=null) colorFromColorEnum(card.color) else Color.White,
+                    showColorHint = viewModel.shownColorHints.value.contains(card.getID()),
+                    showValueHint = viewModel.shownValueHints.value.contains(card.getID())
                 )
             }
         }

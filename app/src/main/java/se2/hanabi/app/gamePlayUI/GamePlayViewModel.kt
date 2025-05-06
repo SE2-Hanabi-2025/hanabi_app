@@ -5,12 +5,14 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import se2.hanabi.app.Model.GameStatus
 import se2.hanabi.app.Model.Player
 import se2.hanabi.app.Services.GamePlayService
 import se2.hanabi.app.Model.Card
 import se2.hanabi.app.Model.Hint
+import se2.hanabi.app.Model.HintType
 import kotlin.random.Random
 
 /**
@@ -22,14 +24,17 @@ class GamePlayViewModel: ViewModel() {
     private val gameStatus: GameStatus = generateTestGameStatus()
 
     // game state info
-    private val _numPlayers = MutableStateFlow(5)
-    val numPlayers: MutableStateFlow<Int> = _numPlayers
+    private val _Players = MutableStateFlow(gameStatus.players)
+    val numPlayers: MutableStateFlow<List<Player>> = _Players
 
-    private val _thisPlayerId = MutableStateFlow(Random.nextInt(numPlayers.value))
-    val thisPlayerId: MutableStateFlow<Int> = _thisPlayerId
+    private val _thisPlayer = MutableStateFlow(2) // id of "cat" from genertaeTestGameStatus
+    val thisPlayer: MutableStateFlow<Int> = _thisPlayer
 
-    private val _hands = MutableStateFlow(generateTestHands(numPlayers.value))
-    val hands: MutableStateFlow<List<List<Card>>> = _hands
+    private val _thisPlayersHand = MutableStateFlow<List<Int>>(gameStatus.playersHand) // id of "cat" from genertaeTestGameStatus
+    val thisPlayersHand: MutableStateFlow<List<Int>> = _thisPlayersHand
+
+    private val _otherPlayersHands = MutableStateFlow(gameStatus.visibleHands)
+    val otherPlayersHands: MutableStateFlow<Map<Int, List<Card>>> = _otherPlayersHands
 
     private val _stackValues = generateTestColorStackValues()
     val stackValues:  List<Int> = _stackValues
@@ -47,11 +52,11 @@ class GamePlayViewModel: ViewModel() {
     val numRemainingFuseTokens: MutableStateFlow<Int> = _numRemainingFuseTokens
 
     // game play info
-    private val _selectedCard = MutableStateFlow<Card?>(null)
-    val selectedCard: MutableStateFlow<Card?> = _selectedCard
+    private val _selectedCard = MutableStateFlow<Int>(-1)
+    val selectedCard: MutableStateFlow<Int> = _selectedCard
 
-    private val _selectedHandIndex = MutableStateFlow(-1)
-    val selectedHandIndex: MutableStateFlow<Int> = _selectedHandIndex
+    private val _selectedPlayer = MutableStateFlow<Int>(-1)
+    val selectedPlayer: MutableStateFlow<Int> = _selectedPlayer
 
     private val _selectedHint = MutableStateFlow<Hint?>(null)
     val selectedHint: MutableStateFlow<Hint?> = _selectedHint
@@ -59,28 +64,29 @@ class GamePlayViewModel: ViewModel() {
     private val _isValidHint = MutableStateFlow(false)
     val isValidHint: MutableStateFlow<Boolean> = _isValidHint
 
-    private val _shownColorHints = SnapshotStateList<Int>()
-    val shownColorHints: List<Int> = _shownColorHints
-    private val _shownValueHints = SnapshotStateList<Int>()
-    val shownValueHints: List<Int> = _shownValueHints
+    private val _shownColorHints = MutableStateFlow<MutableMap<Int,Card.Color>>(mutableMapOf())
+    val shownColorHints: StateFlow<MutableMap<Int,Card.Color>> = _shownColorHints
+    private val _shownValueHints =  MutableStateFlow<MutableMap<Int, Int>>(mutableMapOf())
+    val shownValueHints: StateFlow<MutableMap<Int,Int>> = _shownValueHints
 
-    fun onPlayersCardClick(card: Card) {
-        _selectedHandIndex.value = -1
+
+    fun onPlayersCardClick(cardId: Int) {
+        _selectedPlayer.value = -1
         hintReset()
-         _selectedCard.value = if (card == selectedCard.value) null else card
+         _selectedCard.value = if (cardId == selectedCard.value) -1 else cardId
     }
 
-    fun onOtherPlayersHandClick(handIndex: Int) {
-        _selectedCard.value = null
+    fun onOtherPlayersHandClick(playerId: Int) {
+        _selectedCard.value = -1
         hintReset()
-        _selectedHandIndex.value = if (handIndex == selectedHandIndex.value) -1 else handIndex
+        _selectedPlayer.value = if (playerId == _selectedPlayer.value) -1 else playerId
     }
 
     fun onHintClick(hint: Hint) {
         _selectedHint.value = if (hint == selectedHint.value) null else hint
         if (_selectedHint.value != null) {
             var validHint = false;
-            _hands.value[selectedHandIndex.value].forEach() { card ->
+            _otherPlayersHands.value.get(selectedPlayer.value)?.forEach() { card ->
                 if (card.color == _selectedHint.value?.getColor() || card.value == _selectedHint.value?.getValue()) {
                     validHint = true
                 }
@@ -94,11 +100,13 @@ class GamePlayViewModel: ViewModel() {
     fun onGiveHintClick() {
         if (isValidHint.value) {
             //TODO send hint to server and recieve update to shownHints
-            _hands.value[_selectedHandIndex.value].forEach() {card ->
-                if (card.color == _selectedHint.value?.getColor()) {
-                    _shownColorHints.add(card.getID())
-                } else if (card.value == _selectedHint.value?.getValue()) {
-                    _shownValueHints.add(card.getID())
+            _otherPlayersHands.value.get(_selectedPlayer.value)?.forEach() { card ->
+                _selectedHint.value?.let { hint ->
+                    if (card.color == hint.getColor()) {
+                        _shownColorHints.value.put(card.getID(), card.color)
+                    } else if (card.value == hint.getValue()){ // HintType == Value
+                        _shownValueHints.value.put(card.getID(), card.value)
+                    }
                 }
             }
             resetSelection()
@@ -107,12 +115,12 @@ class GamePlayViewModel: ViewModel() {
 
     fun onColorStackClick(color: Card.Color) {
         //TODO send place card request to server
-        _selectedCard.value?.let { card ->
-            val colorIndex = Card.Color.entries.indexOf(color)
-            if (card.color == color && card.value == _stackValues[colorIndex] + 1) {
-                _stackValues[colorIndex]++
-                _selectedCard.value = null
-            }
+        if (_selectedCard.value != -1) {
+//            val colorIndex = Card.Color.entries.indexOf(color)
+//            if (card.color == color && card.value == _stackValues[colorIndex] + 1) {
+//                _stackValues[colorIndex]++
+//                _selectedCard.value = null
+//            }
         }
         // more logic: discard selected card, draw next one
     }
@@ -126,8 +134,8 @@ class GamePlayViewModel: ViewModel() {
 
     //
     private fun resetSelection() {
-        _selectedCard.value = null
-        _selectedHandIndex.value = -1
+        _selectedCard.value = -1
+        _selectedPlayer.value = -1
         hintReset()
     }
 
@@ -202,10 +210,12 @@ fun generateTestGameStatus(): GameStatus {
 
     return GameStatus(
         players = players,
+        playersHand = listOf(6,7,8),
         visibleHands = visibleHands,
         playedCards = playedCards,
         discardPile = discardPile,
-        hints = 8,
+        shownHints = HashMap<Int, Hint>(),
+        hintTokens = 8,
         strikes = 0,
         gameOver = false,
         currentPlayer = 1

@@ -1,18 +1,15 @@
 package se2.hanabi.app.Model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Hint private constructor(
-        private val type: HintType,
         private val color: Card.Color? =null,
         private val value: Int? = null
     ) {
 
-    constructor(colorIn: Card.Color?) : this(type=HintType.COLOR, color=colorIn)
-    constructor(valueIn: Int) : this(type=HintType.VALUE, value=valueIn)
-
-    //getters
-    fun getHintType(): HintType {
-        return type
-    }
+    constructor(colorIn: Card.Color?) : this(color=colorIn)
+    constructor(valueIn: Int) : this(value=valueIn)
 
     fun getColor(): Card.Color? {
         return color
