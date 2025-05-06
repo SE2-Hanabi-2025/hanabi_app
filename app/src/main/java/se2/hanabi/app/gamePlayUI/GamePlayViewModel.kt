@@ -18,6 +18,7 @@ import kotlin.random.Random
  */
 class GamePlayViewModel: ViewModel() {
     private val gamePlayService: GamePlayService = GamePlayService()
+    private val gameStatus: GameStatus = generateTestGameStatus()
 
     // game state info
     private val _numPlayers = MutableStateFlow(5)
@@ -163,4 +164,49 @@ fun randomHand(numCards: Int): List<Card> {
         hand.add( Card( colors[Random.nextInt(colors.size)], Random.nextInt(4)+1))
     }
     return hand
+}
+
+// Test game status
+fun generateTestGameStatus(): GameStatus {
+    val player1 = Player(name = "Alice", id = 0)
+    val player2 = Player(name = "Bob", id = 1)
+    val player3 = Player(name = "Cat", id = 2)
+    val players = listOf(player1, player2, player3)
+
+    val hand1 = listOf(
+        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.RED, value = 1),
+        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.BLUE, value = 3),
+        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.GREEN, value = 2)
+    )
+    val hand2 = listOf(
+        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.YELLOW, value = 1),
+        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.WHITE, value = 5),
+        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.RED, value = 2)
+    )
+    // cat's hand is not visable
+    val visibleHands = mapOf(0 to hand1, 1 to hand2)
+
+    val playedCards = mapOf(
+        se2.hanabi.app.Model.Card.Color.RED to 1,
+        se2.hanabi.app.Model.Card.Color.BLUE to 0,
+        se2.hanabi.app.Model.Card.Color.GREEN to 0,
+        se2.hanabi.app.Model.Card.Color.YELLOW to 4,
+        se2.hanabi.app.Model.Card.Color.WHITE to 0
+    )
+
+    val discardPile = listOf(
+        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.RED, value = 1),
+        se2.hanabi.app.Model.Card(color = se2.hanabi.app.Model.Card.Color.BLUE, value = 2)
+    )
+
+    return GameStatus(
+        players = players,
+        visibleHands = visibleHands,
+        playedCards = playedCards,
+        discardPile = discardPile,
+        hints = 8,
+        strikes = 0,
+        gameOver = false,
+        currentPlayer = 1
+    )
 }
