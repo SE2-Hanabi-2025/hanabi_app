@@ -39,7 +39,7 @@ import kotlin.math.roundToInt
 fun PlayersCardsUI() {
     val viewModel: GamePlayViewModel = viewModel()
     PlayersHand(
-        hand = viewModel.hands.collectAsState().value[viewModel.thisPlayerIndex.collectAsState().value],
+        hand = viewModel.hands.collectAsState().value[viewModel.thisPlayerId.collectAsState().value],
         onCardClick = viewModel::onPlayersCardClick,
         selectedCard = viewModel.selectedCard.collectAsState().value
     )
@@ -47,7 +47,7 @@ fun PlayersCardsUI() {
         viewModel.hands.collectAsState().value,
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
         selectedHandIndex = viewModel.selectedHandIndex.collectAsState().value,
-        thisPlayerIndex = viewModel.thisPlayerIndex.collectAsState().value
+        thisPlayerIndex = viewModel.thisPlayerId.collectAsState().value
     )
     if (viewModel.selectedHandIndex.collectAsState().value != -1) {
         HintSelector(
