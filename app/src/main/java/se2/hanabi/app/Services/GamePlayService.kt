@@ -37,11 +37,12 @@ class GamePlayService(
         return null
     }
 
-    suspend fun  playCard(cardId: Int) {
+    suspend fun  playCard(cardId: Int, stackColor: Card.Color) {
         try {
             val response: HttpResponse = client.post("$baseURL/$lobbyId/play") {
                 parameter("playerId", playerId)
                 parameter("cardId", cardId)
+                parameter("color", stackColor)
             }
 
             if (response.status.isSuccess()) {
