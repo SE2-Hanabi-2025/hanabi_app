@@ -8,13 +8,17 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
@@ -35,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
@@ -83,6 +88,8 @@ class StartMenuActivity: ComponentActivity() {
         var isConnected by remember { mutableStateOf(false) }
         var username by remember { mutableStateOf("") }
         var isUsernameError by remember { mutableStateOf(false) }
+        var showAvatarDialog by remember { mutableStateOf(false) }
+        var selectedAvatarResId by remember { mutableIntStateOf(R.drawable.whiteavatar) }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
         val urlEmulator = "http://10.0.2.2:8080"
@@ -126,7 +133,8 @@ class StartMenuActivity: ComponentActivity() {
                     val response: io.ktor.client.statement.HttpResponse =
                         client.get("$urlEmulator/game/start") // FIXED URL
                     statusMessage = response.body()
-                    startActivity(Intent(this@StartMenuActivity, GameActivity::class.java))
+                    val intent = Intent(context, GameActivity::class.java)
+                    context.startActivity(intent)
                 } catch (e: Exception) {
                     statusMessage = "Failed to start the game: ${e.localizedMessage}"
                     showStatusDialog = true
@@ -142,6 +150,12 @@ class StartMenuActivity: ComponentActivity() {
                     val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code")
                     statusMessage = response.body()
                     isConnected = true
+                    val intent = Intent(context, LobbyActivity::class.java).apply {
+                        putExtra("avatarResID", selectedAvatarResId)
+                        putExtra("username", username)
+                        putExtra("lobbyCode", code)
+                    }
+                    context.startActivity(intent)
                 } catch (e: Exception) {
                     statusMessage = "Failed to join lobby"
                 }
@@ -176,17 +190,22 @@ class StartMenuActivity: ComponentActivity() {
             Title(modifier = titleModifier)
 
             Column(
-                modifier = Modifier.align(Alignment.Center).padding(bottom = 62.dp),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(bottom = 62.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 //Avatar Placeholder
-                Box(modifier = Modifier.size(80.dp).background(Color.LightGray, shape = RoundedCornerShape(40.dp)),
+                Box(modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(Color.DarkGray)
+                    .clickable { showAvatarDialog = true },
                     contentAlignment = Alignment.Center){
-                    Text(text = if (username.isNotBlank())
-                    username.first().uppercase()
-                    else "A",
-                        fontSize = 36.sp,
-                        color = Color.DarkGray)
+                    Image(painter = painterResource(id = selectedAvatarResId),
+                        contentDescription = "Select Avatar",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop)
                 }
                 androidx.compose.material3.TextField(
                     value = username,
@@ -222,7 +241,9 @@ class StartMenuActivity: ComponentActivity() {
                         }
                     },
                     shape = RoundedCornerShape(50),
-                    modifier = Modifier.padding(top = 16.dp, bottom = 24.dp).width(220.dp))
+                    modifier = Modifier
+                        .padding(top = 16.dp, bottom = 24.dp)
+                        .width(220.dp))
 
                 Button(
                     onClick = { showJoinDialog = true },
@@ -244,6 +265,31 @@ class StartMenuActivity: ComponentActivity() {
                 }
 
                 Button(
+                    onClick = {
+                        if (username.isBlank()) {
+                            isUsernameError = true
+                            statusMessage = "Please enter a username"
+                            showStatusDialog=true
+                        }
+                        else{
+                            val intent = Intent (context, LobbyActivity::class.java).apply {
+                                putExtra("avatarResId", selectedAvatarResId)
+                                putExtra("username", username)
+                            }
+                            context.startActivity(intent)
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.DarkGray,
+                        contentColor = Color.White
+                    ),
+                    border = BorderStroke(2.dp, Color.White),
+                    modifier = Modifier.padding(top = 10.dp).height(60.dp).width(200.dp)
+                ) { Text (text = "Create Lobby",
+                    textAlign = TextAlign.Center,
+                    fontSize = 20.sp)
+            }
+               /* Button(
                     onClick = {context.startActivity(
                         Intent(
                             context,
@@ -263,7 +309,7 @@ class StartMenuActivity: ComponentActivity() {
                     Text(text = "Create Lobby",
                         textAlign = TextAlign.Center,
                         fontSize = 20.sp)
-                }
+                }*/
                 Button(
                     onClick = { startGame() },
                     colors = ButtonDefaults.buttonColors(
@@ -359,13 +405,13 @@ class StartMenuActivity: ComponentActivity() {
                     Column {
                         androidx.compose.material3.TextField(
                         value = lobbyCode,
-                        onValueChange = { lobbyCode = it },
-                        label = { Text("Enter Lobby Code") }
+                        onValueChange = { lobbyCode = it.filter { char -> char.isLetterOrDigit()}.take(6).uppercase()},
+                        label = { Text("Enter Lobby Code with 6 chars") }
                     )
                     } },
                 confirmButton = {
                     Button(onClick = {
-                        if (lobbyCode.isNotEmpty()) {
+                        if (lobbyCode.length == 6) {
                             joinLobby(lobbyCode)
                             showJoinDialog = false
                         }
@@ -380,7 +426,51 @@ class StartMenuActivity: ComponentActivity() {
                 }
             )
         }
+        if (showAvatarDialog){
+            AvatarSelectionDialog(
+                onDismiss = {showAvatarDialog = false},
+                onAvatarSelected = {
+                    avatarRes -> selectedAvatarResId = avatarRes
+                    showAvatarDialog = false
+                }
+            )
+        }
     }
+
+    @Composable
+    fun AvatarSelectionDialog(
+        onDismiss: () -> Unit,
+        onAvatarSelected: (Int) -> Unit
+    ){
+        val avatarOptions = listOf(
+            R.drawable.redavatar,
+            R.drawable.whiteavatar,
+            R.drawable.greenavatar,
+            R.drawable.blueavatar,
+            R.drawable.yellowavatar
+        )
+
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Choose your Avatar")},
+            text = {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                avatarOptions.forEach {avatarRes ->
+                Image(painter = painterResource(id = avatarRes),
+                    contentDescription = "Choose your player",
+                    modifier = Modifier.size(50.dp).clip(CircleShape).clickable { onAvatarSelected(avatarRes) }.padding(4.dp),
+                    contentScale = ContentScale.Crop)
+            }
+             }
+    },
+            confirmButton = {
+                Button(onClick = onDismiss) { Text("Cancel") }
+            }
+        )}
 
     @Preview(showBackground = true)
     @Composable
