@@ -25,7 +25,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import se2.hanabi.app.Model.Card
+import se2.hanabi.app.model.Card
 
 const val aspectRatio = 1.51f
 val cardWidth = 66.dp

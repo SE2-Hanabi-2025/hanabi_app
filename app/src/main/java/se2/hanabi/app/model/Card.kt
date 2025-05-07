@@ -1,4 +1,4 @@
-package se2.hanabi.app.Model
+package se2.hanabi.app.model
 
 import kotlinx.serialization.Serializable
 

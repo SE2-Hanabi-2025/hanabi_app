@@ -7,11 +7,11 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import se2.hanabi.app.Model.GameStatus
-import se2.hanabi.app.Model.Player
+import se2.hanabi.app.model.GameStatus
+import se2.hanabi.app.model.Player
 import se2.hanabi.app.Services.GamePlayService
-import se2.hanabi.app.Model.Card
-import se2.hanabi.app.Model.Hint
+import se2.hanabi.app.model.Card
+import se2.hanabi.app.model.Hint
 import kotlin.random.Random
 
 /**
@@ -52,10 +52,10 @@ class GamePlayViewModel: ViewModel() {
 
     // game play info
     private val _selectedCard = MutableStateFlow<Int>(-1)
-    val selectedCard: MutableStateFlow<Int> = _selectedCard
+    val selectedCardId: MutableStateFlow<Int> = _selectedCard
 
     private val _selectedPlayer = MutableStateFlow<Int>(-1)
-    val selectedPlayer: MutableStateFlow<Int> = _selectedPlayer
+    val selectedPlayerId: MutableStateFlow<Int> = _selectedPlayer
 
     private val _selectedHint = MutableStateFlow<Hint?>(null)
     val selectedHint: MutableStateFlow<Hint?> = _selectedHint
@@ -63,8 +63,8 @@ class GamePlayViewModel: ViewModel() {
     private val _isValidHint = MutableStateFlow(false)
     val isValidHint: MutableStateFlow<Boolean> = _isValidHint
 
-    private val _shownColorHints = MutableStateFlow<MutableMap<Int,Card.Color>>(mutableMapOf())
-    val shownColorHints: StateFlow<MutableMap<Int,Card.Color>> = _shownColorHints
+    private val _shownColorHints = MutableStateFlow<MutableMap<Int, Card.Color>>(mutableMapOf())
+    val shownColorHints: StateFlow<MutableMap<Int, Card.Color>> = _shownColorHints
     private val _shownValueHints =  MutableStateFlow<MutableMap<Int, Int>>(mutableMapOf())
     val shownValueHints: StateFlow<MutableMap<Int,Int>> = _shownValueHints
 
@@ -72,7 +72,7 @@ class GamePlayViewModel: ViewModel() {
     fun onPlayersCardClick(cardId: Int) {
         _selectedPlayer.value = -1
         hintReset()
-         _selectedCard.value = if (cardId == selectedCard.value) -1 else cardId
+         _selectedCard.value = if (cardId == selectedCardId.value) -1 else cardId
     }
 
     fun onOtherPlayersHandClick(playerId: Int) {
@@ -85,7 +85,7 @@ class GamePlayViewModel: ViewModel() {
         _selectedHint.value = if (hint == selectedHint.value) null else hint
         if (_selectedHint.value != null) {
             var validHint = false;
-            _otherPlayersHands.value.get(selectedPlayer.value)?.forEach() { card ->
+            _otherPlayersHands.value.get(selectedPlayerId.value)?.forEach() { card ->
                 if (card.color == _selectedHint.value?.getColor() || card.value == _selectedHint.value?.getValue()) {
                     validHint = true
                 }
@@ -100,32 +100,18 @@ class GamePlayViewModel: ViewModel() {
     // call server requests
     fun onGiveHintClick() {
         if (isValidHint.value) {
-            //TODO send hint to server and recieve update to shownHints
             viewModelScope.launch {
-                gamePlayService.giveHint(toPlayer = selectedPlayer.value, hint = selectedHint.value!!)
-                gamePlayService.getGameStatus()
+                gamePlayService.giveHint(toPlayerId = selectedPlayerId.value, hint = selectedHint.value!!)
                 gameStatus = gamePlayService.getGameStatus()?: gameStatus
             }
-
-//            _otherPlayersHands.value.get(_selectedPlayer.value)?.forEach() { card ->
-//                _selectedHint.value?.let { hint ->
-//                    if (card.color == hint.getColor()) {
-//                        _shownColorHints.value.put(card.getID(), card.color)
-//                    } else if (card.value == hint.getValue()){ // HintType == Value
-//                        _shownValueHints.value.put(card.getID(), card.value)
-//                    }
-//                }
-//            }
-
             resetSelection()
         }
     }
 
     fun onColorStackClick(color: Card.Color) {
-        //TODO send place card request to server
         if (_selectedCard.value != -1) {
             viewModelScope.launch {
-                gamePlayService.playCard(selectedCard.value)
+                gamePlayService.playCard(selectedCardId.value)
                 // will draw card be call automical server side after a play attempt?
                 gamePlayService.drawCard()
                 gameStatus = gamePlayService.getGameStatus()?: gameStatus
@@ -135,9 +121,8 @@ class GamePlayViewModel: ViewModel() {
     }
 
     fun onDiscardStackClick() {
-        //TODO send that thisPlayer wants to discard SelectedCard
         viewModelScope.launch {
-            gamePlayService.discardCard(cardId = selectedCard.value)
+            gamePlayService.discardCard(cardId = selectedCardId.value)
             gameStatus = gamePlayService.getGameStatus()?: gameStatus
         }
     }

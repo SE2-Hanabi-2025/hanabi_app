@@ -10,8 +10,9 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
 import kotlinx.serialization.json.Json
-import se2.hanabi.app.Model.GameStatus
-import se2.hanabi.app.Model.Hint
+import se2.hanabi.app.model.Card
+import se2.hanabi.app.model.GameStatus
+import se2.hanabi.app.model.Hint
 
 class GamePlayService(
     private val lobbyId: Int,
@@ -107,7 +108,7 @@ class GamePlayService(
             val response: HttpResponse = client.post("$baseURL/{$lobbyId}/hint") {
                 parameter("fromPlayerId", playerId)
                 parameter("toPlayerId", toPlayerId)
-                parameter("hint", Hint)
+                parameter("hint", hint)
             }
 
             if (response.status.isSuccess()) {

@@ -1,11 +1,11 @@
-package se2.hanabi.app.Model
+package se2.hanabi.app.model
 
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Hint private constructor(
-        private val color: Card.Color? =null,
-        private val value: Int? = null
+    private val color: Card.Color? =null,
+    private val value: Int? = null
     ) {
 
     constructor(colorIn: Card.Color?) : this(color=colorIn)

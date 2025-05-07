@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import se2.hanabi.app.Model.Card
-import se2.hanabi.app.Model.Hint
+import se2.hanabi.app.model.Card
+import se2.hanabi.app.model.Hint
 
 @Composable
 fun HintSelector(

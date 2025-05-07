@@ -2,7 +2,7 @@ package se2.hanabi.app
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
-import se2.hanabi.app.Model.Card
+import se2.hanabi.app.model.Card
 import se2.hanabi.app.gamePlayUI.getCardImageName
 
 class CardUITest {

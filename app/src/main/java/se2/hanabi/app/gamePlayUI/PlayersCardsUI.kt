@@ -25,9 +25,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import se2.hanabi.app.Model.Card
-import se2.hanabi.app.Model.HintType
-import kotlin.enums.enumEntries
+import se2.hanabi.app.model.Card
 import kotlin.math.roundToInt
 
 /**
@@ -42,15 +40,15 @@ fun PlayersCardsUI() {
     PlayersHand(
         hand = viewModel.thisPlayersHand.collectAsState().value,
         onCardClick = viewModel::onPlayersCardClick,
-        selectedCard = viewModel.selectedCard.collectAsState().value
+        selectedCard = viewModel.selectedCardId.collectAsState().value
     )
     OtherPlayersHands(
         hands = viewModel.otherPlayersHands.collectAsState().value,
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
-        selectedHandIndex = viewModel.selectedPlayer.collectAsState().value,
+        selectedHandIndex = viewModel.selectedPlayerId.collectAsState().value,
 //        thisPlayerIndex = viewModel.thisPlayerId.collectAsState().value
     )
-    if (viewModel.selectedPlayer.collectAsState().value != -1) {
+    if (viewModel.selectedPlayerId.collectAsState().value != -1) {
         HintSelector(
             selectedHint = viewModel.selectedHint.collectAsState().value,
             onHintClick = viewModel::onHintClick,

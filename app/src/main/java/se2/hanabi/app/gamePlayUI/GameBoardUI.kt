@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import se2.hanabi.app.Model.Card
+import se2.hanabi.app.model.Card
 
 /**
  * GameBoardUI display the features of the game board.
