@@ -1,5 +1,6 @@
 package se2.hanabi.app.gamePlayUI
 
+import android.icu.text.CaseMap.Title
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.ktor.http.LinkHeader.Parameters.Title
 //import se2.hanabi.app.screens.Title
 
 // eventually to be linked to Color Enum in backend
@@ -39,7 +41,7 @@ fun GamePlayUI() {
         val titleModifier = Modifier
             .align(Alignment.TopCenter)
             .padding(top = 20.dp)
-      //  Title(modifier = titleModifier)
+   //     Title(modifier = titleModifier)
         GameBoardUI()
         PlayersCardsUI()
     }
