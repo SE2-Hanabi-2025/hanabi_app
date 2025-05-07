@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import se2.hanabi.app.screens.Title
+//import se2.hanabi.app.screens.Title
 
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
@@ -39,7 +39,7 @@ fun GamePlayUI() {
         val titleModifier = Modifier
             .align(Alignment.TopCenter)
             .padding(top = 20.dp)
-        Title(modifier = titleModifier)
+      //  Title(modifier = titleModifier)
         GameBoardUI()
         PlayersCardsUI()
     }
