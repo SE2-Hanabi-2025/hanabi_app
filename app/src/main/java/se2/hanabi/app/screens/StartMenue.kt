@@ -165,32 +165,19 @@ class StartMenuActivity: ComponentActivity() {
                     showFireworksCounter.intValue = 0
                 })
             }
-            Text(
-                text = "Hanabi!",
-                fontFamily = FontFamily.Cursive,
-                color = Color(0xFFF2FF90),
-                fontSize = 100.sp,
-                fontWeight = FontWeight.Bold,
-                style = TextStyle(
-                    shadow = Shadow(
-                        color = Color.Black.copy(alpha = 100f),
-                        offset = Offset(-0f, 0f),
-                        blurRadius = 50f
-                    )
-                ),
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 50.dp)
-                    .clickable(
+            val titleModifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 50.dp)
+                .clickable(
 //                        interactionSource = remember { MutableInteractionSource() },
 //                        indication = null
-                    ) {
-                        showFireworksCounter.intValue += 1
-                    }
-            )
+                ) {
+                    showFireworksCounter.intValue += 1
+                }
+            Title(modifier = titleModifier)
 
             Column(
-                modifier = Modifier.align(Alignment.Center),
+                modifier = Modifier.align(Alignment.Center).padding(bottom = 62.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 {
@@ -201,7 +188,7 @@ class StartMenuActivity: ComponentActivity() {
                         containerColor = Color(0xFF2ecc71),
                         contentColor = Color.White
                     ),
-                    border = BorderStroke(5.dp, Color.White),
+                    border = BorderStroke(2.dp, Color.White),
                     modifier = Modifier
                         .padding(top = 350.dp)
                         .width(200.dp)
@@ -209,7 +196,8 @@ class StartMenuActivity: ComponentActivity() {
                 ) {
                     Text(
                         text = "Join Lobby",
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp
                     )
                 }
 
@@ -224,13 +212,15 @@ class StartMenuActivity: ComponentActivity() {
                         containerColor = Color.DarkGray,
                         contentColor = Color.White
                     ),
-                    border = BorderStroke(5.dp, Color.White),
+                    border = BorderStroke(2.dp, Color.White),
                     modifier = Modifier
                         .padding(top = 10.dp)
                         .width(200.dp)
                         .height(60.dp)
                 ) {
-                    Text("Create Lobby")
+                    Text(text = "Create Lobby",
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp)
                 }
                 Button(
                     onClick = { startGame() },
@@ -238,13 +228,15 @@ class StartMenuActivity: ComponentActivity() {
                         containerColor = Color.DarkGray,
                         contentColor = Color.White
                     ),
-                    border = BorderStroke(5.dp, Color.White),
+                    border = BorderStroke(2.dp, Color.White),
                     modifier = Modifier
                         .padding(top = 10.dp)
                         .width(200.dp)
                         .height(60.dp)
                 ) {
-                    Text("Start Game")
+                    Text(text = "Start game",
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp)
                 }
                 /*Button(
                     onClick = {
@@ -399,4 +391,23 @@ class StartMenuActivity: ComponentActivity() {
             }
         )
     }
+}
+
+@Composable
+fun Title(modifier: Modifier = Modifier) {
+    Text(
+        text = "Hanabi!",
+        fontFamily = FontFamily.Cursive,
+        color = Color(0xFFF2FF90),
+        fontSize = 100.sp,
+        fontWeight = FontWeight.Bold,
+        style = TextStyle(
+            shadow = Shadow(
+                color = Color.Black.copy(alpha = 100f),
+                offset = Offset(-0f, 0f),
+                blurRadius = 50f
+            )
+        ),
+        modifier = modifier
+    )
 }
