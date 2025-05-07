@@ -45,14 +45,15 @@ class GamePlayService(
                 parameter("color", stackColor)
             }
 
+            val msg = "playerId: $playerId | cardId: $cardId | stackColor: $stackColor"
             if (response.status.isSuccess()) {
-                println("Card successfully played")
+                println("Card successfully played | $msg")
             } else if (response.status == HttpStatusCode.BadRequest) {
-                println("Invalid move")
+                println("Invalid move | $msg")
             } else if (response.status == HttpStatusCode.NotFound) {
-                println("Game or lobby not found")
+                println("Game: $lobbyId not found")
             } else {
-                println("Error playing card: ${response.status}")
+                println("Error playing card | $msg: ${response.status} ")
             }
 
         } catch (e: Exception) {
@@ -67,13 +68,13 @@ class GamePlayService(
             }
 
             if (response.status.isSuccess()) {
-                println("Card successfully drawn")
+                println("Card successfully drawn by $playerId")
             } else if (response.status == HttpStatusCode.BadRequest) {
-                println("Invalid move: not your turn/ hand is full")
+                println("Invalid move: not your turn/ hand is full | $playerId")
             } else if (response.status == HttpStatusCode.NotFound) {
-                println("Game or lobby not found")
+                println("Game: $lobbyId not found")
             } else {
-                println("Error drawing card: ${response.status}")
+                println("Error drawing card | $playerId: ${response.status}")
             }
 
         } catch (e: Exception) {
@@ -88,14 +89,15 @@ class GamePlayService(
                 parameter("cardId", cardId)
             }
 
+            val msg = "playerId: $playerId | cardId: $cardId"
             if (response.status.isSuccess()) {
-                println("Card successfully discarded")
+                println("Card successfully discarded | $msg")
             } else if (response.status == HttpStatusCode.BadRequest) {
-                println("Invalid move: not your turn")
+                println("Invalid move: not your turn | $msg")
             } else if (response.status == HttpStatusCode.NotFound) {
-                println("Game or lobby not found")
+                println("Game: $lobbyId not found")
             } else {
-                println("Error discarding card: ${response.status}")
+                println("Error discarding card | $msg: ${response.status} ")
             }
 
         } catch (e: Exception) {
@@ -112,14 +114,15 @@ class GamePlayService(
                 parameter("hint", hint)
             }
 
+            val msg = "fromPlayerId: $playerId | toPlayerId: $toPlayerId | hint: $hint"
             if (response.status.isSuccess()) {
-                println("Hint successfully given")
+                println("Hint successfully given | $msg")
             } else if (response.status == HttpStatusCode.BadRequest) {
-                println("Invalid move: not a valid hint")
+                println("Invalid move: not a valid hint | $msg")
             } else if (response.status == HttpStatusCode.NotFound) {
-                println("Game or lobby not found")
+                println("Game: $lobbyId not found")
             } else {
-                println("Error giving hint: ${response.status}")
+                println("Error giving hint | $msg: ${response.status}")
             }
 
         } catch (e: Exception) {
