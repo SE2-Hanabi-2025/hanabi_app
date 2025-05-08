@@ -112,8 +112,6 @@ class GamePlayViewModel: ViewModel() {
         if (_selectedCard.value != -1) {
             viewModelScope.launch {
                 gamePlayService.playCard(selectedCardId.value, color)
-                // will draw card be call automical server side after a play attempt?
-                gamePlayService.drawCard()
                 gameStatus = gamePlayService.getGameStatus()?: gameStatus
             }
         }

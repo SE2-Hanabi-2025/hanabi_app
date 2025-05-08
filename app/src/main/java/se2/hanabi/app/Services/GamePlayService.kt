@@ -70,28 +70,6 @@ class GamePlayService(
         }
     }
 
-    suspend fun  drawCard() {
-        val msg = "playerId: $playerId"
-        try {
-            val response: HttpResponse = client.post("$baseURL/{$lobbyId}/draw") {
-                parameter("playerId", playerId)
-            }
-
-            if (response.status.isSuccess()) {
-                println("Card successfully drawn by $playerId")
-            } else if (response.status == HttpStatusCode.BadRequest) {
-                println("Invalid move: not your turn/ hand is full | $playerId")
-            } else if (response.status == HttpStatusCode.NotFound) {
-                println("Game: $lobbyId not found")
-            } else {
-                println("Error drawing card | $playerId: ${response.status}")
-            }
-
-        } catch (e: Exception) {
-            println("Error drawing card | $msg: ${e.message}")
-        }
-    }
-
     suspend fun  discardCard(cardId: Int) {
         val msg = "playerId: $playerId | cardId: $cardId"
         try {
