@@ -59,6 +59,7 @@ import se2.hanabi.app.GameActivity
 import se2.hanabi.app.lobby.LobbyActivity
 import se2.hanabi.app.R
 import se2.hanabi.app.ui.theme.ClientTheme
+import kotlin.text.get
 
 
 class StartMenuActivity: ComponentActivity() {
@@ -199,12 +200,28 @@ class StartMenuActivity: ComponentActivity() {
                 }
 
                 Button(
-                    onClick = {context.startActivity(
-                        Intent(
-                            context,
-                            LobbyActivity::class.java
-                        )
-                    )},
+                    onClick = {
+                        coroutineScope.launch {
+                            isLoading = true
+                            try {
+                                val response: HttpResponse = client.get("$urlEmulator/create-lobby")
+                                val createdCode: String = response.body()
+                                println("Created lobby code: $createdCode")
+
+                                // Navigation zur LobbyActivity
+                                val intent = Intent(context, LobbyActivity::class.java).apply {
+                                    putExtra("lobbyCode", createdCode) // Übergabe des Lobby-Codes
+                                }
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                println("Error creating lobby: ${e.localizedMessage}")
+                                statusMessage = "Failed to create lobby: ${e.localizedMessage}"
+                                showStatusDialog = true
+                            } finally {
+                                isLoading = false
+                            }
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.DarkGray,
                         contentColor = Color.White
@@ -215,10 +232,14 @@ class StartMenuActivity: ComponentActivity() {
                         .width(200.dp)
                         .height(60.dp)
                 ) {
-                    Text(text = "Create Lobby",
+                    Text(
+                        text = "Create Lobby",
                         textAlign = TextAlign.Center,
-                        fontSize = 20.sp)
+                        fontSize = 20.sp
+                    )
                 }
+
+
                 Button(
                     onClick = { startGame() },
                     colors = ButtonDefaults.buttonColors(
