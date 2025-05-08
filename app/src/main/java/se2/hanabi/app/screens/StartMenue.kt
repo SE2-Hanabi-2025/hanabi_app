@@ -208,11 +208,19 @@ class StartMenuActivity: ComponentActivity() {
                                 val createdCode: String = response.body()
                                 println("Created lobby code: $createdCode")
 
-                                // Navigation zur LobbyActivity
+                                //lobby beitreten
+                                val joinResponse: HttpResponse = client.get("$urlEmulator/join-lobby/$createdCode")
+
+                                if (joinResponse.body<String>() == "success") {
+                                    //Navigation zur LobbyActivity
                                 val intent = Intent(context, LobbyActivity::class.java).apply {
                                     putExtra("lobbyCode", createdCode) // Übergabe des Lobby-Codes
                                 }
                                 context.startActivity(intent)
+                                } else{
+                                    statusMessage = "Failed to join lobby"
+                                    showStatusDialog = true
+                                }
                             } catch (e: Exception) {
                                 println("Error creating lobby: ${e.localizedMessage}")
                                 statusMessage = "Failed to create lobby: ${e.localizedMessage}"
