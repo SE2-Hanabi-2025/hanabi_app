@@ -14,28 +14,14 @@ import java.lang.Exception
 
 class LobbyViewModel : ViewModel() {
 
-    init {
-        println("LOBBY VIEWMODEL INIT")
-        fetchLobbyCode()
-    }
+    // Mutable state für den Lobby-Code
+    private val _lobbyCode = mutableStateOf<String?>(null)
+    // Öffentliche Eigenschaft für den Lobby-Code
+    val lobbyCode: String?
+        get() = _lobbyCode.value
 
-    var lobbyCode by mutableStateOf<String?>(null)
-        private set
-
-    private val client = HttpClient(CIO)
-    private val baseUrl = "http://localhost:8080"
-
-    fun fetchLobbyCode() {
-        viewModelScope.launch {
-            try {
-                println("Fetching lobby code from server...")
-                val response: String = client.get("$baseUrl/create-lobby").body()
-                println("Fetched lobby code: $response")
-                lobbyCode = response
-            } catch (e: Exception) {
-                println("ERROR fetching code: ${e.localizedMessage}")
-                lobbyCode = "Error fetching lobby code"
-            }
-        }
+    // Methode zum Setzen des Lobby-Codes
+    fun setLobbyCode(code: String) {
+        _lobbyCode.value = code
     }
 }
