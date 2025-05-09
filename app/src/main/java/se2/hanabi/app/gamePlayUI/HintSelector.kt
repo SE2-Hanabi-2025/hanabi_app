@@ -28,11 +28,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import se2.hanabi.app.model.Card
+import se2.hanabi.app.model.Hint
 
 @Composable
 fun HintSelector(
-    onHintClick: (String) -> Unit,
-    selectedHint: String = ""
+    onHintClick: (Hint) -> Unit,
+    selectedHint: Hint? = null
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     val hintItemSize = 60.dp
@@ -57,12 +59,12 @@ fun HintSelector(
             Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                colors.forEach() { color ->
+                Card.Color.entries.forEach() { color ->
                     HintItem(
-                        colorAsString = color,
+                        colorIn = color,
                         size = hintItemSize,
-                        isSelected = color.compareTo(selectedHint) == 0,
-                        onClick = { onHintClick(color) }
+                        isSelected = (selectedHint!=null) && color==selectedHint.getColor() ,
+                        onClick = { onHintClick(Hint(color)) }
                     )
                 }
             }
@@ -74,8 +76,8 @@ fun HintSelector(
                     HintItem(
                         value = i,
                         size = hintItemSize,
-                        isSelected = i.toString().compareTo(selectedHint) == 0,
-                        onClick = { onHintClick(i.toString()) }
+                        isSelected = selectedHint!=null && selectedHint.getValue()==i,
+                        onClick = { onHintClick(Hint(i)) }
                     )
                 }
             }
@@ -128,14 +130,14 @@ fun GiveHintButton(
 @Composable
 fun HintItem(
     modifier: Modifier = Modifier,
-    colorAsString: String = "",
+    colorIn: Card.Color? = null,
     value: Int = -1,
     size: Dp = 60.dp,
     isSelected: Boolean = false,
     onClick: () -> Unit = {}
 
 ) {
-    var color =colorFromString(colorAsString) // default is white
+    var color = if (colorIn==null) Color.White else colorFromColorEnum(colorIn)// default is white
     val haloSize = 15.dp
     val haloProp = haloSize.div(size)
     Box() {
@@ -159,7 +161,7 @@ fun HintItem(
             )
         }
 
-        if (colorAsString == "") {
+        if (colorIn == null) {
             color = Color(0xFF566290)
         }
         Box(

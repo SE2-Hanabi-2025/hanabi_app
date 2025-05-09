@@ -23,10 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import se2.hanabi.app.card.Card
-import se2.hanabi.app.card.CardItem
-import se2.hanabi.app.card.cardHeight
-import se2.hanabi.app.card.cardWidth
+import se2.hanabi.app.model.Card
 
 /**
  * GameBoardUI display the features of the game board.
@@ -50,7 +47,7 @@ fun GameBoardUI() {
                 .padding(boardElementPadding),
             verticalArrangement = Arrangement.spacedBy(boardElementPadding)
         ) {
-            FuseTokens(numRemaining = viewModel.numRemainingFuzeTokens.collectAsState().value)
+            FuseTokens(numRemaining = viewModel.numRemainingFuseTokens.collectAsState().value)
             Column(
                 verticalArrangement = Arrangement.spacedBy(cardSpacing)
             ) {
@@ -64,7 +61,7 @@ fun GameBoardUI() {
         }
         // right column
         ColorStacks(
-            stackValues = viewModel.stackValues,
+            stackValues = viewModel.stackValues.collectAsState().value,
             onColorStackClick = viewModel::onColorStackClick,
         )
     }
@@ -142,7 +139,7 @@ fun RemainingCardsStack(
             EmptyStack()
         } else {
             CardItem(
-                card = Card("red", 1),
+                card = Card(Card.Color.RED, 1),
                 isFlipped = true,
                 isPortrait = false,
             )
@@ -173,7 +170,7 @@ fun DiscardedCardsStack(
         EmptyStack()
     } else {
         CardItem(
-            card = Card(lastDiscardedCard.color,lastDiscardedCard.number),
+            card = Card(lastDiscardedCard.color,lastDiscardedCard.value),
             isFlipped = false,
             isPortrait = false,
             onClick = onClick
@@ -187,7 +184,7 @@ fun EmptyStack(
     modifier: Modifier = Modifier,
     isPortrait: Boolean = false,
     onClick: () -> Unit = {},
-    color: String = "white"
+    color: Card.Color = Card.Color.WHITE
 ) {
     CardItem(
         modifier = Modifier.alpha(0.3f),
@@ -202,16 +199,16 @@ fun EmptyStack(
 @Composable
 fun ColorStacks(
     modifier: Modifier = Modifier,
-    stackValues: List<Int>,
-    onColorStackClick: (String) -> Unit,
+    stackValues: Map<Card.Color, Int>,
+    onColorStackClick: (Card.Color) -> Unit,
 ) {
     Column(
         modifier = Modifier
             .padding(boardElementPadding),
         verticalArrangement = Arrangement.spacedBy(cardSpacing),
     ) {
-        colors.forEachIndexed() {index, color ->
-            if (stackValues[index]==0) {
+        Card.Color.entries.forEach() { color ->
+            if (stackValues[color]==0) {
                 EmptyStack(
                     isPortrait = false,
                     onClick = { onColorStackClick(color) },
@@ -220,9 +217,9 @@ fun ColorStacks(
             } else {
                 CardItem(
                     card = Card(color,
-                    stackValues[index]),
+                    stackValues[color]?:0),
                     isPortrait = false,
-                    highlightColor = colorFromString(color),
+                    highlightColor = colorFromColorEnum(color),
                     onClick = { onColorStackClick(color) },
                 )
             }
@@ -230,13 +227,14 @@ fun ColorStacks(
     }
 }
 
-fun colorFromString(colorName: String): Color {
-    return when (colorName.lowercase()) {
-        "red" -> Color.Red
-        "green" -> Color.Green
-        "yellow" -> Color.Yellow
-        "blue" -> Color.Cyan
-        else -> Color.White // White by default
+fun colorFromColorEnum(colorIn: Card.Color): Color {
+    return when (colorIn) {
+        Card.Color.RED -> Color.Red
+        Card.Color.GREEN -> Color.Green
+        Card.Color.YELLOW -> Color.Yellow
+        Card.Color.BLUE -> Color.Cyan
+        Card.Color.WHITE -> Color.White
+//        else -> Color.White // White by default
     }
 }
 

@@ -92,7 +92,7 @@ class StartMenuActivity: ComponentActivity() {
         var selectedAvatarResId by remember { mutableIntStateOf(R.drawable.whiteavatar) }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
-        val urlEmulator = "http://10.0.2.2:8080"
+        val baseURL = "http://10.145.212.9:8080" // "http://10.0.2.2:8080" // for emulator
         val urlLocalHost = "http://localhost:8080"
         val context = LocalContext.current
 
@@ -100,7 +100,7 @@ class StartMenuActivity: ComponentActivity() {
             coroutineScope.launch {
                 isLoading = true // Show loading spinner
                 try {
-                    val response: HttpResponse = client.get("$urlEmulator/status")
+                    val response: HttpResponse = client.get("$baseURL/status")
                     statusMessage = response.body()
                 } catch (e: Exception) {
                     statusMessage = "Failed to fetch status"
@@ -114,7 +114,7 @@ class StartMenuActivity: ComponentActivity() {
             coroutineScope.launch {
                 isLoading = true // Show loading spinner
                 try {
-                    val response: HttpResponse = client.get("$urlEmulator/connect")
+                    val response: HttpResponse = client.get("$baseURL/connect")
                     statusMessage = response.body()
                     //After connecting, navigate to LobbyScreen
                     context.startActivity(Intent(context, LobbyActivity::class.java))
@@ -131,7 +131,7 @@ class StartMenuActivity: ComponentActivity() {
                 isLoading = true
                 try {
                     val response: io.ktor.client.statement.HttpResponse =
-                        client.get("$urlEmulator/game/start") // FIXED URL
+                        client.get("$baseURL/game/start") // FIXED URL
                     statusMessage = response.body()
                     val intent = Intent(context, GameActivity::class.java)
                     context.startActivity(intent)
@@ -147,7 +147,7 @@ class StartMenuActivity: ComponentActivity() {
             coroutineScope.launch {
                 isLoading = true
                 try {
-                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code")
+                    val response: HttpResponse = client.get("$baseURL/join-lobby/$code")
                     statusMessage = response.body()
                     isConnected = true
                     val intent = Intent(context, LobbyActivity::class.java).apply {
