@@ -1,4 +1,4 @@
-package se2.hanabi.app.card
+package se2.hanabi.app.gamePlayUI
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,8 +25,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import se2.hanabi.app.gamePlayUI.BackGlow
-import se2.hanabi.app.gamePlayUI.colorFromString
+import se2.hanabi.app.model.Card
 
 const val aspectRatio = 1.51f
 val cardWidth = 66.dp
@@ -34,7 +33,7 @@ val cardHeight = cardWidth.times(aspectRatio)
 
 // Returns name of the corresponding card image, following the schema "color_number"
 fun getCardImageName(card: Card): String {
-    return "${card.color.lowercase()}_${card.number}"
+    return "${card.color.toString().lowercase()}_${card.value}"
 }
 
 /**
@@ -97,14 +96,14 @@ fun CardItem(
                     .graphicsLayer {
                         rotationZ = if (isPortrait) 0f else 90f
                     }
-                    .offset(x = 0.dp, y = if (!isPortrait) (-(cardHeight-cardWidth)/2) else 0.dp),
+                    .offset(x = 0.dp, y = if (!isPortrait) (-(cardHeight - cardWidth)/2) else 0.dp),
             painter = painterResource(id = imageID),
             contentDescription = "Front side: $imageName image",
             contentScale = ContentScale.Fit
         )
         //hint overlay
         if (showColorHint || showValueHint) {
-            val cardHintBackgroundColor = if (showColorHint) colorFromString(card.color) else Color.Black
+            val cardHintBackgroundColor = if (showColorHint) colorFromColorEnum(card.color) else Color.Black
             val cardHintValueColor = if (showColorHint) Color.Black else Color(0xFFF2FF90)
             Box(
                 modifier = Modifier
@@ -121,7 +120,7 @@ fun CardItem(
                 if (showValueHint) {
                     Text(
                         modifier = Modifier.padding(3.dp),
-                        text = "${card.number}",
+                        text = "${card.value}",
                         fontFamily = FontFamily.Cursive,
                         color = cardHintValueColor,
                         fontSize = 30.sp,
