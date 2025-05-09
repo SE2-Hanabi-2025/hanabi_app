@@ -92,7 +92,7 @@ class StartMenuActivity: ComponentActivity() {
         var selectedAvatarResId by remember { mutableIntStateOf(R.drawable.whiteavatar) }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
-        val baseURL = "http://10.145.212.9:8080" // "http://10.0.2.2:8080" // for emulator
+        val urlEmulator = "http://10.0.2.2:8080"
         val urlLocalHost = "http://localhost:8080"
         val context = LocalContext.current
 
@@ -100,7 +100,7 @@ class StartMenuActivity: ComponentActivity() {
             coroutineScope.launch {
                 isLoading = true // Show loading spinner
                 try {
-                    val response: HttpResponse = client.get("$baseURL/status")
+                    val response: HttpResponse = client.get("$urlEmulator/status")
                     statusMessage = response.body()
                 } catch (e: Exception) {
                     statusMessage = "Failed to fetch status"
@@ -114,7 +114,7 @@ class StartMenuActivity: ComponentActivity() {
             coroutineScope.launch {
                 isLoading = true // Show loading spinner
                 try {
-                    val response: HttpResponse = client.get("$baseURL/connect")
+                    val response: HttpResponse = client.get("$urlEmulator/connect")
                     statusMessage = response.body()
                     //After connecting, navigate to LobbyScreen
                     context.startActivity(Intent(context, LobbyActivity::class.java))
@@ -131,7 +131,7 @@ class StartMenuActivity: ComponentActivity() {
                 isLoading = true
                 try {
                     val response: io.ktor.client.statement.HttpResponse =
-                        client.get("$baseURL/game/start") // FIXED URL
+                        client.get("$urlEmulator/game/start") // FIXED URL
                     statusMessage = response.body()
                     val intent = Intent(context, GameActivity::class.java)
                     context.startActivity(intent)
@@ -147,7 +147,7 @@ class StartMenuActivity: ComponentActivity() {
             coroutineScope.launch {
                 isLoading = true
                 try {
-                    val response: HttpResponse = client.get("$baseURL/join-lobby/$code")
+                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code")
                     statusMessage = response.body()
                     isConnected = true
                     val intent = Intent(context, LobbyActivity::class.java).apply {
@@ -266,17 +266,34 @@ class StartMenuActivity: ComponentActivity() {
 
                 Button(
                     onClick = {
-                        if (username.isBlank()) {
-                            isUsernameError = true
-                            statusMessage = "Please enter a username"
-                            showStatusDialog=true
-                        }
-                        else{
-                            val intent = Intent (context, LobbyActivity::class.java).apply {
-                                putExtra("avatarResId", selectedAvatarResId)
-                                putExtra("username", username)
+                        coroutineScope.launch {
+                            isLoading = true
+                            try {
+                                val response: HttpResponse = client.get("$urlEmulator/create-lobby")
+                                val createdCode: String = response.body()
+                                println("Created lobby code: $createdCode")
+
+                                //lobby beitreten
+                                val joinResponse: HttpResponse = client.get("$urlEmulator/join-lobby/$createdCode")
+                                val joinResponseBody: String = joinResponse.body()
+
+                                if (joinResponseBody.startsWith("Joined lobby" , ignoreCase = true)) {
+                                    //Navigation zur LobbyActivity
+                                val intent = Intent(context, LobbyActivity::class.java).apply {
+                                    putExtra("lobbyCode", createdCode) // Übergabe des Lobby-Codes
+                                }
+                                context.startActivity(intent)
+                                } else{
+                                    statusMessage = "Failed to join lobby: $joinResponseBody"
+                                    showStatusDialog = true
+                                }
+                            } catch (e: Exception) {
+                                println("Error creating lobby: ${e.localizedMessage}")
+                                statusMessage = "Failed to create lobby: ${e.localizedMessage}"
+                                showStatusDialog = true
+                            } finally {
+                                isLoading = false
                             }
-                            context.startActivity(intent)
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -284,32 +301,19 @@ class StartMenuActivity: ComponentActivity() {
                         contentColor = Color.White
                     ),
                     border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier.padding(top = 10.dp).height(60.dp).width(200.dp)
-                ) { Text (text = "Create Lobby",
-                    textAlign = TextAlign.Center,
-                    fontSize = 20.sp)
+                    modifier = Modifier
+                        .padding(top = 10.dp)
+                        .width(200.dp)
+                        .height(60.dp)
+                ) {
+                    Text(
+                        text = "Create Lobby",
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp
+                    )
                 }
-                /* Button(
-                     onClick = {context.startActivity(
-                         Intent(
-                             context,
-                             LobbyActivity::class.java
-                         )
-                     )},
-                     colors = ButtonDefaults.buttonColors(
-                         containerColor = Color.DarkGray,
-                         contentColor = Color.White
-                     ),
-                     border = BorderStroke(2.dp, Color.White),
-                     modifier = Modifier
-                         .padding(top = 10.dp)
-                         .width(200.dp)
-                         .height(60.dp)
-                 ) {
-                     Text(text = "Create Lobby",
-                         textAlign = TextAlign.Center,
-                         fontSize = 20.sp)
-                 }*/
+
+
                 Button(
                     onClick = { startGame() },
                     colors = ButtonDefaults.buttonColors(

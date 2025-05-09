@@ -1,5 +1,6 @@
 package se2.hanabi.app.lobby
 
+import androidx.activity.viewModels
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -30,7 +31,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,19 +38,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+
+
+
 import se2.hanabi.app.GameActivity
 import se2.hanabi.app.ui.theme.ClientTheme
 
 class LobbyActivity : ComponentActivity() {
+
+    private val viewModel: LobbyViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val receivedLobbyCode = intent.getStringExtra("lobbyCode") ?: "Kein Code"
+
+        viewModel.setLobbyCode(receivedLobbyCode)
+
         setContent{
             ClientTheme {
                 LobbyScreen(
                     //TODO: add dynamic data
                     playerList = listOf("Player1","Player2","Player3", "Player4", "Player5"),
+                    lobbyCode = viewModel.lobbyCode,
                     onLeaveLobby = { finish()},
                     onStartGame = {navigateToGame()}
                 )
@@ -65,40 +75,53 @@ class LobbyActivity : ComponentActivity() {
 
 @Composable
 fun LobbyScreen (playerList: List<String>,
+                 lobbyCode: String?,
                  onLeaveLobby: () -> Unit,
                  onStartGame: () -> Unit){
     Box(modifier = Modifier.fillMaxSize()){
-        Image(painter = painterResource(id = R.drawable.lobbyscreen_bg),
+        Image(
+            painter = painterResource(id = R.drawable.lobbyscreen_bg),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop)
 
-        //Lobby code
-        val lobbyCode = remember { (100000..999990).random() }
 
     //TODO: Implement server connection
-        Box(modifier = Modifier.fillMaxWidth(0.8f).height(60.dp).offset(x = 33.dp, y = 100.dp).clip(RoundedCornerShape(30.dp)).background(Color.Black.copy(alpha = 0.7f)), contentAlignment = Alignment.Center)
-               { Text (
-            text = "Lobby Code: $lobbyCode",
+        Box(modifier = Modifier
+            .fillMaxWidth(0.8f)
+            .height(60.dp)
+            .offset(x = 33.dp, y = 100.dp)
+            .clip(RoundedCornerShape(30.dp))
+            .background(Color.Black.copy(alpha = 0.7f)),
+            contentAlignment = Alignment.Center)
+               {
+            Text (
+            text = lobbyCode?.let { "Lobby Code: $it" }?:"Loading..." ,
             color = Color.White,
                    fontSize = 22.sp
         )}
                 //Player list Placeholder
-                Box(modifier = Modifier.fillMaxWidth(0.7f).heightIn(max = 400.dp).offset(y = 200.dp, x = 55.dp).clip(
-                    RoundedCornerShape(40.dp))
+                Box(modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .heightIn(max = 400.dp)
+                    .offset(y = 200.dp, x = 55.dp)
+                    .clip(RoundedCornerShape(40.dp))
                     .background(Color.Black.copy(alpha = 0.6f))
                     .padding(horizontal = 30.dp, vertical = 50.dp))
                 {
-                 LazyColumn (
-                 modifier = Modifier.fillMaxWidth()
-              ){
-                    items(playerList) { player ->
-                        Row (modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                 LazyColumn (modifier = Modifier.fillMaxWidth()
+              ){ items(playerList) { player ->
+                        Row (modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(30.dp))
                         {
                             Box(
-                                modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.DarkGray)
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.DarkGray)
                             )
 
                             Text(
@@ -112,7 +135,10 @@ fun LobbyScreen (playerList: List<String>,
             }
            }
         //Buttons
-    Column (modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 62.dp),
+    Column (
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .padding(bottom = 62.dp),
         horizontalAlignment = Alignment.CenterHorizontally){
 
         //start game
@@ -144,13 +170,15 @@ fun LobbyScreen (playerList: List<String>,
 }
 }
 
-@Preview(showBackground = true)
+/*@Preview(showBackground = true)
 @Composable
 fun LobbyScreenPreview(){
     ClientTheme {
         LobbyScreen(
         playerList = listOf("Player 1", "Player 2", "Player 3", "Player 4", "Player 5"),
+            lobbyCode = "123456",
         onLeaveLobby = {},
             onStartGame = {}
     ) }
 }
+*/
