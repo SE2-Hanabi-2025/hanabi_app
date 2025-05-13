@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import io.ktor.client.request.get
+import kotlinx.coroutines.delay
 
 
 class LobbyViewModel : ViewModel() {
@@ -34,6 +35,7 @@ class LobbyViewModel : ViewModel() {
             try {
                 val code = _lobbyCode.value ?: return@launch
                 val response: List<String> =  client.get("http://10.0.2.2:8080/lobby/$code/players").body()
+                println("Fetched players: $response") // Debugging line
                 _players.value = response
             }catch (e: Exception){
                 e.printStackTrace()
@@ -41,4 +43,14 @@ class LobbyViewModel : ViewModel() {
             }
         }
     }
+
+    fun startPlayerSync(intervalMillis : Long = 1000L){
+        viewModelScope.launch {
+            while (true) {
+                fetchPlayers()
+                delay(intervalMillis)
+            }
+        }
+    }
 }
+
