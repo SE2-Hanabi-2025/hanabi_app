@@ -132,8 +132,7 @@ class StartMenuActivity: ComponentActivity() {
             coroutineScope.launch {
                 isLoading = true
                 try {
-                    val response: io.ktor.client.statement.HttpResponse =
-                        client.get("$urlEmulator/game/start") // FIXED URL
+                    val response: HttpResponse = client.get("$urlEmulator/start-game/$lobbyCode")
                     statusMessage = response.body()
                     val intent = Intent(context, GameActivity::class.java)
                     context.startActivity(intent)
@@ -157,6 +156,7 @@ class StartMenuActivity: ComponentActivity() {
                         putExtra("avatarResID", selectedAvatarResId)
                         putExtra("username", username)
                         putExtra("lobbyCode", code)
+                        putExtra("isHost", false)
                     }
                     context.startActivity(intent)
                 } catch (e: Exception) {
@@ -184,6 +184,7 @@ class StartMenuActivity: ComponentActivity() {
                             putExtra("lobbyCode", createdCode)
                             putExtra("username", username)
                             putExtra("avatarResID", selectedAvatarResId)
+                            putExtra("isHost", true)
                         }
                         context.startActivity(intent)
                     } else {

@@ -26,6 +26,10 @@ class LobbyViewModel : ViewModel() {
     val lobbyCode: String?
         get() = _lobbyCode.value
 
+    private val _isHost = mutableStateOf(false)
+    val isHost: Boolean
+        get() = _isHost.value
+
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json{
@@ -33,6 +37,10 @@ class LobbyViewModel : ViewModel() {
                 isLenient = true
             })
         }
+    }
+
+    fun setIsHost(isHost: Boolean) {
+        _isHost.value = isHost
     }
 
     fun setLobbyCode(code: String) {
