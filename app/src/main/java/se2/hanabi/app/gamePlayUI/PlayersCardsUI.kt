@@ -1,6 +1,12 @@
 package se2.hanabi.app.gamePlayUI
 
-import androidx.compose. foundation.layout.Arrangement
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,16 +43,20 @@ import kotlin.math.roundToInt
 @Composable
 fun PlayersCardsUI() {
     val viewModel: GamePlayViewModel = viewModel()
+    val thisPlayerId by viewModel.thisPlayer.collectAsState()
+    val currentPlayer by viewModel.currentPlayer.collectAsState()
     PlayersHand(
         hand = viewModel.thisPlayersHand.collectAsState().value,
         onCardClick = viewModel::onPlayersCardClick,
-        selectedCard = viewModel.selectedCardId.collectAsState().value
+        selectedCard = viewModel.selectedCardId.collectAsState().value,
+        isCurrentPlayerTurn = viewModel.thisPlayer.collectAsState().value == currentPlayer
     )
     OtherPlayersHands(
         hands = viewModel.otherPlayersHands.collectAsState().value,
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
         selectedHandIndex = viewModel.selectedPlayerId.collectAsState().value,
-//        thisPlayerIndex = viewModel.thisPlayerId.collectAsState().value
+        currentPlayerId = currentPlayer,
+        thisPlayerId = thisPlayerId
     )
     if (viewModel.selectedPlayerId.collectAsState().value != -1) {
         HintSelector(
@@ -60,33 +70,54 @@ fun PlayersCardsUI() {
 fun PlayersHand(
     hand: List<Int>,
     onCardClick: (Int) -> Unit,
-    selectedCard: Int?
+    selectedCard: Int?,
+    isCurrentPlayerTurn: Boolean
 ) {
     val viewModel: GamePlayViewModel = viewModel()
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseAlpha"
+    )
     Box(
         modifier = Modifier
             .fillMaxSize(),
         contentAlignment = Alignment.BottomCenter
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .padding(5.dp)
-                .fillMaxWidth(),
-            Arrangement.SpaceEvenly,
-        ) {
-            hand.forEach() { cardId ->
-                val colorHint = viewModel.shownColorHints.value[cardId]
-                val color: Card.Color = colorHint ?: Card.Color.WHITE // WHITE is dummy color
-                val valueHint = viewModel.shownValueHints.value[cardId]
-                val value: Int = valueHint ?: 1 // 1 is dummy value
-                CardItem(
-                    card = Card(color=color, value=value, id = -1), // dummy card id = -1
-                    isFlipped = true,
-                    isSelected = cardId == selectedCard,
-                    onClick = { onCardClick(cardId) },
-                    showColorHint = colorHint!=null,
-                    showValueHint = valueHint!=null,
+                .padding(10.dp)
+                .background(
+                    if (isCurrentPlayerTurn) Color.Yellow.copy(alpha = pulseAlpha) else Color.Transparent,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                 )
+                .padding(10.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(5.dp)
+                    .fillMaxWidth(),
+                Arrangement.SpaceEvenly,
+            ) {
+                hand.forEach() { cardId ->
+                    val colorHint = viewModel.shownColorHints.value[cardId]
+                    val color: Card.Color = colorHint ?: Card.Color.WHITE // WHITE is dummy color
+                    val valueHint = viewModel.shownValueHints.value[cardId]
+                    val value: Int = valueHint ?: 1 // 1 is dummy value
+                    CardItem(
+                        card = Card(color = color, value = value, id = -1), // dummy card id = -1
+                        isFlipped = true,
+                        isSelected = cardId == selectedCard,
+                        onClick = { onCardClick(cardId) },
+                        showColorHint = colorHint != null,
+                        showValueHint = valueHint != null,
+                    )
+                }
             }
         }
     }
@@ -97,6 +128,8 @@ fun OtherPlayersHands(
     hands: Map<Int, List<Card>>,
     onOtherPlayersHandClick: (Int) -> Unit,
     selectedHandIndex: Int,
+    currentPlayerId: Int,
+    thisPlayerId: Int
 ) {
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
 
@@ -126,11 +159,13 @@ fun OtherPlayersHands(
                     boxSize.height * 0.6f
                 }
             val handOffset = Offset(handOffsetX, handOffsetY)
+            val isCurrentTurn = hand.key == currentPlayerId && hand.key != thisPlayerId
             OtherPlayersHand(
                 offset = handOffset,
                 hand = hand,
                 rotationAmountZ = rotationAmountZ.floatValue,
                 isSelected = index == selectedHandIndex,
+                isCurrentTurn = isCurrentTurn,
                 onClick = { onOtherPlayersHandClick(index) }
             )
         }
@@ -143,10 +178,22 @@ fun OtherPlayersHand(
     hand: Map.Entry<Int, List<Card>>,
     rotationAmountZ: Float,
     isSelected: Boolean = false,
+    isCurrentTurn: Boolean = false,
     onClick: () -> Unit = {},
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     var rowSize by remember { mutableStateOf(IntSize.Zero) }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseAlpha"
+    )
 
     Box(
         modifier = Modifier
@@ -164,6 +211,13 @@ fun OtherPlayersHand(
                 height = with (LocalDensity.current) {rowSize.height.toDp() - 20.dp },
                 glowSize = 30.dp,
                 )
+        }
+        if (isCurrentTurn) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(Color.Yellow.copy(alpha = pulseAlpha), shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+            )
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy((-45.dp)),
