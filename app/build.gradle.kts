@@ -110,6 +110,9 @@ sonar {
 
 dependencies {
 
+    implementation(libs.ktor.client.content.negotiation)
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
+    implementation(libs.kotlinx.serialization.json.v180)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

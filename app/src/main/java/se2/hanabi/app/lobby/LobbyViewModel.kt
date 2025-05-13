@@ -1,6 +1,5 @@
 package se2.hanabi.app.lobby
 
-
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,6 +11,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import io.ktor.client.request.get
 import kotlinx.coroutines.delay
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 
 
 class LobbyViewModel : ViewModel() {
@@ -24,7 +26,14 @@ class LobbyViewModel : ViewModel() {
     val lobbyCode: String?
         get() = _lobbyCode.value
 
-    private val client = HttpClient(CIO)
+    private val client = HttpClient(CIO) {
+        install(ContentNegotiation) {
+            json(Json{
+                ignoreUnknownKeys = true
+                isLenient = true
+            })
+        }
+    }
 
     fun setLobbyCode(code: String) {
         _lobbyCode.value = code
@@ -35,7 +44,6 @@ class LobbyViewModel : ViewModel() {
             try {
                 val code = _lobbyCode.value ?: return@launch
                 val response: List<String> =  client.get("http://10.0.2.2:8080/lobby/$code/players").body()
-                println("Fetched players: $response") // Debugging line
                 _players.value = response
             }catch (e: Exception){
                 e.printStackTrace()
