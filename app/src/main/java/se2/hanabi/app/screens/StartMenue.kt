@@ -64,6 +64,8 @@ import se2.hanabi.app.GameActivity
 import se2.hanabi.app.lobby.LobbyActivity
 import se2.hanabi.app.R
 import se2.hanabi.app.ui.theme.ClientTheme
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 
 class StartMenuActivity: ComponentActivity() {
@@ -147,7 +149,8 @@ class StartMenuActivity: ComponentActivity() {
             coroutineScope.launch {
                 isLoading = true
                 try {
-                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code")
+                    val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
+                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code?name=$encodedName")
                     statusMessage = response.body()
                     isConnected = true
                     val intent = Intent(context, LobbyActivity::class.java).apply {
@@ -161,6 +164,38 @@ class StartMenuActivity: ComponentActivity() {
                 }
                 showStatusDialog = true
                 isLoading = false
+            }
+        }
+
+        fun createLobbyAndJoin(currentUsername: String) {
+            coroutineScope.launch {
+                isLoading = true
+                try {
+                    val response: HttpResponse = client.get("$urlEmulator/create-lobby")
+                    val createdCode: String = response.body()
+                    val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
+                    val joinResponse: HttpResponse = client.get("$urlEmulator/join-lobby/$createdCode?name=$encodedName")
+                    val joinResponseBody: String = joinResponse.body()
+
+                    println("-> Join Response: $joinResponseBody")
+
+                    if (joinResponseBody.startsWith("Joined lobby", ignoreCase = true)) {
+                        val intent = Intent(context, LobbyActivity::class.java).apply {
+                            putExtra("lobbyCode", createdCode)
+                            putExtra("username", username)
+                            putExtra("avatarResID", selectedAvatarResId)
+                        }
+                        context.startActivity(intent)
+                    } else {
+                        statusMessage = "Failed to join lobby: $joinResponseBody"
+                        showStatusDialog = true
+                    }
+                } catch (e: Exception) {
+                    statusMessage = "Failed to create lobby"
+                    showStatusDialog = true
+                } finally {
+                    isLoading = false
+                }
             }
         }
 
@@ -266,35 +301,7 @@ class StartMenuActivity: ComponentActivity() {
 
                 Button(
                     onClick = {
-                        coroutineScope.launch {
-                            isLoading = true
-                            try {
-                                val response: HttpResponse = client.get("$urlEmulator/create-lobby")
-                                val createdCode: String = response.body()
-                                println("Created lobby code: $createdCode")
-
-                                //lobby beitreten
-                                val joinResponse: HttpResponse = client.get("$urlEmulator/join-lobby/$createdCode")
-                                val joinResponseBody: String = joinResponse.body()
-
-                                if (joinResponseBody.startsWith("Joined lobby" , ignoreCase = true)) {
-                                    //Navigation zur LobbyActivity
-                                val intent = Intent(context, LobbyActivity::class.java).apply {
-                                    putExtra("lobbyCode", createdCode) // Übergabe des Lobby-Codes
-                                }
-                                context.startActivity(intent)
-                                } else{
-                                    statusMessage = "Failed to join lobby: $joinResponseBody"
-                                    showStatusDialog = true
-                                }
-                            } catch (e: Exception) {
-                                println("Error creating lobby: ${e.localizedMessage}")
-                                statusMessage = "Failed to create lobby: ${e.localizedMessage}"
-                                showStatusDialog = true
-                            } finally {
-                                isLoading = false
-                            }
-                        }
+                        createLobbyAndJoin(username)
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.DarkGray,

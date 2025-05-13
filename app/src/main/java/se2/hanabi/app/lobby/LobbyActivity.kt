@@ -31,6 +31,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 
@@ -54,12 +57,13 @@ class LobbyActivity : ComponentActivity() {
         val receivedLobbyCode = intent.getStringExtra("lobbyCode") ?: "Kein Code"
 
         viewModel.setLobbyCode(receivedLobbyCode)
+        viewModel.startPlayerSync()
 
         setContent{
             ClientTheme {
+                val players by viewModel.players.collectAsState()
                 LobbyScreen(
-                    //TODO: add dynamic data
-                    playerList = listOf("Player1","Player2","Player3", "Player4", "Player5"),
+                    playerList = players,
                     lobbyCode = viewModel.lobbyCode,
                     onLeaveLobby = { finish()},
                     onStartGame = {navigateToGame()}
