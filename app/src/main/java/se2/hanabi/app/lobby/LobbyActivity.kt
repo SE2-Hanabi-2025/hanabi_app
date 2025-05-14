@@ -48,6 +48,7 @@ import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import se2.hanabi.app.GameActivity
 import se2.hanabi.app.ui.theme.ClientTheme
@@ -66,10 +67,11 @@ class LobbyActivity : ComponentActivity() {
         viewModel.setIsHost(isHost)
         viewModel.startPlayerSync()
 
-        setContent{
+
+        setContent {
             ClientTheme {
                 val players by viewModel.players.collectAsState()
-                val lobbyCode =viewModel.lobbyCode
+                val lobbyCode = viewModel.lobbyCode
                 val isHostState = viewModel.isHost
                 val isGameStarted by viewModel.isGameStarted.collectAsState()
 
@@ -89,152 +91,140 @@ class LobbyActivity : ComponentActivity() {
             }
         }
     }
-    private fun navigateToGame(){
+
+    private fun navigateToGame() {
         val intent = Intent(this, GameActivity::class.java)
         startActivity(intent)
     }
+
     private fun startGameRequest(lobbyCode: String) {
         lifecycleScope.launch {
             try {
-                val response: HttpResponse = HttpClient(CIO).post("http://10.0.2.2:8080/start-game/$lobbyCode")
+                val response: HttpResponse =
+                    HttpClient(CIO).get("http://10.0.2.2:8080/start-game/$lobbyCode")
                 if (response.status == HttpStatusCode.OK) {
                     navigateToGame()
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
             }
         }
     }
-}
 
 
-@Composable
-fun LobbyScreen (playerList: List<String>,
-                 lobbyCode: String?,
-                 onLeaveLobby: () -> Unit,
-                 onStartGame: () -> Unit,
-                 isHost: Boolean
-) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(id = R.drawable.lobbyscreen_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-
-
-        //TODO: Implement server connection
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .height(60.dp)
-                .offset(x = 33.dp, y = 100.dp)
-                .clip(RoundedCornerShape(30.dp))
-                .background(Color.Black.copy(alpha = 0.7f)),
-            contentAlignment = Alignment.Center
-        )
-        {
-            Text(
-                text = lobbyCode?.let { "Lobby Code: $it" } ?: "Loading...",
-                color = Color.White,
-                fontSize = 22.sp
+    @Composable
+    fun LobbyScreen(
+        playerList: List<String>,
+        lobbyCode: String?,
+        onLeaveLobby: () -> Unit,
+        onStartGame: () -> Unit,
+        isHost: Boolean
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = R.drawable.lobbyscreen_bg),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
             )
-        }
-        //Player list Placeholder
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.7f)
-                .heightIn(max = 400.dp)
-                .offset(y = 200.dp, x = 55.dp)
-                .clip(RoundedCornerShape(40.dp))
-                .background(Color.Black.copy(alpha = 0.6f))
-                .padding(horizontal = 30.dp, vertical = 50.dp)
-        )
-        {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(playerList) { player ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(30.dp)
-                    )
-                    {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(Color.DarkGray)
-                        )
 
-                        Text(
-                            text = player,
-                            color = Color.White,
-                            modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.Start,
-                            fontSize = 20.sp
+
+            //TODO: Implement server connection
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(60.dp)
+                    .offset(x = 33.dp, y = 100.dp)
+                    .clip(RoundedCornerShape(30.dp))
+                    .background(Color.Black.copy(alpha = 0.7f)),
+                contentAlignment = Alignment.Center
+            )
+            {
+                Text(
+                    text = lobbyCode?.let { "Lobby Code: $it" } ?: "Loading...",
+                    color = Color.White,
+                    fontSize = 22.sp
+                )
+            }
+            //Player list Placeholder
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .heightIn(max = 400.dp)
+                    .offset(y = 200.dp, x = 55.dp)
+                    .clip(RoundedCornerShape(40.dp))
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .padding(horizontal = 30.dp, vertical = 50.dp)
+            )
+            {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(playerList) { player ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(30.dp)
                         )
+                        {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.DarkGray)
+                            )
+
+                            Text(
+                                text = player,
+                                color = Color.White,
+                                modifier = Modifier.weight(1f),
+                                textAlign = TextAlign.Start,
+                                fontSize = 20.sp
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        //Buttons
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 62.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+            //Buttons
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 62.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
 
-            //start game
-            if (isHost) {
+                //start game
+                if (isHost) {
+                    Button(
+                        onClick = { onStartGame() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2ecc71),
+                            contentColor = Color.White
+                        ),
+                        border = BorderStroke(2.dp, Color.White),
+                        modifier = Modifier.width(200.dp).height(60.dp)
+                    ) {
+                        Text("Start Game", color = Color.White, fontSize = 20.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                //leave Lobby
                 Button(
-                    onClick = {onStartGame()},
+                    onClick = onLeaveLobby,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2ecc71),
-                        contentColor = Color.White
+                        containerColor = Color.DarkGray
                     ),
                     border = BorderStroke(2.dp, Color.White),
                     modifier = Modifier.width(200.dp).height(60.dp)
                 ) {
-                    Text("Start Game", color = Color.White, fontSize = 20.sp)
+                    Text("Leave Lobby", color = Color.White, fontSize = 20.sp)
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
             }
-            //leave Lobby
-            Button(
-                onClick = onLeaveLobby,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.DarkGray
-                ),
-                border = BorderStroke(2.dp, Color.White),
-                modifier = Modifier.width(200.dp).height(60.dp)
-            ) {
-                Text("Leave Lobby", color = Color.White, fontSize = 20.sp)
-            }
-
         }
+
     }
-
 }
-
-
-
-/*@Preview(showBackground = true)
-@Composable
-fun LobbyScreenPreview(){
-    ClientTheme {
-        LobbyScreen(
-        playerList = listOf("Player 1", "Player 2", "Player 3", "Player 4", "Player 5"),
-            lobbyCode = "123456",
-        onLeaveLobby = {},
-            onStartGame = {}
-    ) }
-}
-*/
