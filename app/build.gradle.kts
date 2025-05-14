@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("jacoco")
     id("org.sonarqube") version "5.1.0.4882"
+
+    kotlin("plugin.serialization") version "2.1.20" // Replace with the latest version
 }
 
 android {
@@ -108,6 +110,9 @@ sonar {
 
 dependencies {
 
+    implementation(libs.ktor.client.content.negotiation)
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
+    implementation(libs.kotlinx.serialization.json.v180)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -135,4 +140,9 @@ dependencies {
     implementation(libs.coil.svg)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
+
+    implementation(libs.kotlinx.serialization.json.v180)
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
 }

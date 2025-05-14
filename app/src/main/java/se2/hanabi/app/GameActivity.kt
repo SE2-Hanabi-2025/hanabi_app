@@ -5,55 +5,87 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.client.engine.cio.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.get
+import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.launch
+import se2.hanabi.app.gamePlayUI.GamePlayUI
 import se2.hanabi.app.logic.GameManager
 import se2.hanabi.app.logic.PlaceCardResult
-import se2.hanabi.app.logic.PlaceCardResultType
 
 class GameActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            GameScreen()
+            // UI will be developed on GamePlayUI
+            // !! GamePlayUI replaces GameScreen !!
+            GamePlayUI()
+//             GameScreen()
+        }
+    }
+
+    class GamePlayService() {
+        private val baseURL = "http://10.145.212.9:8080" // "http://10.0.2.2:8080" // for emulator
+        val client = HttpClient(CIO)
+
+        suspend fun drawCard(gameManager: GameManager) {
+            try {
+                val response: HttpResponse = client.get("$baseURL/game/draw")
+                val cardText = response.body<String>()
+
+                val cardValue = cardText.substringAfter(": ").trim()
+                gameManager.drawCard(cardValue)
+
+            } catch (e: Exception) {
+            }
         }
     }
 
     @Composable
     fun GameScreen() {
+        val gamePlayService = remember { GamePlayService() }
         val gameManager = remember { GameManager() }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
-        val urlEmulator = "http://10.0.2.2:8080"
+        val urlEmulator = "http://10.145.212.9:8080"
         val snackbarHostState = remember { SnackbarHostState() }
         val context = LocalContext.current
 
         fun drawCard() {
             coroutineScope.launch {
-                try {
-                    val response: HttpResponse = client.get("$urlEmulator/game/draw")
-                    val cardText = response.body<String>()
-
-                    val cardValue = cardText.substringAfter(": ").trim()
-                    gameManager.drawCard(cardValue)
-
-                } catch (e: Exception) {
-
-                }
+                gamePlayService.drawCard(gameManager)
             }
         }
 
