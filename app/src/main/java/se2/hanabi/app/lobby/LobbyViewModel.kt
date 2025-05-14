@@ -14,12 +14,20 @@ import kotlinx.coroutines.delay
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import se2.hanabi.app.R
 
+data class PlayerInLobby(
+    val name: String,
+    val avatarResID: Int
+)
 
 class LobbyViewModel : ViewModel() {
 
-    private val _players = MutableStateFlow<List<String>>(emptyList())
-    val players: StateFlow<List<String>> = _players
+    private val _players = MutableStateFlow<List<PlayerInLobby>>(emptyList())
+    val players: StateFlow<List<PlayerInLobby>> = _players
+
+    private var currentPlayerName: String? = null
+    private var currentPlayerAvatarResID: Int = R.drawable.whiteavatar
 
     private val _lobbyCode = mutableStateOf<String?>(null)
 
@@ -39,17 +47,14 @@ class LobbyViewModel : ViewModel() {
         _lobbyCode.value = code
     }
 
-    fun fetchPlayers() {
-        viewModelScope.launch {
-            try {
-                val code = _lobbyCode.value ?: return@launch
-                val response: List<String> =  client.get("http://10.0.2.2:8080/lobby/$code/players").body()
-                _players.value = response
-            }catch (e: Exception){
-                e.printStackTrace()
-                _players.value = emptyList()
-            }
-        }
+    fun setCurrentPlayerInfo(name: String, avatarResID: Int){
+        currentPlayerName = name
+        currentPlayerAvatarResID = avatarResID
+        _players.value = players.value + PlayerInLobby(name, avatarResID)
+    }
+
+    fun leaveLobby(currentName: String?){
+        currentName?.let { name -> _players.value = players.value.filterNot { it.name == name } }
     }
 
     fun startPlayerSync(intervalMillis : Long = 1000L){
@@ -58,6 +63,25 @@ class LobbyViewModel : ViewModel() {
                 fetchPlayers()
                 delay(intervalMillis)
             }
+        }
+    }
+
+    private suspend fun fetchPlayers() {
+        val code = _lobbyCode.value ?: return
+            try {
+                val rawList: List<String> =  client.get("http://10.0.2.2:8080/lobby/$code/players").body()
+                val updated = rawList.map { name ->
+                    if ( name == currentPlayerName){
+                        PlayerInLobby(name, currentPlayerAvatarResID)
+                    } else {
+                        PlayerInLobby(name, R.drawable.whiteavatar)
+                    }
+                }
+                _players.value = updated
+            }catch (e: Exception){
+                e.printStackTrace()
+                _players.value = emptyList()
+
         }
     }
 }

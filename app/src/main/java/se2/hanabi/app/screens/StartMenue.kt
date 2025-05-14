@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +29,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,7 +60,9 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.statement.HttpResponse
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.launch
 import se2.hanabi.app.EndAnimations.FireworkLauncher
 import se2.hanabi.app.GameActivity
@@ -66,6 +71,7 @@ import se2.hanabi.app.R
 import se2.hanabi.app.ui.theme.ClientTheme
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import kotlin.math.sin
 
 
 class StartMenuActivity: ComponentActivity() {
@@ -89,9 +95,10 @@ class StartMenuActivity: ComponentActivity() {
         var isLoading by remember { mutableStateOf(false) }
         var isConnected by remember { mutableStateOf(false) }
         var username by remember { mutableStateOf("") }
-        var isUsernameError by remember { mutableStateOf(false) }
+        var isValidUsername by remember { mutableStateOf(false) }
+        var invalidUsernameMsg by remember { mutableStateOf("Wrong username") }
         var showAvatarDialog by remember { mutableStateOf(false) }
-        var selectedAvatarResId by remember { mutableIntStateOf(R.drawable.whiteavatar) }
+        var avatarResId by remember { mutableIntStateOf(R.drawable.whiteavatar) }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
         val urlEmulator = "http://10.0.2.2:8080"
@@ -149,49 +156,56 @@ class StartMenuActivity: ComponentActivity() {
             coroutineScope.launch {
                 isLoading = true
                 try {
-                    val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
-                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code?name=$encodedName")
-                    statusMessage = response.body()
-                    isConnected = true
-                    val intent = Intent(context, LobbyActivity::class.java).apply {
-                        putExtra("avatarResID", selectedAvatarResId)
-                        putExtra("username", username)
-                        putExtra("lobbyCode", code)
+                    val encodedName = URLEncoder.encode(username)
+                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code"){
+                        parameter("name", encodedName)
                     }
-                    context.startActivity(intent)
-                } catch (e: Exception) {
-                    statusMessage = "Failed to join lobby"
+                    val bodyText: String = response.body()
+                    if (response.status.isSuccess() && bodyText.startsWith("Joined lobby", ignoreCase = true)){
+                        Intent (context, LobbyActivity:: class.java).apply {
+                            putExtra("lobbyCode", code)
+                            putExtra("username", username)
+                            putExtra("AvatarResID", avatarResId)
+                    }.also ( context::startActivity )
+                    //statusMessage = response.body()
+                    //isConnected = true
                 }
+                else {
+                    statusMessage = "Error ${response.status.value}(${response.status.description}): $bodyText"
                 showStatusDialog = true
+            }}
+                catch (e: Exception) {
+                    statusMessage = "Failed to join lobby ${e.localizedMessage}"
+                    showStatusDialog = true
+                }
+                finally {
                 isLoading = false
-            }
+                }
+                }
         }
 
-        fun createLobbyAndJoin(currentUsername: String) {
+        fun createLobbyAndJoin() {
             coroutineScope.launch {
                 isLoading = true
                 try {
-                    val response: HttpResponse = client.get("$urlEmulator/create-lobby")
-                    val createdCode: String = response.body()
+                    val createResp: HttpResponse = client.get("$urlEmulator/create-lobby")
+                    val createdCode: String = createResp.body()
                     val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
-                    val joinResponse: HttpResponse = client.get("$urlEmulator/join-lobby/$createdCode?name=$encodedName")
-                    val joinResponseBody: String = joinResponse.body()
+                    val joinResp: HttpResponse = client.get("$urlEmulator/join-lobby/$createdCode?name=$encodedName")
+                    val joinBody: String = joinResp.body()
 
-                    println("-> Join Response: $joinResponseBody")
-
-                    if (joinResponseBody.startsWith("Joined lobby", ignoreCase = true)) {
-                        val intent = Intent(context, LobbyActivity::class.java).apply {
+                    if (joinBody.startsWith("Joined lobby", ignoreCase = true)) {
+                            Intent(context, LobbyActivity::class.java).apply {
                             putExtra("lobbyCode", createdCode)
                             putExtra("username", username)
-                            putExtra("avatarResID", selectedAvatarResId)
-                        }
-                        context.startActivity(intent)
+                            putExtra("avatarResID", avatarResId)
+                        }.also (context::startActivity)
                     } else {
-                        statusMessage = "Failed to join lobby: $joinResponseBody"
+                        statusMessage = "Failed to join lobby: $joinBody"
                         showStatusDialog = true
                     }
                 } catch (e: Exception) {
-                    statusMessage = "Failed to create lobby"
+                    statusMessage = "Failed to create lobby ${e.localizedMessage}"
                     showStatusDialog = true
                 } finally {
                     isLoading = false
@@ -237,51 +251,45 @@ class StartMenuActivity: ComponentActivity() {
                     .background(Color.DarkGray)
                     .clickable { showAvatarDialog = true },
                     contentAlignment = Alignment.Center){
-                    Image(painter = painterResource(id = selectedAvatarResId),
+                    Image(painter = painterResource(id = avatarResId),
                         contentDescription = "Select Avatar",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop)
                 }
-                androidx.compose.material3.TextField(
-                    value = username,
-                    onValueChange = {
-                            newValue ->
+
+                Spacer(Modifier.height(16.dp))
+
                         val maxLength = 6
                         val allowedChars = "a-zA-Z0-9,.!_;:?"
                         val regex = Regex("^[$allowedChars]*$")
-                        if (newValue.length <= maxLength){
-                            if (newValue.matches(regex)){
-                                username=newValue
-                                isUsernameError = false
-                            }
-                            else{
-                                if (newValue.length < username.length || newValue.isEmpty()){
-                                    username = newValue
+                        OutlinedTextField(
+                            value = username,
+                            onValueChange = {
+                                new -> username = new.take(maxLength)
+                                isValidUsername = username.matches(regex)
+                                invalidUsernameMsg = when{
+                                    username.isEmpty() -> "Please enter username"
+                                    !username.matches(regex) -> "Wrong input"
+                                    else -> ""
                                 }
-                                isUsernameError = newValue.isNotEmpty()
-                            }
-                        }
-                        else{
-                            isUsernameError = true
-                        }
-                    },
-                    label = {
-                        Text("Enter Username")
-                    },
-                    singleLine = true,
-                    isError = isUsernameError,
-                    supportingText ={
-                        if (isUsernameError){
-                            Text("Wrong input!")
-                        }
-                    },
-                    shape = RoundedCornerShape(50),
-                    modifier = Modifier
-                        .padding(top = 16.dp, bottom = 24.dp)
-                        .width(220.dp))
+                            },
+                            label = {
+                                Text("Username")},
+                            isError = !isValidUsername,
+                            singleLine = true)
+                                if (!isValidUsername){
+                                    Text(invalidUsernameMsg, color = MaterialTheme.colorScheme.error)
+                                }
+
+                        Spacer(Modifier.height(20.dp))
+
+              //      shape = RoundedCornerShape(50),
+                //    modifier = Modifier
+                        //      .padding(top = 16.dp, bottom = 24.dp)
+                      //  .width(220.dp))
 
                 Button(
-                    onClick = { showJoinDialog = true },
+                    onClick = { if (isValidUsername) showJoinDialog = true },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF2ecc71),
                         contentColor = Color.White
@@ -301,7 +309,7 @@ class StartMenuActivity: ComponentActivity() {
 
                 Button(
                     onClick = {
-                        createLobbyAndJoin(username)
+                        if (isValidUsername) createLobbyAndJoin()
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.DarkGray,
@@ -441,7 +449,7 @@ class StartMenuActivity: ComponentActivity() {
             AvatarSelectionDialog(
                 onDismiss = {showAvatarDialog = false},
                 onAvatarSelected = {
-                        avatarRes -> selectedAvatarResId = avatarRes
+                        avatarResId = it
                     showAvatarDialog = false
                 }
             )
