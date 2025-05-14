@@ -31,6 +31,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -70,6 +71,13 @@ class LobbyActivity : ComponentActivity() {
                 val players by viewModel.players.collectAsState()
                 val lobbyCode =viewModel.lobbyCode
                 val isHostState = viewModel.isHost
+                val isGameStarted by viewModel.isGameStarted.collectAsState()
+
+                LaunchedEffect(isGameStarted) {
+                    if (isGameStarted) {
+                        navigateToGame()
+                    }
+                }
 
                 LobbyScreen(
                     playerList = players,
