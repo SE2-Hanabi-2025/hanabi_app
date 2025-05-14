@@ -3,10 +3,12 @@ package se2.hanabi.app.lobby
 import androidx.activity.viewModels
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import se2.hanabi.app.R
 import androidx.compose.ui.unit.sp
 import androidx.activity.compose.setContent
+import androidx.collection.emptyLongSet
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,45 +41,74 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-
+import se2.hanabi.app.lobby.LobbyPlayerItem
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 
 import se2.hanabi.app.GameActivity
 import se2.hanabi.app.ui.theme.ClientTheme
+import kotlin.math.log
 
 class LobbyActivity : ComponentActivity() {
 
     private val viewModel: LobbyViewModel by viewModels()
 
+    private var currentPlayerUsername: String? = null
+    private var currentPlayerAvatarResID: Int = R.drawable.whiteavatar
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val receivedLobbyCode = intent.getStringExtra("lobbyCode") ?: "Kein Code"
+        currentPlayerUsername = intent.getStringExtra("username") ?: intent.getStringExtra("Username")
+        currentPlayerAvatarResID = intent.getIntExtra("AvatarResID", intent.getIntExtra("AvatarResID", R.drawable.whiteavatar))
+
+        Log.d("LobbyActivity", "Username: $currentPlayerUsername")
+        Log.d("LobbyActivity", "AvatarResID: $currentPlayerAvatarResID")
+        Log.d("LobbyActivity", "LobbyCode: $receivedLobbyCode")
 
         viewModel.setLobbyCode(receivedLobbyCode)
-
+        currentPlayerUsername?.let{ user ->
+            viewModel.setCurrentPlayerInfo(user, currentPlayerAvatarResID, receivedLobbyCode)
+        }
         setContent{
             ClientTheme {
+                currentPlayerUsername = currentPlayerUsername
+               val lobbyCode = viewModel.lobbyCode
+                val playerList = viewModel.playerList
+
                 LobbyScreen(
-                    //TODO: add dynamic data
-                    playerList = listOf("Player1","Player2","Player3", "Player4", "Player5"),
+
+                    playerList = viewModel.playerList,
                     lobbyCode = viewModel.lobbyCode,
-                    onLeaveLobby = { finish()},
+                    currentPlayerUsername = currentPlayerUsername,
+
+                    onLeaveLobby = { viewModel.leaveLobby(currentPlayerUsername)
+                        finish()},
                     onStartGame = {navigateToGame()}
                 )
             }
         }
     }
+
     private fun navigateToGame(){
-        val intent = Intent(this, GameActivity::class.java)
+        val intent = Intent(this, GameActivity::class.java).apply {
+            putExtra("lobbyCode", viewModel.lobbyCode)
+            putExtra("username", currentPlayerUsername)
+            putExtra("AvatarResID", currentPlayerAvatarResID)
+        }
         startActivity(intent)
     }
 }
 
 @Composable
-fun LobbyScreen (playerList: List<String>,
+fun LobbyScreen (playerList: List<PlayerInLobby>,
                  lobbyCode: String?,
+                 currentPlayerUsername: String?,
                  onLeaveLobby: () -> Unit,
                  onStartGame: () -> Unit){
+
     Box(modifier = Modifier.fillMaxSize()){
         Image(
             painter = painterResource(id = R.drawable.lobbyscreen_bg),
@@ -85,8 +116,6 @@ fun LobbyScreen (playerList: List<String>,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop)
 
-
-    //TODO: Implement server connection
         Box(modifier = Modifier
             .fillMaxWidth(0.8f)
             .height(60.dp)
@@ -109,13 +138,17 @@ fun LobbyScreen (playerList: List<String>,
                     .background(Color.Black.copy(alpha = 0.6f))
                     .padding(horizontal = 30.dp, vertical = 50.dp))
                 {
-                 LazyColumn (modifier = Modifier.fillMaxWidth()
-              ){ items(playerList) { player ->
-                        Row (modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(30.dp))
+                     if (playerList.isEmpty() && currentPlayerUsername != null){
+                 Column {
+                    PlayerRow (player = PlayerInLobby (currentPlayerUsername, R.drawable.whiteavatar), isCurrentPlayer = true)}}
+                else
+                 { LazyColumn ( modifier = Modifier.fillMaxWidth()) {
+                     items(playerList) { player ->
+                        PlayerRow (
+                            player = player,
+                            isCurrentPlayer = (player.name == currentPlayerUsername))
+
+                            /*
                         {
                             Box(
                                 modifier = Modifier
@@ -130,10 +163,11 @@ fun LobbyScreen (playerList: List<String>,
                                 modifier = Modifier.weight(1f),
                                 textAlign = TextAlign.Start,
                                 fontSize = 20.sp
-                        )
+                        )*/
               }}
             }
            }
+
         //Buttons
     Column (
         modifier = Modifier
@@ -165,9 +199,26 @@ fun LobbyScreen (playerList: List<String>,
         ) {
             Text("Leave Lobby", color = Color.White, fontSize = 20.sp)
         }
-
+    }
     }
 }
+@Composable
+fun PlayerRow (player: PlayerInLobby, isCurrentPlayer: Boolean){
+    Row (
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(30.dp)
+    ){
+        Image(painter = painterResource(id = player.avatarResID),
+            contentDescription = "${player.name} avatar",
+            modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.DarkGray))
+        Text(text = if (isCurrentPlayer) "${player.name} (You)" else player.name,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Start,
+            fontSize = 20.sp)
+    }
 }
 
 /*@Preview(showBackground = true)

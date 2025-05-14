@@ -1,6 +1,7 @@
 package se2.hanabi.app.screens
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -43,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -57,7 +59,10 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.statement.HttpResponse
+import io.ktor.http.isSuccess
+import io.ktor.http.parameters
 import kotlinx.coroutines.launch
 import se2.hanabi.app.EndAnimations.FireworkLauncher
 import se2.hanabi.app.GameActivity
@@ -87,9 +92,11 @@ class StartMenuActivity: ComponentActivity() {
         var isLoading by remember { mutableStateOf(false) }
         var isConnected by remember { mutableStateOf(false) }
         var username by remember { mutableStateOf("") }
+        var isValidUsername by remember { mutableStateOf(false) }
+        var invalidUsernameMsg by remember { mutableStateOf("Invalid username") }
         var isUsernameError by remember { mutableStateOf(false) }
         var showAvatarDialog by remember { mutableStateOf(false) }
-        var selectedAvatarResId by remember { mutableIntStateOf(R.drawable.whiteavatar) }
+        var avatarResId by remember { mutableIntStateOf(R.drawable.whiteavatar) }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
         val urlEmulator = "http://10.0.2.2:8080"
@@ -147,21 +154,36 @@ class StartMenuActivity: ComponentActivity() {
             coroutineScope.launch {
                 isLoading = true
                 try {
-                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code")
-                    statusMessage = response.body()
-                    isConnected = true
-                    val intent = Intent(context, LobbyActivity::class.java).apply {
-                        putExtra("avatarResID", selectedAvatarResId)
+                    val encodedUsername = Uri.encode(username)
+                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code"){
+                        parameter("name", encodedUsername)
+                    }
+                    val responseBodyText: String = response.body()
+                    if (response.status.isSuccess() && responseBodyText.startsWith("Joined lobby", ignoreCase = true)){
+                        val intent = Intent(context, LobbyActivity::class.java).apply {
+                            putExtra("avatarResID", avatarResId)
+                            putExtra("username", username)
+                            putExtra("lobbyCode", code)
+                        }
+                        context.startActivity(intent)
+                    }
+          /*          val intent = Intent(context, LobbyActivity::class.java).apply {
+                        putExtra("avatarResID", avatarResId)
                         putExtra("username", username)
                         putExtra("lobbyCode", code)
                     }
                     context.startActivity(intent)
-                } catch (e: Exception) {
+                }*/
+                else{
+                    statusMessage = "Error ${response.status.value}(${response.status.description}): $responseBodyText"
+                    showStartDialog = true}}
+                     catch (e: Exception) {
                     statusMessage = "Failed to join lobby"
                 }
-                showStatusDialog = true
+                finally {
+
                 isLoading = false
-            }
+            }}
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -202,42 +224,41 @@ class StartMenuActivity: ComponentActivity() {
                     .background(Color.DarkGray)
                     .clickable { showAvatarDialog = true },
                     contentAlignment = Alignment.Center){
-                    Image(painter = painterResource(id = selectedAvatarResId),
+                    Image(painter = painterResource(id = avatarResId),
                         contentDescription = "Select Avatar",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop)
                 }
+                isUsernameError = !isValidUsername && username.isNotEmpty()
                 androidx.compose.material3.TextField(
                     value = username,
                     onValueChange = {
                             newValue ->
                         val maxLength = 6
-                        val allowedChars = "a-zA-Z0-9,.!_;:?"
-                        val regex = Regex("^[$allowedChars]*$")
-                        if (newValue.length <= maxLength){
-                            if (newValue.matches(regex)){
-                                username=newValue
-                                isUsernameError = false
+                        val allowedChars = "\"a-zA-Z0-9_\\-.,"
+                        val regex = Regex("^[$allowedChars]+$")
+                        username = newValue
+                        if (newValue.length > maxLength){
+                            isValidUsername = false
+                            invalidUsernameMsg = "Max length: $maxLength"
                             }
-                            else{
-                                if (newValue.length < username.length || newValue.isEmpty()){
-                                    username = newValue
-                                }
-                                isUsernameError = newValue.isNotEmpty()
-                            }
-                        }
-                        else{
+                            else if (!newValue.matches(regex)){
+                                    isValidUsername = false
                             isUsernameError = true
-                        }
-                    },
+                            invalidUsernameMsg = "Use only letters, numbers, or _ - . ,"
+                                }
+                        else {
+                            isValidUsername = true
+                            isUsernameError = false
+                            }
+                        },
                     label = {
                         Text("Enter Username")
                     },
                     singleLine = true,
-                    isError = isUsernameError,
                     supportingText ={
                         if (isUsernameError){
-                            Text("Wrong input!")
+                            Text(invalidUsernameMsg)
                         }
                     },
                     shape = RoundedCornerShape(50),
@@ -266,27 +287,58 @@ class StartMenuActivity: ComponentActivity() {
 
                 Button(
                     onClick = {
-                        coroutineScope.launch {
-                            isLoading = true
-                            try {
+                        if (username.isBlank()){
+                          invalidUsernameMsg = "Username should not be empty!"
+                          isUsernameError = true
+                          return@Button
+                        }
+                        if (!isValidUsername){
+                            isUsernameError = true
+                            return@Button
+                        }
+                       coroutineScope.launch {
+                           isLoading = true
+                         try {
                                 val response: HttpResponse = client.get("$urlEmulator/create-lobby")
+                                    if (!response.status.isSuccess()){
+                                        val errorBody: String = try {
+                                            response.body()
+                                        }
+                                        catch (e: Exception){ "" }
+                                        statusMessage = "Failed to create lobby: ${response.status.value}(${response.status.description}) - $errorBody"
+                                        showStatusDialog = true
+                                    }
+                             else{
                                 val createdCode: String = response.body()
                                 println("Created lobby code: $createdCode")
-
+                             val encodedUsername = Uri.encode(username)
                                 //lobby beitreten
-                                val joinResponse: HttpResponse = client.get("$urlEmulator/join-lobby/$createdCode")
-                                val joinResponseBody: String = joinResponse.body()
+                                val joinResponse: HttpResponse = client.get("$urlEmulator/join-lobby/$createdCode"){
+                                    parameter ("name", encodedUsername)
+                                }
+                                        if (!joinResponse.status.isSuccess()){
+                                            val errorBodyJoin: String = try {
+                                                joinResponse.body()}
+                                            catch (e: Exception){""}
+                                            statusMessage = "Failed to join lobby: ${joinResponse.status.value} (${joinResponse.status.description}) - $errorBodyJoin"
+                                        showStatusDialog = true
+                                        } else{
+                               val joinResponseBody: String = joinResponse.body()
 
                                 if (joinResponseBody.startsWith("Joined lobby" , ignoreCase = true)) {
                                     //Navigation zur LobbyActivity
                                 val intent = Intent(context, LobbyActivity::class.java).apply {
                                     putExtra("lobbyCode", createdCode) // Übergabe des Lobby-Codes
+                                    putExtra("username", username)
+                                    putExtra("AvatarResId", avatarResId)
                                 }
                                 context.startActivity(intent)
                                 } else{
                                     statusMessage = "Failed to join lobby: $joinResponseBody"
                                     showStatusDialog = true
                                 }
+                                        }
+                                    }
                             } catch (e: Exception) {
                                 println("Error creating lobby: ${e.localizedMessage}")
                                 statusMessage = "Failed to create lobby: ${e.localizedMessage}"
@@ -434,7 +486,7 @@ class StartMenuActivity: ComponentActivity() {
             AvatarSelectionDialog(
                 onDismiss = {showAvatarDialog = false},
                 onAvatarSelected = {
-                        avatarRes -> selectedAvatarResId = avatarRes
+                        avatarRes -> avatarResId = avatarRes
                     showAvatarDialog = false
                 }
             )
