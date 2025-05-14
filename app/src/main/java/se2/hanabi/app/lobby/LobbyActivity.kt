@@ -2,7 +2,9 @@ package se2.hanabi.app.lobby
 
 import androidx.activity.viewModels
 import android.content.Intent
+import android.icu.util.Currency
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import se2.hanabi.app.R
 import androidx.compose.ui.unit.sp
@@ -38,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,11 +55,22 @@ class LobbyActivity : ComponentActivity() {
 
     private val viewModel: LobbyViewModel by viewModels()
 
+    private var currentPlayerUsername: String? = null
+    private var currentPlayerAvatarResID: Int = R.drawable.whiteavatar
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val receivedLobbyCode = intent.getStringExtra("lobbyCode") ?: "Kein Code"
+        currentPlayerUsername = intent.getStringExtra("username")
+        currentPlayerAvatarResID = intent.getIntExtra("avatarResID", R.drawable.whiteavatar)
+
+        Log.d("LobbyActivity", "Username: $currentPlayerUsername")
+        Log.d("LobbyActivity", "AvatarResID: $currentPlayerAvatarResID")
+        Log.d("LobbyActivity", "LobbyCode: $receivedLobbyCode")
 
         viewModel.setLobbyCode(receivedLobbyCode)
+        currentPlayerUsername?.let { user -> viewModel.setCurrentPlayerInfo (user,currentPlayerAvatarResID) }
         viewModel.startPlayerSync()
 
         setContent{
@@ -65,7 +79,11 @@ class LobbyActivity : ComponentActivity() {
                 LobbyScreen(
                     playerList = players,
                     lobbyCode = viewModel.lobbyCode,
-                    onLeaveLobby = { finish()},
+                    currentPlayerUsername = currentPlayerUsername,
+                    currentPlayerAvatarResID = currentPlayerAvatarResID,
+                    onLeaveLobby = {
+                        viewModel.leaveLobby(currentPlayerUsername)
+                        finish()},
                     onStartGame = {navigateToGame()}
                 )
             }
@@ -78,8 +96,10 @@ class LobbyActivity : ComponentActivity() {
 }
 
 @Composable
-fun LobbyScreen (playerList: List<String>,
+fun LobbyScreen (playerList: List<PlayerInLobby>,
                  lobbyCode: String?,
+                 currentPlayerUsername: String?,
+                 currentPlayerAvatarResID: Int,
                  onLeaveLobby: () -> Unit,
                  onStartGame: () -> Unit){
     Box(modifier = Modifier.fillMaxSize()){
@@ -90,7 +110,7 @@ fun LobbyScreen (playerList: List<String>,
             contentScale = ContentScale.Crop)
 
 
-    //TODO: Implement server connection
+
         Box(modifier = Modifier
             .fillMaxWidth(0.8f)
             .height(60.dp)
@@ -121,15 +141,12 @@ fun LobbyScreen (playerList: List<String>,
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(30.dp))
                         {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.DarkGray)
-                            )
+                           Image(painter = painterResource(id = player.avatarResID),
+                               contentDescription = "${player.name} avatar",
+                               modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.DarkGray))
 
                             Text(
-                            text = player,
+                            text = if (player.name == currentPlayerUsername) "${player.name} (You)" else player.name,
                             color = Color.White,
                                 modifier = Modifier.weight(1f),
                                 textAlign = TextAlign.Start,
