@@ -1,4 +1,4 @@
-package se2.hanabi.app
+package se2.hanabi.app.activities
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

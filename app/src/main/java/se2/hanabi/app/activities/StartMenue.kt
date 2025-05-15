@@ -1,4 +1,4 @@
-package se2.hanabi.app.screens
+package se2.hanabi.app.activities
 
 import android.content.Intent
 import android.os.Bundle
@@ -60,7 +60,6 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.launch
 import se2.hanabi.app.EndAnimations.FireworkLauncher
-import se2.hanabi.app.GameActivity
 import se2.hanabi.app.lobby.LobbyActivity
 import se2.hanabi.app.R
 import se2.hanabi.app.ui.theme.ClientTheme

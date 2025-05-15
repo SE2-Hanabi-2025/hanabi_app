@@ -1,4 +1,4 @@
-package se2.hanabi.app
+package se2.hanabi.app.activities
 
 import android.content.Intent
 import android.os.Bundle
@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import se2.hanabi.app.EndAnimations.FireworkLauncher
+import se2.hanabi.app.MainActivity
 
 class WinActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

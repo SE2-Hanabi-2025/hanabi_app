@@ -48,9 +48,8 @@ import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import se2.hanabi.app.GameActivity
+import se2.hanabi.app.activities.GameActivity
 import se2.hanabi.app.ui.theme.ClientTheme
 
 class LobbyActivity : ComponentActivity() {

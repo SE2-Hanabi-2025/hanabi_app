@@ -4,7 +4,9 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
-import se2.hanabi.app.screens.StartMenuActivity
+import se2.hanabi.app.activities.GameActivity
+import se2.hanabi.app.activities.StartMenuActivity
+import se2.hanabi.app.lobby.LobbyActivity
 
 
 class MainActivity : ComponentActivity() {

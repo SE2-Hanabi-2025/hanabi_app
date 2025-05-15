@@ -13,8 +13,8 @@
         android:theme="@style/Theme.App"
         tools:targetApi="31">
 
-        <activity android:name=".GameActivity" />
-        <activity android:name=".WinActivity" />
+        <activity android:name=".activities.GameActivity" />
+        <activity android:name=".activities.WinActivity" />
 
         <activity
             android:name=".MainActivity"
@@ -27,7 +27,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".screens.StartMenuActivity">
+        <activity android:name=".activities.StartMenuActivity">
         </activity>
         <activity android:name=".lobby.LobbyActivity"/>
     </application>
