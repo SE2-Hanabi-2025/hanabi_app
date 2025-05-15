@@ -15,7 +15,9 @@ import se2.hanabi.app.model.Hint
 import kotlin.random.Random
 
 /**
- * GamePlayViewModel stores the current game state and handles event such as button clicks.
+ * GamePlayViewModel displays a gameStatus object.
+ * it passes on action (hint, play, discard) to the GamePlayService.
+ * handles local logic of showing selected card/hand/ih, as well as when hint selecter is shown.
  *
  */
 class GamePlayViewModel: ViewModel() {
@@ -137,35 +139,6 @@ class GamePlayViewModel: ViewModel() {
         _isValidHint.value = false
     }
 
-}
-
-// functions to produce game state for demo/development
-fun generateTestColorStackValues(): SnapshotStateList<Int> {
-    return mutableStateListOf(Random.nextInt(6),Random.nextInt(6),Random.nextInt(6),Random.nextInt(6),Random.nextInt(6),)
-}
-
-fun randomCard(): Card {
-    return Card(Card.Color.entries[Random.nextInt(Card.Color.entries.size)],Random.nextInt(5)+1)
-}
-
-fun generateTestHands(numPlayers: Int): List<List<Card>> {
-    val numPlayers = numPlayers.coerceIn(2,5)
-    val hands = mutableListOf<List<Card>>()
-    val handSize = if (numPlayers<=3) 5 else 4
-
-    for (i in 0 until numPlayers) {
-        hands.add(randomHand(handSize))
-    }
-    return hands
-}
-
-fun randomHand(numCards: Int): List<Card> {
-
-    val hand = mutableListOf<Card>()
-    for (i in 0 until numCards) {
-        hand.add( randomCard())
-    }
-    return hand
 }
 
 // Test game status
