@@ -143,6 +143,6 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
 
     implementation(libs.kotlinx.serialization.json.v180)
-
+    implementation("io.ktor:ktor-client-websockets:2.3.4")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
 }
