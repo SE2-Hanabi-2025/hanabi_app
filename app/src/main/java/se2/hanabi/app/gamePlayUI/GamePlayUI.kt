@@ -25,7 +25,7 @@ val colors = listOf("red","green","yellow","blue","white")
  * This includes:
  * - the cards from all players' hands
  * - fuse/hint tokens, discard/draw pile, color stacks
- * - game title at top
+ *
  */
 @Composable
 fun GamePlayUI() {
@@ -38,10 +38,6 @@ fun GamePlayUI() {
         ),
         contentAlignment = Alignment.Center
     ) {
-        val titleModifier = Modifier
-            .align(Alignment.TopCenter)
-            .padding(top = 20.dp)
-   //     Title(modifier = titleModifier)
         GameBoardUI()
         PlayersCardsUI()
     }
