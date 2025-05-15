@@ -15,7 +15,9 @@ import se2.hanabi.app.model.Hint
 import kotlin.random.Random
 
 /**
- * GamePlayViewModel stores the current game state and handles event such as button clicks.
+ * GamePlayViewModel displays a gameStatus object.
+ * it passes on action (hint, play, discard) to the GamePlayService.
+ * handles local logic of showing selected card/hand/ih, as well as when hint selecter is shown.
  *
  */
 class GamePlayViewModel: ViewModel() {
