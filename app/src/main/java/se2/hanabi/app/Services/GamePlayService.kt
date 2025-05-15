@@ -1,5 +1,6 @@
 package se2.hanabi.app.Services
 
+import WebSocketService
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -18,8 +19,9 @@ class GamePlayService(
     private val lobbyId: Int,
     private val playerId: Int
     ) {
-    private val baseURL = "http://10.145.212.9:8080" // "http://10.0.2.2:8080" // for emulator
+    private val baseURL = "http://10.0.2.2:8080" // "http://10.0.2.2:8080" //"http://10.145.212.9:8080" for emulator
     private val client = HttpClient(CIO)
+    private val webSocketService = WebSocketService()
 
     suspend fun getGameStatus(): GameStatus? {
         val msg = "LobbyId: $lobbyId"
@@ -27,7 +29,7 @@ class GamePlayService(
             val response: HttpResponse = client.get("$baseURL/{$lobbyId}/status") {
                 parameter("lobbyId", lobbyId)
             }
-
+            getGameStatusSocket()
             if (response.status.isSuccess()) {
                 val gameStatus: GameStatus = Json.decodeFromString<GameStatus>(response.body())
                 println("Game status successfully updated | $msg")
@@ -54,7 +56,7 @@ class GamePlayService(
                 parameter("cardId", cardId)
                 parameter("color", stackColor)
             }
-
+            playCardSocket(cardId,stackColor)
             if (response.status.isSuccess()) {
                 println("Card successfully played | $msg")
             } else if (response.status == HttpStatusCode.BadRequest) {
@@ -77,7 +79,7 @@ class GamePlayService(
                 parameter("playerId", playerId)
                 parameter("cardId", cardId)
             }
-
+            discardCardSocket(cardId)
             if (response.status.isSuccess()) {
                 println("Card successfully discarded | $msg")
             } else if (response.status == HttpStatusCode.BadRequest) {
@@ -102,7 +104,7 @@ class GamePlayService(
                 parameter("toPlayerId", toPlayerId)
                 parameter("hint", hint)
             }
-
+            giveHintSocket(toPlayerId,hint)
             if (response.status.isSuccess()) {
                 println("Hint successfully given | $msg")
             } else if (response.status == HttpStatusCode.BadRequest) {
@@ -116,6 +118,22 @@ class GamePlayService(
         } catch (e: Exception) {
             println("Error giving hint | $msg: ${e.message}")
         }
+    }
+
+    suspend fun getGameStatusSocket() {
+        webSocketService.sendMessage("Request through socket: getGameStatus for lobby $lobbyId")
+    }
+
+    suspend fun playCardSocket(cardId: Int, stackColor: Card.Color) {
+        webSocketService.sendMessage("Request through socket: playCard $cardId of color $stackColor by player $playerId in lobby $lobbyId")
+    }
+
+    suspend fun discardCardSocket(cardId: Int) {
+        webSocketService.sendMessage("Request through socket: discardCard $cardId by player $playerId in lobby $lobbyId")
+    }
+
+    suspend fun giveHintSocket(toPlayerId: Int, hint: Hint) {
+        webSocketService.sendMessage("Request through socket: giveHint $hint from $playerId to $toPlayerId in lobby $lobbyId")
     }
 
 }
