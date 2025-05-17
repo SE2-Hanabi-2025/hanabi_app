@@ -192,7 +192,7 @@ fun EmptyStack(
         isFlipped = true,
         isPortrait = isPortrait,
         onClick = onClick,
-        showColorHint = true
+        colorHint = color
     )
 }
 
