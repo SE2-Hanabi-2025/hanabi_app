@@ -14,6 +14,7 @@ import kotlinx.serialization.json.Json
 import se2.hanabi.app.model.Card
 import se2.hanabi.app.model.GameStatus
 import se2.hanabi.app.model.Hint
+import se2.hanabi.app.model.HintType
 
 class GamePlayService(
     private val lobbyId: Int,
@@ -97,12 +98,15 @@ class GamePlayService(
 
     //hint in backend split into hintType and value
     suspend fun  giveHint(toPlayerId:Int, hint: Hint) {
-        val msg = "fromPlayerId: $playerId | toPlayerId: $toPlayerId | hint: $hint"
+        val hintType= if(hint.getColor()!=null) HintType.COLOR else HintType.VALUE
+        val hintValueAsString = if (hintType==HintType.COLOR) hint.getColor().toString() else hint.getValue().toString()
+        val msg = "fromPlayerId: $playerId | toPlayerId: $toPlayerId | hintType: $hintType | value: $hintValueAsString"
         try {
             val response: HttpResponse = client.post("$baseURL/{$lobbyId}/hint") {
                 parameter("fromPlayerId", playerId)
                 parameter("toPlayerId", toPlayerId)
-                parameter("hint", hint)
+                parameter("hintType", hintType)
+                parameter("hintValue", hintValueAsString)
             }
             giveHintSocket(toPlayerId,hint)
             if (response.status.isSuccess()) {
