@@ -80,8 +80,8 @@ fun PlayersHand(
                     isFlipped = true,
                     isSelected = cardId == selectedCard,
                     onClick = { onCardClick(cardId) },
-                    colorHint = viewModel.shownColorHints.value[cardId],
-                    valueHint = viewModel.shownValueHints.value[cardId],
+                    colorHint = viewModel.cardsShowingColorHints.value[cardId],
+                    valueHint = viewModel.cardsShowingValueHints.value[cardId],
                 )
             }
         }
@@ -176,8 +176,8 @@ fun OtherPlayersHand(
                                     card.value == viewModel.selectedHint.collectAsState().value?.getValue()
                             ),
                     highlightColor = if (viewModel.selectedHint.collectAsState().value?.getColor()!=null) colorFromColorEnum(card.color) else Color.White,
-                    colorHint = viewModel.shownColorHints.value[card.getID()],
-                    valueHint = viewModel.shownValueHints.value[card.getID()],
+                    colorHint = viewModel.cardsShowingColorHints.value[card.getID()],
+                    valueHint = viewModel.cardsShowingValueHints.value[card.getID()],
                 )
             }
         }

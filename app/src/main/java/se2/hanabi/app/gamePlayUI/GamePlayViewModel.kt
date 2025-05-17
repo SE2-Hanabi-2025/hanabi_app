@@ -63,10 +63,10 @@ class GamePlayViewModel: ViewModel() {
     private val _isValidHint = MutableStateFlow(false)
     val isValidHint: MutableStateFlow<Boolean> = _isValidHint
 
-    private val _shownColorHints = MutableStateFlow<Map<Int, Card.Color>>(gameStatus.shownColorHints)
-    val shownColorHints: StateFlow<Map<Int, Card.Color>> = _shownColorHints
-    private val _shownValueHints =  MutableStateFlow<Map<Int, Int>>(gameStatus.shownValueHints)
-    val shownValueHints: StateFlow<Map<Int,Int>> = _shownValueHints
+    private val _cardsShowingColorHints = MutableStateFlow<Map<Int, Card.Color>>(gameStatus.cardsShowingColorHints)
+    val cardsShowingColorHints: StateFlow<Map<Int, Card.Color>> = _cardsShowingColorHints
+    private val _cardsShowingValueHints =  MutableStateFlow<Map<Int, Int>>(gameStatus.cardsShowingValueHints)
+    val cardsShowingValueHints: StateFlow<Map<Int,Int>> = _cardsShowingValueHints
 
     // local functions
     fun onPlayersCardClick(cardId: Int) {
@@ -191,8 +191,8 @@ fun generateTestGameStatus(): GameStatus {
         playedCards = playedCards,
         discardPile = discardPile,
         numRemainingCard = Random.nextInt(16),
-        shownColorHints = shownColorHints,
-        shownValueHints = shownValueHints,
+        cardsShowingColorHints = shownColorHints,
+        cardsShowingValueHints = shownValueHints,
         hintTokens = 8,
         strikes = 0,
         gameOver = false,
