@@ -75,17 +75,13 @@ fun PlayersHand(
             Arrangement.SpaceEvenly,
         ) {
             hand.forEach() { cardId ->
-                val colorHint = viewModel.shownColorHints.value[cardId]
-                val color: Card.Color = colorHint ?: Card.Color.WHITE // WHITE is dummy color
-                val valueHint = viewModel.shownValueHints.value[cardId]
-                val value: Int = valueHint ?: 1 // 1 is dummy value
                 CardItem(
-                    card = Card(color=color, value=value, id = -1), // dummy card id = -1
+                    card = Card(color=Card.Color.RED, value=1, id = -1), // dummy card: red|1 id = -1
                     isFlipped = true,
                     isSelected = cardId == selectedCard,
                     onClick = { onCardClick(cardId) },
-                    showColorHint = colorHint!=null,
-                    showValueHint = valueHint!=null,
+                    colorHint = viewModel.shownColorHints.value[cardId],
+                    valueHint = viewModel.shownValueHints.value[cardId],
                 )
             }
         }
@@ -180,8 +176,8 @@ fun OtherPlayersHand(
                                     card.value == viewModel.selectedHint.collectAsState().value?.getValue()
                             ),
                     highlightColor = if (viewModel.selectedHint.collectAsState().value?.getColor()!=null) colorFromColorEnum(card.color) else Color.White,
-                    showColorHint = viewModel.shownColorHints.value.contains(card.getID()),
-                    showValueHint = viewModel.shownValueHints.value.contains(card.getID())
+                    colorHint = viewModel.shownColorHints.value[card.getID()],
+                    valueHint = viewModel.shownValueHints.value[card.getID()],
                 )
             }
         }

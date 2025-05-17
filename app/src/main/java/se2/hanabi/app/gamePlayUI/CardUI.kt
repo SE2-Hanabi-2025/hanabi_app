@@ -57,8 +57,8 @@ fun CardItem(
     isHighlighted: Boolean = isSelected,
     onClick: () -> Unit = {},
     highlightColor: Color = Color.White,
-    showColorHint: Boolean = false,
-    showValueHint: Boolean = false,
+    colorHint: Card.Color? = null,
+    valueHint: Int? = null,
 ) {
     var actualCardWidth = if (isPortrait) cardWidth else cardHeight
     var actualCardHeight = if (isPortrait) cardHeight else cardWidth
@@ -102,25 +102,25 @@ fun CardItem(
             contentScale = ContentScale.Fit
         )
         //hint overlay
-        if (showColorHint || showValueHint) {
-            val cardHintBackgroundColor = if (showColorHint) colorFromColorEnum(card.color) else Color.Black
-            val cardHintValueColor = if (showColorHint) Color.Black else Color(0xFFF2FF90)
+        if (colorHint != null || valueHint != null) {
+            val hintColor = if (colorHint!=null) colorFromColorEnum(colorHint) else Color.Black
+            val cardHintValueColor = if (colorHint!=null) Color.Black else Color(0xFFF2FF90)
             Box(
                 modifier = Modifier
                     .matchParentSize()
                     .background(
                         brush = Brush.radialGradient(
-                            colors = listOf(cardHintBackgroundColor, cardHintBackgroundColor.copy(alpha = 0f)),
+                            colors = listOf(hintColor, hintColor.copy(alpha = 0f)),
                             center = Offset(0f, 0f),
                             radius = with(LocalDensity.current) {actualCardWidth.toPx()*0.7f }
                         )
                     ),
                 contentAlignment = Alignment.TopStart
             )   {
-                if (showValueHint) {
+                if (valueHint != null) {
                     Text(
                         modifier = Modifier.padding(3.dp),
-                        text = "${card.value}",
+                        text = "$valueHint",
                         fontFamily = FontFamily.Cursive,
                         color = cardHintValueColor,
                         fontSize = 30.sp,
