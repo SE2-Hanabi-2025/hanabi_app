@@ -1,7 +1,5 @@
 package se2.hanabi.app.gamePlayUI
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,10 +63,10 @@ class GamePlayViewModel: ViewModel() {
     private val _isValidHint = MutableStateFlow(false)
     val isValidHint: MutableStateFlow<Boolean> = _isValidHint
 
-    private val _shownColorHints = MutableStateFlow<MutableMap<Int, Card.Color>>(mutableMapOf())
-    val shownColorHints: StateFlow<MutableMap<Int, Card.Color>> = _shownColorHints
-    private val _shownValueHints =  MutableStateFlow<MutableMap<Int, Int>>(mutableMapOf())
-    val shownValueHints: StateFlow<MutableMap<Int,Int>> = _shownValueHints
+    private val _shownColorHints = MutableStateFlow<Map<Int, Card.Color>>(gameStatus.shownColorHints)
+    val shownColorHints: StateFlow<Map<Int, Card.Color>> = _shownColorHints
+    private val _shownValueHints =  MutableStateFlow<Map<Int, Int>>(gameStatus.shownValueHints)
+    val shownValueHints: StateFlow<Map<Int,Int>> = _shownValueHints
 
     // local functions
     fun onPlayersCardClick(cardId: Int) {
@@ -174,6 +172,18 @@ fun generateTestGameStatus(): GameStatus {
         Card(color = Card.Color.BLUE, value = 2)
     )
 
+    val shownColorHints = mapOf (
+        0 to Card.Color.RED,
+        5 to Card.Color.BLUE,
+        8 to Card.Color.GREEN,
+    )
+
+    val shownValueHints = mapOf (
+        3 to 5,
+        5 to 4,
+        7 to 3,
+    )
+
     return GameStatus(
         players = players,
         playersHand = listOf(6,7,8),
@@ -181,7 +191,8 @@ fun generateTestGameStatus(): GameStatus {
         playedCards = playedCards,
         discardPile = discardPile,
         numRemainingCard = Random.nextInt(16),
-        shownHints = HashMap<Int, Hint>(),
+        shownColorHints = shownColorHints,
+        shownValueHints = shownValueHints,
         hintTokens = 8,
         strikes = 0,
         gameOver = false,
