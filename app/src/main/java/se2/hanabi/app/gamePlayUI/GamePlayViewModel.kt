@@ -1,7 +1,5 @@
 package se2.hanabi.app.gamePlayUI
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +29,7 @@ class GamePlayViewModel: ViewModel() {
     private val _thisPlayer = MutableStateFlow(2) // id of "cat" from genertaeTestGameStatus
     val thisPlayer: MutableStateFlow<Int> = _thisPlayer
 
-    private val _thisPlayersHand = MutableStateFlow<List<Int>>(gameStatus.playersHand) // id of "cat" from genertaeTestGameStatus
+    private val _thisPlayersHand = MutableStateFlow<List<Int>>(gameStatus.playerCardIds) // id of "cat" from genertaeTestGameStatus
     val thisPlayersHand: MutableStateFlow<List<Int>> = _thisPlayersHand
 
     private val _otherPlayersHands = MutableStateFlow(gameStatus.visibleHands)
@@ -40,13 +38,13 @@ class GamePlayViewModel: ViewModel() {
     private val _stackValues = MutableStateFlow<Map<Card.Color, Int>>(gameStatus.playedCards)
     val stackValues: MutableStateFlow<Map<Card.Color, Int>> = _stackValues
 
-    private val _numRemainingCard = MutableStateFlow(gameStatus.numRemainingCard)
+    private val _numRemainingCard = MutableStateFlow(gameStatus.numRemainingCards)
     val numRemainingCard: MutableStateFlow<Int> = _numRemainingCard
 
     private val _lastDiscardedCard = MutableStateFlow<Card?>(gameStatus.discardPile.last())
     val lastDiscardedCard: MutableStateFlow<Card?> = _lastDiscardedCard
 
-    private val _numRemainingHintTokens = MutableStateFlow(gameStatus.hintTokens)
+    private val _numRemainingHintTokens = MutableStateFlow(gameStatus.numRemainingHintTokens)
     val numRemainingHintTokens: MutableStateFlow<Int> = _numRemainingHintTokens
 
     private val _numRemainingFuseTokens = MutableStateFlow(gameStatus.strikes)
@@ -176,13 +174,13 @@ fun generateTestGameStatus(): GameStatus {
 
     return GameStatus(
         players = players,
-        playersHand = listOf(6,7,8),
+        playerCardIds = listOf(6,7,8),
         visibleHands = visibleHands,
         playedCards = playedCards,
         discardPile = discardPile,
-        numRemainingCard = Random.nextInt(16),
+        numRemainingCards = Random.nextInt(16),
         shownHints = HashMap<Int, Hint>(),
-        hintTokens = 8,
+        numRemainingHintTokens = 8,
         strikes = 0,
         gameOver = false,
         currentPlayer = 1

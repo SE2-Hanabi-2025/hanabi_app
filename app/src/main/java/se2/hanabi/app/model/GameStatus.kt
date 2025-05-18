@@ -5,13 +5,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GameStatus(
     val players: List<Player>,
-    val playersHand: List<Int>,
+    val playerCardIds: List<Int>,
     val visibleHands: Map<Int, List<Card>>,
     val playedCards: Map<Card.Color, Int>,
     val discardPile: List<Card>,
-    val numRemainingCard: Int,
+    val numRemainingCards: Int,
     val shownHints: Map<Int, Hint>,
-    val hintTokens: Int,
+    val numRemainingHintTokens: Int,
     val strikes: Int,
     val gameOver: Boolean,
     val currentPlayer: Int
