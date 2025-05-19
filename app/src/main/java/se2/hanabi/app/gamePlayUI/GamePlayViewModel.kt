@@ -20,8 +20,14 @@ import kotlin.random.Random
  * handles local logic of showing selected card/hand/ih, as well as when hint selecter is shown.
  *
  */
-class GamePlayViewModel: ViewModel() {
-    private val gamePlayService: GamePlayService = GamePlayService(lobbyId = 12345, playerId = 42)
+class GamePlayViewModel(
+    private val lobbyId: String,
+    private val playerId: Int
+): ViewModel() {
+    private val gamePlayService: GamePlayService = GamePlayService(
+        lobbyId = lobbyId,
+        playerId = playerId
+    )
     private var gameStatus: GameStatus = generateTestGameStatus()
 
     // game state info

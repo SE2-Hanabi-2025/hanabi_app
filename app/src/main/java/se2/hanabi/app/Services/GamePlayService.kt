@@ -16,9 +16,9 @@ import se2.hanabi.app.model.GameStatus
 import se2.hanabi.app.model.Hint
 
 class GamePlayService(
-    private val lobbyId: Int,
+    private val lobbyId: String,
     private val playerId: Int
-    ) {
+) {
     private val baseURL = "http://10.0.2.2:8080" // "http://10.0.2.2:8080" //"http://10.145.212.9:8080" for emulator
     private val client = HttpClient(CIO)
     private val webSocketService = WebSocketService()

@@ -79,6 +79,31 @@ class LobbyViewModel : ViewModel() {
                 delay(intervalMillis)
             }
         }
+    }    // Member variable for storing username so we can match it in the players list
+    private val _username = mutableStateOf("")
+    
+    // Set username when joining a lobby
+    fun setUsername(username: String) {
+        _username.value = username
+    }
+
+    // Get player ID by matching username in the players list
+    fun getPlayerId(): Int {
+        val username = _username.value
+        val playersList = _players.value
+        
+        // If we have a username, find its index in the players list
+        // The index corresponds to the player ID assigned by the server
+        if (username.isNotEmpty()) {
+            val index = playersList.indexOf(username)
+            if (index != -1) {
+                return index
+            }
+        }
+        
+        // If we can't find the player or have no username, return -1
+        // The calling code should handle this appropriately
+        return 0
     }
 }
 
