@@ -17,7 +17,7 @@ import se2.hanabi.app.model.Hint
 import se2.hanabi.app.model.HintType
 
 class GamePlayService(
-    private val lobbyId: Int,
+    private val lobbyId: String,
     private val playerId: Int
     ) {
     private val baseURL = "http://10.0.2.2:8080" // "http://10.0.2.2:8080" //"http://10.145.212.9:8080" for emulator
@@ -55,7 +55,7 @@ class GamePlayService(
             val response: HttpResponse = client.post("$baseURL/$lobbyId/play") {
                 parameter("playerId", playerId)
                 parameter("cardId", cardId)
-                parameter("color", stackColor)
+                parameter("stackColor", stackColor.name)
             }
             playCardSocket(cardId,stackColor)
             if (response.status.isSuccess()) {
@@ -76,7 +76,7 @@ class GamePlayService(
     suspend fun  discardCard(cardId: Int) {
         val msg = "playerId: $playerId | cardId: $cardId"
         try {
-            val response: HttpResponse = client.post("$baseURL/{$lobbyId}/discard") {
+            val response: HttpResponse = client.post("$baseURL/$lobbyId/discard") {
                 parameter("playerId", playerId)
                 parameter("cardId", cardId)
             }

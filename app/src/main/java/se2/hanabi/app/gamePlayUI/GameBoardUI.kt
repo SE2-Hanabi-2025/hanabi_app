@@ -31,8 +31,8 @@ import se2.hanabi.app.model.Card
  *
  */
 @Composable
-fun GameBoardUI() {
-    val viewModel: GamePlayViewModel = viewModel()
+fun GameBoardUI(viewModelIn: GamePlayViewModel) {
+    val viewModel: GamePlayViewModel = viewModelIn
 
     Row(
         modifier = Modifier

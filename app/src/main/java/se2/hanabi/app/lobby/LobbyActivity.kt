@@ -76,7 +76,7 @@ class LobbyActivity : ComponentActivity() {
 
                 LaunchedEffect(isGameStarted) {
                     if (isGameStarted) {
-                        navigateToGame()
+                        navigateToGame(receivedLobbyCode)
                     }
                 }
 
@@ -91,8 +91,11 @@ class LobbyActivity : ComponentActivity() {
         }
     }
 
-    private fun navigateToGame() {
-        val intent = Intent(this, GameActivity::class.java)
+    private fun navigateToGame(lobbyCode: String, playerId: Int =0 ) { // TODO use player id in lobby and pass it on to game
+        val intent = Intent(this, GameActivity::class.java).apply {
+            putExtra("lobbyCode", lobbyCode)
+            putExtra("playerId", playerId)
+        }
         startActivity(intent)
     }
 
@@ -102,7 +105,7 @@ class LobbyActivity : ComponentActivity() {
                 val response: HttpResponse =
                     HttpClient(CIO).get("http://10.0.2.2:8080/start-game/$lobbyCode")
                 if (response.status == HttpStatusCode.OK) {
-                    navigateToGame()
+                    navigateToGame(lobbyCode)
                 }
             } catch (e: Exception) {
             }

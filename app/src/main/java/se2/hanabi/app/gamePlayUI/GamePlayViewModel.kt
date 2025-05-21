@@ -1,5 +1,6 @@
 package se2.hanabi.app.gamePlayUI
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,16 +19,24 @@ import kotlin.random.Random
  * handles local logic of showing selected card/hand/ih, as well as when hint selecter is shown.
  *
  */
-class GamePlayViewModel: ViewModel() {
-    private val gamePlayService: GamePlayService = GamePlayService(lobbyId = 12345, playerId = 42)
+class GamePlayViewModel(
+    private val _lobbyCode: String,
+    private val _thisPlayerId: Int
+) : ViewModel() {
+
+    val thisPlayer: MutableStateFlow<Int> = MutableStateFlow(_thisPlayerId)
+
+
+    private lateinit var gamePlayService: GamePlayService
+    init {
+        gamePlayService= GamePlayService(_lobbyCode, _thisPlayerId)
+    }
+
     private var gameStatus: GameStatus = generateTestGameStatus()
 
     // game state info
     private val _Players = MutableStateFlow(gameStatus.players)
     val numPlayers: MutableStateFlow<List<Player>> = _Players
-
-    private val _thisPlayer = MutableStateFlow(2) // id of "cat" from genertaeTestGameStatus
-    val thisPlayer: MutableStateFlow<Int> = _thisPlayer
 
     private val _thisPlayersHand = MutableStateFlow<List<Int>>(gameStatus.playerCardIds) // id of "cat" from genertaeTestGameStatus
     val thisPlayersHand: MutableStateFlow<List<Int>> = _thisPlayersHand

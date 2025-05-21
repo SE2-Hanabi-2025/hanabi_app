@@ -28,7 +28,7 @@ val colors = listOf("red","green","yellow","blue","white")
  *
  */
 @Composable
-fun GamePlayUI() {
+fun GamePlayUI(viewModel: GamePlayViewModel) {
     Box(modifier = Modifier
         .fillMaxSize()
         .background(
@@ -38,7 +38,7 @@ fun GamePlayUI() {
         ),
         contentAlignment = Alignment.Center
     ) {
-        GameBoardUI()
-        PlayersCardsUI()
+        GameBoardUI(viewModel)
+        PlayersCardsUI(viewModel)
     }
 }

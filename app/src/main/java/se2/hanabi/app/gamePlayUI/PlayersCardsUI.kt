@@ -35,8 +35,8 @@ import kotlin.math.roundToInt
  * - other players hands on the side of the screen with the card faces visible.
  */
 @Composable
-fun PlayersCardsUI() {
-    val viewModel: GamePlayViewModel = viewModel()
+fun PlayersCardsUI(viewModelIn: GamePlayViewModel) {
+    val viewModel: GamePlayViewModel = viewModelIn
     PlayersHand(
         hand = viewModel.thisPlayersHand.collectAsState().value,
         onCardClick = viewModel::onPlayersCardClick,
