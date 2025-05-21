@@ -17,7 +17,7 @@ import se2.hanabi.app.model.Hint
 import se2.hanabi.app.model.HintType
 
 class GamePlayService(
-    private val lobbyId: String,
+    private val lobbyCode: String,
     private val playerId: Int
     ) {
     private val baseURL = "http://10.0.2.2:8080" // "http://10.0.2.2:8080" //"http://10.145.212.9:8080" for emulator
@@ -25,10 +25,10 @@ class GamePlayService(
     private val webSocketService = WebSocketService()
 
     suspend fun getGameStatus(): GameStatus? {
-        val msg = "LobbyId: $lobbyId"
+        val msg = "LobbyId: $lobbyCode"
         try {
-            val response: HttpResponse = client.get("$baseURL/{$lobbyId}/status") {
-                parameter("lobbyId", lobbyId)
+            val response: HttpResponse = client.get("$baseURL/{$lobbyCode}/status") {
+                parameter("lobbyId", lobbyCode)
             }
             getGameStatusSocket()
             if (response.status.isSuccess()) {
@@ -38,7 +38,7 @@ class GamePlayService(
             } else if (response.status == HttpStatusCode.BadRequest) {
                 println("Unable to update game status  | $msg")
             } else if (response.status == HttpStatusCode.NotFound) {
-                println("Game: $lobbyId not found")
+                println("Game: $lobbyCode not found")
             } else {
                 println("Error updating game status | $msg: ${response.status} ")
             }
@@ -52,7 +52,7 @@ class GamePlayService(
     suspend fun  playCard(cardId: Int, stackColor: Card.Color) {
         val msg = "playerId: $playerId | cardId: $cardId | stackColor: $stackColor"
         try {
-            val response: HttpResponse = client.post("$baseURL/$lobbyId/play") {
+            val response: HttpResponse = client.post("$baseURL/$lobbyCode/play") {
                 parameter("playerId", playerId)
                 parameter("cardId", cardId)
                 parameter("stackColor", stackColor.name)
@@ -63,7 +63,7 @@ class GamePlayService(
             } else if (response.status == HttpStatusCode.BadRequest) {
                 println("Invalid move | $msg")
             } else if (response.status == HttpStatusCode.NotFound) {
-                println("Game: $lobbyId not found")
+                println("Game: $lobbyCode not found")
             } else {
                 println("Error playing card | $msg: ${response.status} ")
             }
@@ -76,7 +76,7 @@ class GamePlayService(
     suspend fun  discardCard(cardId: Int) {
         val msg = "playerId: $playerId | cardId: $cardId"
         try {
-            val response: HttpResponse = client.post("$baseURL/$lobbyId/discard") {
+            val response: HttpResponse = client.post("$baseURL/$lobbyCode/discard") {
                 parameter("playerId", playerId)
                 parameter("cardId", cardId)
             }
@@ -86,7 +86,7 @@ class GamePlayService(
             } else if (response.status == HttpStatusCode.BadRequest) {
                 println("Invalid move: not your turn | $msg")
             } else if (response.status == HttpStatusCode.NotFound) {
-                println("Game: $lobbyId not found")
+                println("Game: $lobbyCode not found")
             } else {
                 println("Error discarding card | $msg: ${response.status} ")
             }
@@ -102,7 +102,7 @@ class GamePlayService(
         val hintValueAsString = if (hintType==HintType.COLOR) hint.getColor().toString() else hint.getValue().toString()
         val msg = "fromPlayerId: $playerId | toPlayerId: $toPlayerId | hintType: $hintType | value: $hintValueAsString"
         try {
-            val response: HttpResponse = client.post("$baseURL/{$lobbyId}/hint") {
+            val response: HttpResponse = client.post("$baseURL/{$lobbyCode}/hint") {
                 parameter("fromPlayerId", playerId)
                 parameter("toPlayerId", toPlayerId)
                 parameter("hintType", hintType)
@@ -114,7 +114,7 @@ class GamePlayService(
             } else if (response.status == HttpStatusCode.BadRequest) {
                 println("Invalid move: not a valid hint | $msg")
             } else if (response.status == HttpStatusCode.NotFound) {
-                println("Game: $lobbyId not found")
+                println("Game: $lobbyCode not found")
             } else {
                 println("Error giving hint | $msg: ${response.status}")
             }
@@ -125,19 +125,19 @@ class GamePlayService(
     }
 
     suspend fun getGameStatusSocket() {
-        webSocketService.sendMessage("Request through socket: getGameStatus for lobby $lobbyId")
+        webSocketService.sendMessage("Request through socket: getGameStatus for lobby $lobbyCode")
     }
 
     suspend fun playCardSocket(cardId: Int, stackColor: Card.Color) {
-        webSocketService.sendMessage("Request through socket: playCard $cardId of color $stackColor by player $playerId in lobby $lobbyId")
+        webSocketService.sendMessage("Request through socket: playCard $cardId of color $stackColor by player $playerId in lobby $lobbyCode")
     }
 
     suspend fun discardCardSocket(cardId: Int) {
-        webSocketService.sendMessage("Request through socket: discardCard $cardId by player $playerId in lobby $lobbyId")
+        webSocketService.sendMessage("Request through socket: discardCard $cardId by player $playerId in lobby $lobbyCode")
     }
 
     suspend fun giveHintSocket(toPlayerId: Int, hint: Hint) {
-        webSocketService.sendMessage("Request through socket: giveHint $hint from $playerId to $toPlayerId in lobby $lobbyId")
+        webSocketService.sendMessage("Request through socket: giveHint $hint from $playerId to $toPlayerId in lobby $lobbyCode")
     }
 
 }
