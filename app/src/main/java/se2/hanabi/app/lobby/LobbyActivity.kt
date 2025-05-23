@@ -62,6 +62,9 @@ class LobbyActivity : ComponentActivity() {
         val receivedLobbyCode = intent.getStringExtra("lobbyCode") ?: "Kein Code"
         val isHost = intent.getBooleanExtra("isHost", false)
 
+        val avatarResID = intent.getIntExtra("avatarResID", R.drawable.whiteavatar)
+        val username = intent.getStringExtra("username") ?: "Anonym"
+
         viewModel.setLobbyCode(receivedLobbyCode)
         viewModel.setIsHost(isHost)
         viewModel.startPlayerSync()
@@ -86,6 +89,8 @@ class LobbyActivity : ComponentActivity() {
                     isHost = isHostState,
                     onLeaveLobby = { finish() },
                     onStartGame = { lobbyCode?.let { startGameRequest(lobbyCode) } },
+                    avatarResID = avatarResID,
+                    username = username
                 )
             }
         }
@@ -116,7 +121,9 @@ class LobbyActivity : ComponentActivity() {
         lobbyCode: String?,
         onLeaveLobby: () -> Unit,
         onStartGame: () -> Unit,
-        isHost: Boolean
+        isHost: Boolean,
+        avatarResID: Int,
+        username: String
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
@@ -172,7 +179,15 @@ class LobbyActivity : ComponentActivity() {
                                     .size(40.dp)
                                     .clip(CircleShape)
                                     .background(Color.DarkGray)
-                            )
+                            ){
+                                if (player == username){
+                                    Image( painter = painterResource(id = avatarResID),
+                                        contentDescription = "Avatar",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                            }
 
                             Text(
                                 text = player,
