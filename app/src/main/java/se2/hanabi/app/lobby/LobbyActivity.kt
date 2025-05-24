@@ -62,8 +62,8 @@ class LobbyActivity : ComponentActivity() {
         val receivedLobbyCode = intent.getStringExtra("lobbyCode") ?: "Kein Code"
         val isHost = intent.getBooleanExtra("isHost", false)
 
-        val avatarResID = intent.getIntExtra("avatarResID", R.drawable.whiteavatar)
-        val username = intent.getStringExtra("username") ?: "Anonym"
+        //val avatarResID = intent.getIntExtra("avatarResID", R.drawable.whiteavatar)
+        //val username = intent.getStringExtra("username") ?: "Anonym"
 
         viewModel.setLobbyCode(receivedLobbyCode)
         viewModel.setIsHost(isHost)
@@ -88,9 +88,9 @@ class LobbyActivity : ComponentActivity() {
                     lobbyCode = lobbyCode,
                     isHost = isHostState,
                     onLeaveLobby = { finish() },
-                    onStartGame = { lobbyCode?.let { startGameRequest(lobbyCode) } },
-                    avatarResID = avatarResID,
-                    username = username
+                    onStartGame = { lobbyCode?.let { startGameRequest(lobbyCode) } }//,
+                    //avatarResID = avatarResID,
+                    //username = username
                 )
             }
         }
@@ -117,13 +117,14 @@ class LobbyActivity : ComponentActivity() {
 
     @Composable
     fun LobbyScreen(
-        playerList: List<String>,
+        playerList: List<PlayerInLobby>,
+
         lobbyCode: String?,
         onLeaveLobby: () -> Unit,
         onStartGame: () -> Unit,
         isHost: Boolean,
-        avatarResID: Int,
-        username: String
+        //avatarResID: Int,
+        //username: String
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
@@ -133,8 +134,6 @@ class LobbyActivity : ComponentActivity() {
                 contentScale = ContentScale.Crop
             )
 
-
-            //TODO: Implement server connection
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
@@ -180,17 +179,18 @@ class LobbyActivity : ComponentActivity() {
                                     .clip(CircleShape)
                                     .background(Color.DarkGray)
                             ){
-                                if (player == username){
-                                    Image( painter = painterResource(id = avatarResID),
+                                //if (player == username){
+
+                                Image( painter = painterResource(id = player.avatarResID),
                                         contentDescription = "Avatar",
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
-                            }
+                            //}
 
                             Text(
-                                text = player,
+                                text = player.name,
                                 color = Color.White,
                                 modifier = Modifier.weight(1f),
                                 textAlign = TextAlign.Start,

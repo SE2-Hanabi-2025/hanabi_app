@@ -16,14 +16,19 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
+@kotlinx.serialization.Serializable
+data class PlayerInLobby(
+    val name: String,
+    val avatarResID: Int
+)
 
 class LobbyViewModel : ViewModel() {
 
     private val _isGameStarted = MutableStateFlow(false)
     val isGameStarted: StateFlow<Boolean> = _isGameStarted
 
-    private val _players = MutableStateFlow<List<String>>(emptyList())
-    val players: StateFlow<List<String>> = _players
+    private val _players = MutableStateFlow<List<PlayerInLobby>>(emptyList())
+    val players: StateFlow<List<PlayerInLobby>> = _players
 
     private val _lobbyCode = mutableStateOf<String?>(null)
 
@@ -55,7 +60,8 @@ class LobbyViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val code = _lobbyCode.value ?: return@launch
-                val response: List<String> =  client.get("http://10.0.2.2:8080/lobby/$code/players").body()
+                val response: List<PlayerInLobby> =  client.get("http://10.0.2.2:8080/lobby/$code/players").body()
+
                 _players.value = response
 
                 val gameStatusResponse = client.get("http://10.0.2.2:8080/start-game/$code/status")

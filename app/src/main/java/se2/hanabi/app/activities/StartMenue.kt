@@ -148,7 +148,7 @@ class StartMenuActivity: ComponentActivity() {
                 isLoading = true
                 try {
                     val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
-                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code?name=$encodedName")
+                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code?name=$encodedName&avatarResID=$selectedAvatarResId")
                     statusMessage = response.body()
                     isConnected = true
                     val intent = Intent(context, LobbyActivity::class.java).apply {
@@ -173,7 +173,7 @@ class StartMenuActivity: ComponentActivity() {
                     val response: HttpResponse = client.get("$urlEmulator/create-lobby")
                     val createdCode: String = response.body()
                     val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
-                    val joinResponse: HttpResponse = client.get("$urlEmulator/join-lobby/$createdCode?name=$encodedName")
+                    val joinResponse: HttpResponse = client.get("$urlEmulator/join-lobby/$createdCode?name=$encodedName&avatarResID=$selectedAvatarResId")
                     val joinResponseBody: String = joinResponse.body()
 
                     println("-> Join Response: $joinResponseBody")
