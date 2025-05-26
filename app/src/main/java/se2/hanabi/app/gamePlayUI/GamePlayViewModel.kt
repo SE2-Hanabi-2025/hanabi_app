@@ -1,7 +1,6 @@
 package se2.hanabi.app.gamePlayUI
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,50 +11,69 @@ import se2.hanabi.app.model.Player
 import se2.hanabi.app.Services.GamePlayService
 import se2.hanabi.app.model.Card
 import se2.hanabi.app.model.Hint
-import kotlin.random.Random
 
 /**
  * GamePlayViewModel displays a gameStatus object.
- * it passes on action (hint, play, discard) to the GamePlayService.
- * handles local logic of showing selected card/hand/ih, as well as when hint selecter is shown.
- *
+ * Simplified version that only handles initialization of game state
+ * without WebSockets or game action mechanics.
  */
 class GamePlayViewModel(
     private val lobbyId: String,
     private val playerId: Int
 ): ViewModel() {
+    companion object {
+        private const val TAG = "HanabiGamePlayVM"
+    }
     private val gamePlayService: GamePlayService = GamePlayService(
         lobbyId = lobbyId,
         playerId = playerId
     )
-    private var gameStatus: GameStatus = generateTestGameStatus()
+
+    // Leerer initialer GameStatus, wird vom Backend gefüllt
+    private var gameStatus: GameStatus = GameStatus(
+        players = emptyList(),
+        playersHand = emptyList(),
+        visibleHands = emptyMap(),
+        playedCards = emptyMap(),
+        discardPile = emptyList(),
+        numRemainingCard = 0,
+        shownHints = emptyMap(),
+        hintTokens = 8,
+        strikes = 0,
+        gameOver = false,
+        currentPlayer = 0
+    )
+
+    // Status-Nachricht für Feedback
+    private val _statusMessage = MutableStateFlow<String?>(null)
+    val statusMessage: StateFlow<String?> = _statusMessage
 
     // game state info
-    private val _Players = MutableStateFlow(gameStatus.players)
+    private val _Players = MutableStateFlow<List<Player>>(emptyList())
     val numPlayers: MutableStateFlow<List<Player>> = _Players
 
-    private val _thisPlayer = MutableStateFlow(2) // id of "cat" from genertaeTestGameStatus
+    private val _thisPlayer = MutableStateFlow(playerId)
     val thisPlayer: MutableStateFlow<Int> = _thisPlayer
 
-    private val _thisPlayersHand = MutableStateFlow<List<Int>>(gameStatus.playersHand) // id of "cat" from genertaeTestGameStatus
+    private val _thisPlayersHand = MutableStateFlow<List<Int>>(emptyList())
     val thisPlayersHand: MutableStateFlow<List<Int>> = _thisPlayersHand
 
-    private val _otherPlayersHands = MutableStateFlow(gameStatus.visibleHands)
+    private val _otherPlayersHands = MutableStateFlow<Map<Int, List<Card>>>(emptyMap())
     val otherPlayersHands: MutableStateFlow<Map<Int, List<Card>>> = _otherPlayersHands
 
-    private val _stackValues = MutableStateFlow<Map<Card.Color, Int>>(gameStatus.playedCards)
+    private val _stackValues = MutableStateFlow<Map<Card.Color, Int>>(emptyMap())
     val stackValues: MutableStateFlow<Map<Card.Color, Int>> = _stackValues
 
-    private val _numRemainingCard = MutableStateFlow(gameStatus.numRemainingCard)
+    private val _numRemainingCard = MutableStateFlow(0)
     val numRemainingCard: MutableStateFlow<Int> = _numRemainingCard
 
-    private val _lastDiscardedCard = MutableStateFlow<Card?>(gameStatus.discardPile.last())
+    private val _lastDiscardedCard = MutableStateFlow<Card?>(null)
     val lastDiscardedCard: MutableStateFlow<Card?> = _lastDiscardedCard
 
-    private val _numRemainingHintTokens = MutableStateFlow(gameStatus.hintTokens)
+    private val _numRemainingHintTokens = MutableStateFlow(8)
     val numRemainingHintTokens: MutableStateFlow<Int> = _numRemainingHintTokens
 
-    private val _numRemainingFuseTokens = MutableStateFlow(gameStatus.strikes)
+    private val _numRemainingFuseTokens = MutableStateFlow(0)
     val numRemainingFuseTokens: MutableStateFlow<Int> = _numRemainingFuseTokens
 
     // game play info
@@ -76,121 +94,156 @@ class GamePlayViewModel(
     private val _shownValueHints =  MutableStateFlow<MutableMap<Int, Int>>(mutableMapOf())
     val shownValueHints: StateFlow<MutableMap<Int,Int>> = _shownValueHints
 
-    // local functions
+    init {
+        Log.d(TAG, "Initialisiere GamePlayViewModel - LobbyId: $lobbyId, PlayerId: $playerId")
+
+        // Initialen Spielstatus abrufen
+        viewModelScope.launch {
+            _statusMessage.value = "Spieldaten werden geladen..."
+            Log.d(TAG, "Fordere initialen Spielstatus an...")
+
+            gamePlayService.getGameStatus()?.let { status ->
+                Log.d(TAG, "Spielstatus erfolgreich erhalten: ${status.players.size} Spieler, " +
+                        "${status.numRemainingCard} verbleibende Karten")
+                updateGameStatus(status)
+                _statusMessage.value = "Spiel wurde geladen"
+            } ?: run {
+                Log.e(TAG, "Fehler beim Laden des initialen Spielstatus")
+                _statusMessage.value = "Fehler beim Laden der Spieldaten"
+            }
+        }
+    }
+
+    private fun updateGameStatus(newStatus: GameStatus) {
+        Log.d(TAG, "Aktualisiere Spielstatus")
+        gameStatus = newStatus
+
+        _Players.value = newStatus.players
+        Log.v(TAG, "Spieler: ${newStatus.players.joinToString { it.name }}")
+
+        _thisPlayersHand.value = newStatus.playersHand
+        Log.v(TAG, "Eigene Hand: ${newStatus.playersHand.size} Karten, IDs: ${newStatus.playersHand}")
+
+        _otherPlayersHands.value = newStatus.visibleHands
+        Log.v(TAG, "Hände anderer Spieler: ${newStatus.visibleHands.size} Spieler haben sichtbare Karten")
+        newStatus.visibleHands.forEach { (playerId, cards) ->
+            Log.v(TAG, "  Spieler $playerId: ${cards.size} Karten - ${cards.joinToString { "${it.color}_${it.value}" }}")
+        }
+
+        _stackValues.value = newStatus.playedCards
+        Log.v(TAG, "Gespielte Karten: ${newStatus.playedCards.entries.joinToString { "${it.key}: ${it.value}" }}")
+
+        _numRemainingCard.value = newStatus.numRemainingCard
+        Log.v(TAG, "Verbleibende Karten im Deck: ${newStatus.numRemainingCard}")
+
+        _lastDiscardedCard.value = newStatus.discardPile.lastOrNull()
+        Log.v(TAG, "Ablagestapel: ${newStatus.discardPile.size} Karten, letzte Karte: ${newStatus.discardPile.lastOrNull()}")
+
+        _numRemainingHintTokens.value = newStatus.hintTokens
+        Log.v(TAG, "Hinweis-Token: ${newStatus.hintTokens}")
+
+        _numRemainingFuseTokens.value = newStatus.strikes
+        Log.v(TAG, "Fehlschläge: ${newStatus.strikes}")
+
+        Log.d(TAG, "Aktueller Spieler: ${newStatus.currentPlayer}, Spiel beendet: ${newStatus.gameOver}")
+
+        // Reset ausgewählte Elemente nach Statusänderung
+        resetSelection()
+    }
+
+    // Einfache UI-Interaktionsmethoden, ohne Serveranfragen
     fun onPlayersCardClick(cardId: Int) {
+        Log.d(TAG, "Karte in eigener Hand geklickt: $cardId")
         _selectedPlayer.value = -1
         hintReset()
-         _selectedCard.value = if (cardId == selectedCardId.value) -1 else cardId
+
+        val newValue = if (cardId == selectedCardId.value) {
+            Log.d(TAG, "Karte abgewählt")
+            -1
+        } else {
+            Log.d(TAG, "Karte ausgewählt")
+            cardId
+        }
+        _selectedCard.value = newValue
     }
 
     fun onOtherPlayersHandClick(playerId: Int) {
+        Log.d(TAG, "Hand eines anderen Spielers geklickt: Spieler $playerId")
         _selectedCard.value = -1
         hintReset()
-        _selectedPlayer.value = if (playerId == _selectedPlayer.value) -1 else playerId
+
+        val newValue = if (playerId == _selectedPlayer.value) {
+            Log.d(TAG, "Spieler abgewählt")
+            -1
+        } else {
+            Log.d(TAG, "Spieler ausgewählt für Hinweis")
+            playerId
+        }
+        _selectedPlayer.value = newValue
     }
 
     fun onHintClick(hint: Hint) {
-        _selectedHint.value = if (hint == selectedHint.value) null else hint
+        val hintType = if (hint.getColor() != null) "Farbe: ${hint.getColor()}" else "Wert: ${hint.getValue()}"
+        Log.d(TAG, "Hinweis ausgewählt: $hintType")
+
+        _selectedHint.value = if (hint == selectedHint.value) {
+            Log.d(TAG, "Hinweis abgewählt")
+            null
+        } else {
+            Log.d(TAG, "Hinweis-Typ festgelegt: $hintType")
+            hint
+        }
+
         if (_selectedHint.value != null) {
-            var validHint = false;
-            _otherPlayersHands.value.get(selectedPlayerId.value)?.forEach() { card ->
-                if (card.color == _selectedHint.value?.getColor() || card.value == _selectedHint.value?.getValue()) {
+            var validHint = false
+            val targetPlayerId = selectedPlayerId.value
+
+            Log.d(TAG, "Prüfe, ob Hinweis für Spieler $targetPlayerId gültig ist")
+            _otherPlayersHands.value[targetPlayerId]?.forEach { card ->
+                val matchColor = card.color == _selectedHint.value?.getColor()
+                val matchValue = card.value == _selectedHint.value?.getValue()
+
+                if (matchColor || matchValue) {
+                    Log.d(TAG, "Karte ${card.color}_${card.value} passt zum Hinweis - Hinweis ist gültig")
                     validHint = true
                 }
             }
+
             _isValidHint.value = validHint
+            Log.d(TAG, "Hinweis ist ${if (validHint) "gültig" else "ungültig"}")
         } else {
             _isValidHint.value = false
+            Log.d(TAG, "Kein Hinweis ausgewählt")
         }
     }
 
-
-    // call server requests
+    // Platzhalter-Methoden für UI ohne Serverinteraktion
     fun onGiveHintClick() {
-        if (isValidHint.value) {
-            viewModelScope.launch {
-                gamePlayService.giveHint(toPlayerId = selectedPlayerId.value, hint = selectedHint.value!!)
-                gameStatus = gamePlayService.getGameStatus()?: gameStatus
-            }
-            resetSelection()
-        }
+        Log.d(TAG, "Hinweis-Funktion nicht implementiert (keine Serverinteraktion)")
+        _statusMessage.value = "Hinweis-Funktion nicht implementiert"
     }
 
     fun onColorStackClick(color: Card.Color) {
-        if (_selectedCard.value != -1) {
-            viewModelScope.launch {
-                gamePlayService.playCard(selectedCardId.value, color)
-                gameStatus = gamePlayService.getGameStatus()?: gameStatus
-            }
-        }
-
+        Log.d(TAG, "Kartenspielen nicht implementiert (keine Serverinteraktion)")
+        _statusMessage.value = "Kartenspielen nicht implementiert"
     }
 
     fun onDiscardStackClick() {
-        viewModelScope.launch {
-            gamePlayService.discardCard(cardId = selectedCardId.value)
-            gameStatus = gamePlayService.getGameStatus()?: gameStatus
-        }
+        Log.d(TAG, "Kartenabwerfen nicht implementiert (keine Serverinteraktion)")
+        _statusMessage.value = "Kartenabwerfen nicht implementiert"
     }
 
     // helper functions
     private fun resetSelection() {
+        Log.v(TAG, "Setze Auswahl zurück")
         _selectedCard.value = -1
         _selectedPlayer.value = -1
         hintReset()
     }
 
     private fun hintReset() {
+        Log.v(TAG, "Setze Hinweis-Auswahl zurück")
         _selectedHint.value = null
         _isValidHint.value = false
     }
-
-}
-
-// Test game status
-fun generateTestGameStatus(): GameStatus {
-    val player1 = Player(name = "Alice", id = 0)
-    val player2 = Player(name = "Bob", id = 1)
-    val player3 = Player(name = "Cat", id = 2)
-    val players = listOf(player1, player2, player3)
-
-    val hand1 = listOf(
-        Card(color = Card.Color.RED, value = 1),
-        Card(color = Card.Color.BLUE, value = 3),
-        Card(color = Card.Color.GREEN, value = 2)
-    )
-    val hand2 = listOf(
-        Card(color = Card.Color.YELLOW, value = 1),
-        Card(color = Card.Color.WHITE, value = 5),
-        Card(color = Card.Color.RED, value = 2)
-    )
-    // cat's hand is not visable
-    val visibleHands = mapOf(0 to hand1, 1 to hand2)
-
-    val playedCards = mapOf(
-        Card.Color.RED to 1,
-        Card.Color.BLUE to 0,
-        Card.Color.GREEN to 0,
-        Card.Color.YELLOW to 4,
-        Card.Color.WHITE to 0
-    )
-
-    val discardPile = listOf(
-        Card(color = Card.Color.RED, value = 1),
-        Card(color = Card.Color.BLUE, value = 2)
-    )
-
-    return GameStatus(
-        players = players,
-        playersHand = listOf(6,7,8),
-        visibleHands = visibleHands,
-        playedCards = playedCards,
-        discardPile = discardPile,
-        numRemainingCard = Random.nextInt(16),
-        shownHints = HashMap<Int, Hint>(),
-        hintTokens = 8,
-        strikes = 0,
-        gameOver = false,
-        currentPlayer = 1
-    )
 }
