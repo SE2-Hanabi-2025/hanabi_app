@@ -1,9 +1,12 @@
 package se2.hanabi.app.gamePlayUI
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -15,7 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import se2.hanabi.app.Services.WebSocketService
 
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
@@ -45,8 +50,11 @@ fun GamePlayUI(
             factory = GamePlayViewModelFactory(lobbyId, playerId)
         )
 
-        val players by viewModel.numPlayers.collectAsState()
+        val players by viewModel.players.collectAsState()
         val statusMessage by viewModel.statusMessage.collectAsState()
+        val connectionState by viewModel.connectionState.collectAsState()
+        val isMyTurn by viewModel.isMyTurn.collectAsState()
+        val gameOver by viewModel.gameOver.collectAsState()
 
         // Zeige Ladeanimation wenn noch keine Spieler geladen wurden
         if (players.isEmpty()) {
@@ -59,10 +67,86 @@ fun GamePlayUI(
                         modifier = Modifier.padding(top = 16.dp)
                     )
                 }
+                
+                // Show reconnect button if disconnected
+                if (connectionState == WebSocketService.ConnectionState.DISCONNECTED) {
+                    androidx.compose.material3.Button(
+                        onClick = { viewModel.reconnectWebSocket() },
+                        modifier = Modifier.padding(top = 16.dp)
+                    ) {
+                        Text("Reconnect")
+                    }
+                }
             }
         } else {
+            // Show game board and player cards
             GameBoardUI()
             PlayersCardsUI()
+            
+            // Show game status overlay at the top
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp)
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .padding(8.dp)
+            ) {
+                Text(
+                    text = when (connectionState) {
+                        WebSocketService.ConnectionState.CONNECTED -> "Connected"
+                        WebSocketService.ConnectionState.CONNECTING -> "Connecting..."
+                        WebSocketService.ConnectionState.DISCONNECTED -> "Disconnected"
+                    },
+                    color = when (connectionState) {
+                        WebSocketService.ConnectionState.CONNECTED -> Color.Green
+                        WebSocketService.ConnectionState.CONNECTING -> Color.Yellow
+                        WebSocketService.ConnectionState.DISCONNECTED -> Color.Red
+                    }
+                )
+                
+                Text(
+                    text = if (isMyTurn) "Your turn" else "Waiting for other player",
+                    color = if (isMyTurn) Color.Green else Color.White
+                )
+                
+                statusMessage?.let {
+                    Text(text = it, color = Color.White)
+                }
+                
+                if (gameOver) {
+                    Text(
+                        text = "Game Over!",
+                        color = Color.Red,
+                        fontSize = 20.sp
+                    )
+                }
+            }
+            
+            // Action buttons at the bottom
+            if (isMyTurn && !gameOver) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 80.dp, start = 16.dp, end = 16.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    androidx.compose.material3.Button(
+                        onClick = { viewModel.onPlayCardClick() },
+                        enabled = viewModel.selectedCardId.collectAsState().value >= 0
+                    ) {
+                        Text("Play Card")
+                    }
+                    
+                    androidx.compose.material3.Button(
+                        onClick = { viewModel.onDiscardCardClick() },
+                        enabled = viewModel.selectedCardId.collectAsState().value >= 0 && 
+                                 viewModel.numRemainingHintTokens.collectAsState().value < 8
+                    ) {
+                        Text("Discard Card")
+                    }
+                }
+            }
         }
     }
 }
