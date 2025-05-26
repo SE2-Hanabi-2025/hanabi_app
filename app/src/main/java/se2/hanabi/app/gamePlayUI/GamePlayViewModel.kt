@@ -5,17 +5,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import se2.hanabi.app.model.GameStatus
 import se2.hanabi.app.model.Player
 import se2.hanabi.app.Services.GamePlayService
+import se2.hanabi.app.Services.WebSocketService
 import se2.hanabi.app.model.Card
 import se2.hanabi.app.model.Hint
+import se2.hanabi.app.model.websocket.ResultType
 
 /**
- * GamePlayViewModel displays a gameStatus object.
- * Simplified version that only handles initialization of game state
- * without WebSockets or game action mechanics.
+ * GamePlayViewModel displays a gameStatus object and manages game actions via WebSocket.
  */
 class GamePlayViewModel(
     private val lobbyId: String,
@@ -24,10 +25,13 @@ class GamePlayViewModel(
     companion object {
         private const val TAG = "HanabiGamePlayVM"
     }
+    
     private val gamePlayService: GamePlayService = GamePlayService(
         lobbyId = lobbyId,
         playerId = playerId
     )
+    
+    private val webSocketService = WebSocketService()
 
     // Leerer initialer GameStatus, wird vom Backend gefüllt
     private var gameStatus: GameStatus = GameStatus(
@@ -47,13 +51,23 @@ class GamePlayViewModel(
     // Status-Nachricht für Feedback
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage
+    
+    // Connection state
+    private val _connectionState = MutableStateFlow(WebSocketService.ConnectionState.DISCONNECTED)
+    val connectionState: StateFlow<WebSocketService.ConnectionState> = _connectionState
 
     // game state info
-    private val _Players = MutableStateFlow<List<Player>>(emptyList())
-    val numPlayers: MutableStateFlow<List<Player>> = _Players
+    private val _players = MutableStateFlow<List<Player>>(emptyList())
+    val players: MutableStateFlow<List<Player>> = _players
 
     private val _thisPlayer = MutableStateFlow(playerId)
     val thisPlayer: MutableStateFlow<Int> = _thisPlayer
+    
+    private val _currentPlayer = MutableStateFlow(0)
+    val currentPlayer: StateFlow<Int> = _currentPlayer
+    
+    private val _isMyTurn = MutableStateFlow(false)
+    val isMyTurn: StateFlow<Boolean> = _isMyTurn
 
     private val _thisPlayersHand = MutableStateFlow<List<Int>>(emptyList())
     val thisPlayersHand: MutableStateFlow<List<Int>> = _thisPlayersHand
@@ -75,6 +89,9 @@ class GamePlayViewModel(
 
     private val _numRemainingFuseTokens = MutableStateFlow(0)
     val numRemainingFuseTokens: MutableStateFlow<Int> = _numRemainingFuseTokens
+    
+    private val _gameOver = MutableStateFlow(false)
+    val gameOver: StateFlow<Boolean> = _gameOver
 
     // game play info
     private val _selectedCard = MutableStateFlow<Int>(-1)
@@ -97,7 +114,13 @@ class GamePlayViewModel(
     init {
         Log.d(TAG, "Initialisiere GamePlayViewModel - LobbyId: $lobbyId, PlayerId: $playerId")
 
-        // Initialen Spielstatus abrufen
+        // Set up WebSocket listeners
+        setupWebSocketListeners()
+        
+        // Connect to WebSocket
+        connectToWebSocket()
+        
+        // Initialen Spielstatus abrufen (für den Fall, dass WebSocket nicht sofort verbindet)
         viewModelScope.launch {
             _statusMessage.value = "Spieldaten werden geladen..."
             Log.d(TAG, "Fordere initialen Spielstatus an...")
@@ -113,13 +136,89 @@ class GamePlayViewModel(
             }
         }
     }
+    
+    override fun onCleared() {
+        super.onCleared()
+        // Disconnect WebSocket when ViewModel is cleared
+        webSocketService.disconnect()
+    }
+    
+    private fun connectToWebSocket() {
+        Log.d(TAG, "Verbinde mit WebSocket - Lobby: $lobbyId, Spieler: $playerId")
+        webSocketService.connect(lobbyId, playerId)
+    }
+    
+    private fun setupWebSocketListeners() {
+        viewModelScope.launch {
+            // Listen for connection state changes
+            webSocketService.connectionState.collect { state ->
+                _connectionState.value = state
+                when (state) {
+                    WebSocketService.ConnectionState.CONNECTED -> {
+                        _statusMessage.value = "Verbunden mit dem Spielserver"
+                        Log.d(TAG, "WebSocket verbunden")
+                    }
+                    WebSocketService.ConnectionState.CONNECTING -> {
+                        _statusMessage.value = "Verbinde mit dem Spielserver..."
+                        Log.d(TAG, "WebSocket verbindet...")
+                    }
+                    WebSocketService.ConnectionState.DISCONNECTED -> {
+                        _statusMessage.value = "Verbindung zum Server getrennt"
+                        Log.d(TAG, "WebSocket getrennt")
+                    }
+                }
+            }
+        }
+        
+        viewModelScope.launch {
+            // Listen for game state updates
+            webSocketService.gameState.collect { newGameState ->
+                newGameState?.let {
+                    Log.d(TAG, "Neuer Spielstatus empfangen")
+                    updateGameStatus(it)
+                }
+            }
+        }
+        
+        viewModelScope.launch {
+            // Listen for action results
+            webSocketService.actionResult.collect { result ->
+                when (result.type) {
+                    ResultType.SUCCESS -> {
+                        _statusMessage.value = "Erfolgreich: ${result.message}"
+                        Log.d(TAG, "Aktion erfolgreich: ${result.message}")
+                    }
+                    ResultType.INVALID_MOVE -> {
+                        _statusMessage.value = "Ungültiger Zug: ${result.message}"
+                        Log.w(TAG, "Ungültiger Zug: ${result.message}")
+                    }
+                    ResultType.ERROR -> {
+                        _statusMessage.value = "Fehler: ${result.message}"
+                        Log.e(TAG, "Fehler bei Aktion: ${result.message}")
+                    }
+                }
+            }
+        }
+        
+        viewModelScope.launch {
+            // Listen for errors
+            webSocketService.error.collect { errorMsg ->
+                _statusMessage.value = "Fehler: $errorMsg"
+                Log.e(TAG, "WebSocket Fehler: $errorMsg")
+            }
+        }
+    }
 
     private fun updateGameStatus(newStatus: GameStatus) {
         Log.d(TAG, "Aktualisiere Spielstatus")
         gameStatus = newStatus
 
-        _Players.value = newStatus.players
+        _players.value = newStatus.players
         Log.v(TAG, "Spieler: ${newStatus.players.joinToString { it.name }}")
+        
+        _currentPlayer.value = newStatus.currentPlayer
+        _isMyTurn.value = newStatus.currentPlayer == playerId
+        Log.v(TAG, "Aktueller Spieler: ${newStatus.currentPlayer}, Ich bin dran: ${_isMyTurn.value}")
 
         _thisPlayersHand.value = newStatus.playersHand
         Log.v(TAG, "Eigene Hand: ${newStatus.playersHand.size} Karten, IDs: ${newStatus.playersHand}")
@@ -144,14 +243,15 @@ class GamePlayViewModel(
 
         _numRemainingFuseTokens.value = newStatus.strikes
         Log.v(TAG, "Fehlschläge: ${newStatus.strikes}")
-
-        Log.d(TAG, "Aktueller Spieler: ${newStatus.currentPlayer}, Spiel beendet: ${newStatus.gameOver}")
+        
+        _gameOver.value = newStatus.gameOver
+        Log.v(TAG, "Spiel beendet: ${newStatus.gameOver}")
 
         // Reset ausgewählte Elemente nach Statusänderung
         resetSelection()
     }
 
-    // Einfache UI-Interaktionsmethoden, ohne Serveranfragen
+    // UI-Interaktionsmethoden
     fun onPlayersCardClick(cardId: Int) {
         Log.d(TAG, "Karte in eigener Hand geklickt: $cardId")
         _selectedPlayer.value = -1
@@ -217,20 +317,105 @@ class GamePlayViewModel(
         }
     }
 
-    // Platzhalter-Methoden für UI ohne Serverinteraktion
-    fun onGiveHintClick() {
-        Log.d(TAG, "Hinweis-Funktion nicht implementiert (keine Serverinteraktion)")
-        _statusMessage.value = "Hinweis-Funktion nicht implementiert"
-    }
-
     fun onColorStackClick(color: Card.Color) {
-        Log.d(TAG, "Kartenspielen nicht implementiert (keine Serverinteraktion)")
-        _statusMessage.value = "Kartenspielen nicht implementiert"
+        // Handle the color stack click event here
+        // For example, log the click or update some state
+        Log.d("GamePlayViewModel", "Color stack clicked: $color")
     }
 
-    fun onDiscardStackClick() {
-        Log.d(TAG, "Kartenabwerfen nicht implementiert (keine Serverinteraktion)")
-        _statusMessage.value = "Kartenabwerfen nicht implementiert"
+    // WebSocket-Aktionen
+    fun onPlayCardClick() {
+        if (_selectedCard.value < 0) {
+            _statusMessage.value = "Wähle zuerst eine Karte aus"
+            return
+        }
+        
+        if (!_isMyTurn.value) {
+            _statusMessage.value = "Du bist nicht an der Reihe"
+            return
+        }
+        
+        viewModelScope.launch {
+            val cardIndex = _thisPlayersHand.value.indexOf(_selectedCard.value)
+            if (cardIndex >= 0) {
+                _statusMessage.value = "Spiele Karte..."
+                Log.d(TAG, "Spiele Karte an Index $cardIndex")
+                webSocketService.playCard(lobbyId, playerId, cardIndex)
+            } else {
+                _statusMessage.value = "Fehler: Karte nicht gefunden"
+                Log.e(TAG, "Karte $_selectedCard.value nicht in der Hand gefunden")
+            }
+        }
+    }
+    
+    fun onDiscardCardClick() {
+        if (_selectedCard.value < 0) {
+            _statusMessage.value = "Wähle zuerst eine Karte aus"
+            return
+        }
+        
+        if (!_isMyTurn.value) {
+            _statusMessage.value = "Du bist nicht an der Reihe"
+            return
+        }
+        
+        if (_numRemainingHintTokens.value >= 8) {
+            _statusMessage.value = "Du kannst keine Karte abwerfen, wenn alle Hint-Token verfügbar sind"
+            return
+        }
+        
+        viewModelScope.launch {
+            val cardIndex = _thisPlayersHand.value.indexOf(_selectedCard.value)
+            if (cardIndex >= 0) {
+                _statusMessage.value = "Werfe Karte ab..."
+                Log.d(TAG, "Werfe Karte an Index $cardIndex ab")
+                webSocketService.discardCard(lobbyId, playerId, cardIndex)
+            } else {
+                _statusMessage.value = "Fehler: Karte nicht gefunden"
+                Log.e(TAG, "Karte $_selectedCard.value nicht in der Hand gefunden")
+            }
+        }
+    }
+    
+    fun onGiveHintClick() {
+        val selectedPlayer = _selectedPlayer.value
+        val selectedHint = _selectedHint.value
+        
+        if (selectedPlayer < 0) {
+            _statusMessage.value = "Wähle zuerst einen Spieler aus"
+            return
+        }
+        
+        if (selectedHint == null) {
+            _statusMessage.value = "Wähle zuerst einen Hinweis aus"
+            return
+        }
+        
+        if (!_isValidHint.value) {
+            _statusMessage.value = "Der ausgewählte Hinweis ist nicht gültig"
+            return
+        }
+        
+        if (!_isMyTurn.value) {
+            _statusMessage.value = "Du bist nicht an der Reihe"
+            return
+        }
+        
+        if (_numRemainingHintTokens.value <= 0) {
+            _statusMessage.value = "Keine Hinweis-Token mehr verfügbar"
+            return
+        }
+        
+        viewModelScope.launch {
+            _statusMessage.value = "Gebe Hinweis..."
+            Log.d(TAG, "Gebe Hinweis an Spieler $selectedPlayer: $selectedHint")
+            webSocketService.giveHint(lobbyId, playerId, selectedPlayer, selectedHint)
+        }
+    }
+    
+    fun reconnectWebSocket() {
+        webSocketService.disconnect()
+        connectToWebSocket()
     }
 
     // helper functions

@@ -54,7 +54,7 @@ fun GameBoardUI() {
                 RemainingCardsStack(numRemainingCards = viewModel.numRemainingCard.collectAsState().value)
                 DiscardedCardsStack(
                     lastDiscardedCard = viewModel.lastDiscardedCard.collectAsState().value,
-                    onClick = viewModel::onDiscardStackClick
+                    onClick = viewModel::onDiscardCardClick
                 )
             }
             HintTokens(numRemaining = viewModel.numRemainingHintTokens.collectAsState().value)
