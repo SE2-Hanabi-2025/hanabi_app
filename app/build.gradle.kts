@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "se2.hanabi.app"
-        minSdk = 30
+        minSdk = 28
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -111,7 +111,7 @@ sonar {
 dependencies {
 
     implementation(libs.ktor.client.content.negotiation)
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
+    implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.kotlinx.serialization.json.v180)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -143,6 +143,15 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
 
     implementation(libs.kotlinx.serialization.json.v180)
-    implementation("io.ktor:ktor-client-websockets:2.3.4")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+    implementation(libs.ktor.client.websockets)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    implementation(libs.camera.core)
+    implementation(libs.camera.camera2)
+    implementation(libs.camera.lifecycle)
+    implementation(libs.camera.view)
+    implementation(libs.mlkit.barcode.scanning)
+    implementation (libs.androidx.material.icons.extended)
+
+    implementation("com.google.guava:guava:32.1.3-android")
 }

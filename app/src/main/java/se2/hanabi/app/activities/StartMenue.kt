@@ -4,6 +4,10 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.camera.core.AspectRatio
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -12,6 +16,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -50,9 +56,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+//import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.mlkit.vision.barcode.BarcodeScanning
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -65,6 +73,15 @@ import se2.hanabi.app.R
 import se2.hanabi.app.ui.theme.ClientTheme
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import androidx.camera.core.*
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
+import com.google.mlkit.vision.common.InputImage
+
+import androidx.compose.material.icons.filled.Close
+
+import androidx.camera.core.Preview
+import se2.hanabi.app.Handler.CameraPermissionHandler
 
 
 class StartMenuActivity: ComponentActivity() {
@@ -96,6 +113,9 @@ class StartMenuActivity: ComponentActivity() {
         val urlEmulator = "http://10.0.2.2:8080"
         val urlLocalHost = "http://localhost:8080"
         val context = LocalContext.current
+        var showQRScanner by remember { mutableStateOf(false) }
+        var hasCameraPermission by remember { mutableStateOf(false) }
+        var permissionDenied by remember { mutableStateOf(false) }
 
         fun fetchStatus() {
             coroutineScope.launch {
@@ -419,6 +439,15 @@ class StartMenuActivity: ComponentActivity() {
                             onValueChange = { lobbyCode = it.filter { char -> char.isLetterOrDigit()}.take(6).uppercase()},
                             label = { Text("Enter Lobby Code with 6 chars") }
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {showQRScanner = true},
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(imageVector = Icons.Default.Camera, contentDescription = "Scan QR Code")
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Scan QR Code")
+                        }
                     } },
                 confirmButton = {
                     Button(onClick = {
@@ -446,6 +475,35 @@ class StartMenuActivity: ComponentActivity() {
                 }
             )
         }
+        if (showQRScanner) {
+
+            CameraPermissionHandler(
+                onPermissionGranted = {
+                    hasCameraPermission = true
+                    permissionDenied = false
+                },
+                onPermissionDenied = {
+                    hasCameraPermission = false
+                    permissionDenied = true
+                }
+            )
+
+            if (hasCameraPermission) {
+                QRScanner(
+                    onScanned = { scannedCode ->
+                        joinLobby(scannedCode)
+                        showQRScanner = false
+                        showJoinDialog = false
+                    },
+                    onDismiss = { showQRScanner = false }
+                )
+            } else if (permissionDenied) {
+                // Zeige Snackbar oder Dialog
+                statusMessage = "Camera permission denied"
+                showStatusDialog = true
+                showQRScanner = false
+            }
+        }
     }
 
     @Composable
@@ -466,14 +524,20 @@ class StartMenuActivity: ComponentActivity() {
             title = { Text("Choose your Avatar")},
             text = {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ){
                     avatarOptions.forEach {avatarRes ->
                         Image(painter = painterResource(id = avatarRes),
                             contentDescription = "Choose your player",
-                            modifier = Modifier.size(50.dp).clip(CircleShape).clickable { onAvatarSelected(avatarRes) }.padding(4.dp),
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .clickable { onAvatarSelected(avatarRes) }
+                                .padding(4.dp),
                             contentScale = ContentScale.Crop)
                     }
                 }
@@ -483,13 +547,13 @@ class StartMenuActivity: ComponentActivity() {
             }
         )}
 
-    @Preview(showBackground = true)
-    @Composable
-    fun StartMenuScreenPreview() {
-        ClientTheme {
-            StartMenuScreen()
-        }
-    }
+   // @Preview(showBackground = true)
+    //@Composable
+    //fun StartMenuScreenPreview() {
+      //  ClientTheme {
+        //    StartMenuScreen()
+      //  }
+  //  }
 
     @Composable
     fun PopupDialog(title: String, message: String, onDismiss: () -> Unit) {
@@ -524,3 +588,78 @@ fun Title(modifier: Modifier = Modifier) {
         modifier = modifier
     )
 }
+
+@androidx.annotation.OptIn(ExperimentalGetImage::class)
+@OptIn(ExperimentalGetImage::class)
+@Composable
+fun QRScanner(
+    onScanned: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AndroidView(factory = { context ->
+        val previewView = PreviewView(context)
+
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+        cameraProviderFuture.addListener({
+            val cameraProvider = cameraProviderFuture.get()
+
+            val preview: Preview = Preview.Builder()
+                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                .setTargetRotation(previewView.display.rotation)
+                .build()
+
+            val barcodeScanner = BarcodeScanning.getClient()
+            val analyzer: ImageAnalysis = ImageAnalysis.Builder()
+                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                .setTargetRotation(previewView.display.rotation)
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+                .also { analysis ->
+                    analysis.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
+                        val mediaImage = imageProxy.image
+                        if (mediaImage != null) {
+                            val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                            barcodeScanner.process(inputImage)
+                                .addOnSuccessListener { barcodes ->
+                                    for (barcode in barcodes) {
+                                        val rawValue = barcode.rawValue
+                                        if (rawValue != null && rawValue.length == 6) {
+                                            onScanned(rawValue.uppercase())
+                                        }
+                                    }
+                                }
+                                .addOnFailureListener {
+                                }
+                                .addOnCompleteListener {
+                                    imageProxy.close()
+                                }
+                        } else {
+                            imageProxy.close()
+                        }
+                    }
+                }
+
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    context as LifecycleOwner, cameraSelector, preview, analyzer
+                )
+            } catch (exc: Exception) {
+                exc.printStackTrace()
+            }
+        }, ContextCompat.getMainExecutor(context))
+
+        previewView
+    },
+        modifier = Modifier.fillMaxSize()
+    )
+
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+        IconButton(onClick = onDismiss) {
+            Icon(imageVector = Icons.Default.Close, contentDescription = "Close Scanner")
+        }
+    }
+}
+
