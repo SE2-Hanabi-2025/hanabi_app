@@ -130,7 +130,7 @@ fun OtherPlayersHands(
     hands: Map<Int, List<Card>>,
     onOtherPlayersHandClick: (Int) -> Unit,
     selectedHandIndex: Int,
-) {
+){
     val viewModel: GamePlayViewModel = viewModel()
     val players by viewModel.players.collectAsState()
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
@@ -164,8 +164,7 @@ fun OtherPlayersHands(
                     boxSize.height * 0.6f
                 }
             val handOffset = Offset(handOffsetX, handOffsetY)
-            
-            // Find the player details
+              // Find the player details
             val playerId = hand.key
             val playerName = playerMap[playerId]?.name ?: "Spieler $playerId"
             
@@ -175,8 +174,8 @@ fun OtherPlayersHands(
                 playerId = playerId,
                 playerName = playerName,
                 rotationAmountZ = rotationAmountZ.floatValue,
-                isSelected = index == selectedHandIndex,
-                onClick = { onOtherPlayersHandClick(index) }
+                isSelected = playerId == selectedHandIndex,
+                onClick = { onOtherPlayersHandClick(playerId) }
             )
         }
     }

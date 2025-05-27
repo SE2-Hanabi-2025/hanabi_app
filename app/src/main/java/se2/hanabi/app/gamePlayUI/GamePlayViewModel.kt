@@ -293,20 +293,25 @@ class GamePlayViewModel(
             Log.d(TAG, "Hinweis-Typ festgelegt: $hintType")
             hint
         }
-
         if (_selectedHint.value != null) {
             var validHint = false
             val targetPlayerId = selectedPlayerId.value
 
             Log.d(TAG, "Prüfe, ob Hinweis für Spieler $targetPlayerId gültig ist")
-            _otherPlayersHands.value[targetPlayerId]?.forEach { card ->
-                val matchColor = card.color == _selectedHint.value?.getColor()
-                val matchValue = card.value == _selectedHint.value?.getValue()
+            val playerHand = _otherPlayersHands.value[targetPlayerId]
+            
+            if (playerHand != null) {
+                playerHand.forEach { card ->
+                    val matchColor = card.color == _selectedHint.value?.getColor()
+                    val matchValue = card.value == _selectedHint.value?.getValue()
 
-                if (matchColor || matchValue) {
-                    Log.d(TAG, "Karte ${card.color}_${card.value} passt zum Hinweis - Hinweis ist gültig")
-                    validHint = true
+                    if (matchColor || matchValue) {
+                        Log.d(TAG, "Karte ${card.color}_${card.value} passt zum Hinweis - Hinweis ist gültig")
+                        validHint = true
+                    }
                 }
+            } else {
+                Log.e(TAG, "Keine Karten für Spieler $targetPlayerId gefunden")
             }
 
             _isValidHint.value = validHint
