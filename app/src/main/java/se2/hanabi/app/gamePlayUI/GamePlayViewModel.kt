@@ -110,10 +110,10 @@ class GamePlayViewModel: ViewModel() {
         }
     }
 
-    fun onColorStackClick(color: Card.Color) {
+    fun onColorStacksClick() {
         if (_selectedCard.value != -1) {
             viewModelScope.launch {
-                gamePlayService.playCard(selectedCardId.value, color)
+                gamePlayService.playCard(selectedCardId.value, Card.Color.RED) //RED is a dummy color
                 gameStatus = gamePlayService.getGameStatus()?: gameStatus
             }
         }

@@ -2,12 +2,12 @@ package se2.hanabi.app.gamePlayUI
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,7 +20,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,7 +54,7 @@ fun CardItem(
     rotationAmountZ: Float = 0f,
     isSelected: Boolean = false,
     isHighlighted: Boolean = isSelected,
-    onClick: () -> Unit = {},
+    onClick: (() -> Unit)? = null,
     highlightColor: Color = Color.White,
     showColorHint: Boolean = false,
     showValueHint: Boolean = false,
@@ -70,11 +69,13 @@ fun CardItem(
                 rotationZ = rotationAmountZ
                 cameraDistance = 12f * density
             }
-            .selectable(
-                selected = isSelected,
-                onClick = onClick,
-                role = Role.RadioButton,
-            ) //toggle when clicked
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable { onClick.invoke() }
+                } else {
+                    Modifier
+                }
+            )
     ) {
         if (isHighlighted) {
             BackGlow(

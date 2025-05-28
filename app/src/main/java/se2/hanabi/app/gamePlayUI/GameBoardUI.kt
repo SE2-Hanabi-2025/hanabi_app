@@ -1,6 +1,7 @@
 package se2.hanabi.app.gamePlayUI
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,7 +63,7 @@ fun GameBoardUI() {
         // right column
         ColorStacks(
             stackValues = viewModel.stackValues.collectAsState().value,
-            onColorStackClick = viewModel::onColorStackClick,
+            onColorStacksClick = viewModel::onColorStacksClick
         )
     }
 }
@@ -183,7 +184,7 @@ fun DiscardedCardsStack(
 fun EmptyStack(
     modifier: Modifier = Modifier,
     isPortrait: Boolean = false,
-    onClick: () -> Unit = {},
+    onClick: (() -> Unit)? = null,
     color: Card.Color = Card.Color.WHITE
 ) {
     CardItem(
@@ -200,18 +201,18 @@ fun EmptyStack(
 fun ColorStacks(
     modifier: Modifier = Modifier,
     stackValues: Map<Card.Color, Int>,
-    onColorStackClick: (Card.Color) -> Unit,
+    onColorStacksClick: () -> Unit,
 ) {
     Column(
         modifier = Modifier
-            .padding(boardElementPadding),
+            .padding(boardElementPadding)
+            .clickable { onColorStacksClick() },
         verticalArrangement = Arrangement.spacedBy(cardSpacing),
     ) {
         Card.Color.entries.forEach() { color ->
             if (stackValues[color]==0) {
                 EmptyStack(
                     isPortrait = false,
-                    onClick = { onColorStackClick(color) },
                     color = color,
                 )
             } else {
@@ -220,7 +221,6 @@ fun ColorStacks(
                     stackValues[color]?:0),
                     isPortrait = false,
                     highlightColor = colorFromColorEnum(color),
-                    onClick = { onColorStackClick(color) },
                 )
             }
         }
