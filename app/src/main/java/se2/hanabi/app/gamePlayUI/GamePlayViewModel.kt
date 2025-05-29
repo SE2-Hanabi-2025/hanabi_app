@@ -39,13 +39,14 @@ class GamePlayViewModel(
     // Leerer initialer GameStatus, wird vom Backend gefüllt
     private var gameStatus: GameStatus = GameStatus(
         players = emptyList(),
-        playersHand = emptyList(),
+        playerCardIds = emptyList(),
         visibleHands = emptyMap(),
         playedCards = emptyMap(),
         discardPile = emptyList(),
-        numRemainingCard = 0,
-        shownHints = emptyMap(),
-        hintTokens = 8,
+        numRemainingCards = 0,
+        cardsShowingColorHints = emptyMap(),
+        cardsShowingValueHints = emptyMap(),
+        numRemainingHintTokens = 8,
         strikes = 0,
         gameOver = false,
         currentPlayer = 0
@@ -130,7 +131,7 @@ class GamePlayViewModel(
 
             gamePlayService.getGameStatus()?.let { status ->
                 Log.d(TAG, "Spielstatus erfolgreich erhalten: ${status.players.size} Spieler, " +
-                        "${status.numRemainingCard} verbleibende Karten")
+                        "${status.numRemainingCards} verbleibende Karten")
                 updateGameStatus(status)
                 _statusMessage.value = "Spiel wurde geladen"
             } ?: run {
@@ -223,8 +224,8 @@ class GamePlayViewModel(
         _isMyTurn.value = newStatus.currentPlayer == playerId
         Log.v(TAG, "Aktueller Spieler: ${newStatus.currentPlayer}, Ich bin dran: ${_isMyTurn.value}")
 
-        _thisPlayersHand.value = newStatus.playersHand
-        Log.v(TAG, "Eigene Hand: ${newStatus.playersHand.size} Karten, IDs: ${newStatus.playersHand}")
+        _thisPlayersHand.value = newStatus.playerCardIds
+        Log.v(TAG, "Eigene Hand: ${newStatus.playerCardIds.size} Karten, IDs: ${newStatus.playerCardIds}")
 
         _otherPlayersHands.value = newStatus.visibleHands
         Log.v(TAG, "Hände anderer Spieler: ${newStatus.visibleHands.size} Spieler haben sichtbare Karten")
@@ -235,14 +236,14 @@ class GamePlayViewModel(
         _stackValues.value = newStatus.playedCards
         Log.v(TAG, "Gespielte Karten: ${newStatus.playedCards.entries.joinToString { "${it.key}: ${it.value}" }}")
 
-        _numRemainingCard.value = newStatus.numRemainingCard
-        Log.v(TAG, "Verbleibende Karten im Deck: ${newStatus.numRemainingCard}")
+        _numRemainingCard.value = newStatus.numRemainingCards
+        Log.v(TAG, "Verbleibende Karten im Deck: ${newStatus.numRemainingCards}")
 
         _lastDiscardedCard.value = newStatus.discardPile.lastOrNull()
         Log.v(TAG, "Ablagestapel: ${newStatus.discardPile.size} Karten, letzte Karte: ${newStatus.discardPile.lastOrNull()}")
 
-        _numRemainingHintTokens.value = newStatus.hintTokens
-        Log.v(TAG, "Hinweis-Token: ${newStatus.hintTokens}")
+        _numRemainingHintTokens.value = newStatus.numRemainingHintTokens
+        Log.v(TAG, "Hinweis-Token: ${newStatus.numRemainingHintTokens}")
 
         _numRemainingFuseTokens.value = newStatus.strikes
         Log.v(TAG, "Fehlschläge: ${newStatus.strikes}")
