@@ -31,9 +31,10 @@ class LobbyViewModel : ViewModel() {
     val players: StateFlow<List<PlayerInLobby>> = _players
 
     private val _lobbyCode = mutableStateOf<String?>(null)
-
     val lobbyCode: String?
         get() = _lobbyCode.value
+
+    private val _playerId = mutableStateOf<Int?>(null)
 
     private val _isHost = mutableStateOf(false)
     val isHost: Boolean
@@ -54,6 +55,14 @@ class LobbyViewModel : ViewModel() {
 
     fun setLobbyCode(code: String) {
         _lobbyCode.value = code
+    }
+
+    fun setPlayerId(playerId: Int?) {
+        _playerId.value = playerId
+    }
+
+    fun getPlayerId(): Int? {
+        return _playerId.value
     }
 
     fun fetchPlayers() {
@@ -93,7 +102,7 @@ class LobbyViewModel : ViewModel() {
         _username.value = username
     }
 
-    // Get player ID by matching username in the players list
+    /*// Get player ID by matching username in the players list
     fun getPlayerId(): Int {
         val username = _username.value
         val playersList = _players.value
@@ -110,6 +119,6 @@ class LobbyViewModel : ViewModel() {
         // If we can't find the player or have no username, return -1
         // The calling code should handle this appropriately
         return 0
-    }
+    }*/
 }
 

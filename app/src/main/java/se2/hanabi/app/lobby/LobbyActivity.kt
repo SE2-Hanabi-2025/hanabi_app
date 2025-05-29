@@ -59,10 +59,12 @@ class LobbyActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val receivedLobbyCode = intent.getStringExtra("lobbyCode") ?: "Kein Code"
+        val receivedPlayerId = intent.getIntExtra("playerId", -1)
         val isHost = intent.getBooleanExtra("isHost", false)
         val username = intent.getStringExtra("username") ?: ""
 
         viewModel.setLobbyCode(receivedLobbyCode)
+        viewModel.setPlayerId(receivedPlayerId)
         viewModel.setIsHost(isHost)
         viewModel.setUsername(username)
         viewModel.startPlayerSync()
@@ -77,14 +79,11 @@ class LobbyActivity : ComponentActivity() {
 
                 LaunchedEffect(isGameStarted) {
                     if (isGameStarted) {
-                        // Assuming viewModel.getPlayerId() returns the current player's ID
-                        // You might need to implement getPlayerId() in your LobbyViewModel
-                        // or retrieve it in a way that makes sense for your app's logic.
-                        // For now, let's assume a placeholder or a method to get it.
-                        // If lobbyCode is null, it might indicate an issue, handle appropriately.
                         lobbyCode?.let { lc ->
-                            val currentPlayerId = viewModel.getPlayerId() // Placeholder for actual player ID retrieval
-                            navigateToGame(lc, currentPlayerId)
+                            val currentPlayerId = viewModel.getPlayerId()
+                            if (currentPlayerId != null) {
+                                navigateToGame(lc, currentPlayerId)
+                            }
                         }
                     }
                 }
@@ -116,7 +115,9 @@ class LobbyActivity : ComponentActivity() {
                 if (response.status == HttpStatusCode.OK) {
                     // Assuming viewModel.getPlayerId() returns the current player's ID
                     val currentPlayerId = viewModel.getPlayerId() // Placeholder for actual player ID retrieval
-                    navigateToGame(lobbyCode, currentPlayerId)
+                    if (currentPlayerId != null) {
+                        navigateToGame(lobbyCode, currentPlayerId)
+                    }
                 }
             } catch (e: Exception) {
             }
