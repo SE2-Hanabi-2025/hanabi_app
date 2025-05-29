@@ -79,6 +79,7 @@ data class ActionResult(
 @Serializable
 enum class ResultType {
     SUCCESS,
+    FAILURE,
     INVALID_MOVE,
     ERROR
 }

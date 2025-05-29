@@ -191,6 +191,10 @@ class GamePlayViewModel(
                         _statusMessage.value = "Erfolgreich: ${result.message}"
                         Log.d(TAG, "Aktion erfolgreich: ${result.message}")
                     }
+                    ResultType.FAILURE -> {
+                        _statusMessage.value = "Failure: ${result.message}"
+                        Log.d(TAG, "Action failed: ${result.message}")
+                    }
                     ResultType.INVALID_MOVE -> {
                         _statusMessage.value = "Ungültiger Zug: ${result.message}"
                         Log.w(TAG, "Ungültiger Zug: ${result.message}")
@@ -241,6 +245,17 @@ class GamePlayViewModel(
         _lastDiscardedCard.value = newStatus.discardPile.lastOrNull()
         Log.v(TAG, "Ablagestapel: ${newStatus.discardPile.size} Karten, letzte Karte: ${newStatus.discardPile.lastOrNull()}")
 
+        _cardsShowingColorHints.value = newStatus.cardsShowingColorHints
+        Log.v(TAG, "Cards showing color hints: ${newStatus.cardsShowingColorHints.size} hints")
+        newStatus.cardsShowingColorHints.forEach { (cardId, color) ->
+            Log.v(TAG, "  Card: $cardId - $color")
+        }
+
+        _cardsShowingValueHints.value = newStatus.cardsShowingValueHints
+        Log.v(TAG, "Cards showing value hints: ${newStatus.cardsShowingValueHints.size} hints")
+        newStatus.cardsShowingValueHints.forEach { (cardId, value) ->
+            Log.v(TAG, "  Card: $cardId - $value")
+        }
         _numRemainingHintTokens.value = newStatus.numRemainingHintTokens
         Log.v(TAG, "Hinweis-Token: ${newStatus.numRemainingHintTokens}")
 
