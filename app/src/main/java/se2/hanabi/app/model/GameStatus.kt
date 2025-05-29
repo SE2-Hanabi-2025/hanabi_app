@@ -1,8 +1,6 @@
 package se2.hanabi.app.model
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonNames
 
 @Serializable
 data class GameStatus(
@@ -17,7 +15,7 @@ data class GameStatus(
     val numRemainingHintTokens: Int,
     val strikes: Int,
     val gameOver: Boolean,
-    val currentPlayer: Int
+    val currentPlayerId: Int
 ) {
 
 }

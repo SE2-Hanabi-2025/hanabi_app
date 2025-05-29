@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import se2.hanabi.app.model.GameStatus
 import se2.hanabi.app.model.Player
@@ -49,7 +48,7 @@ class GamePlayViewModel(
         numRemainingHintTokens = 8,
         strikes = 0,
         gameOver = false,
-        currentPlayer = 0
+        currentPlayerId = 0
     )
 
     // Status-Nachricht für Feedback
@@ -220,9 +219,9 @@ class GamePlayViewModel(
         _players.value = newStatus.players
         Log.v(TAG, "Spieler: ${newStatus.players.joinToString { it.name }}")
 
-        _currentPlayer.value = newStatus.currentPlayer
-        _isMyTurn.value = newStatus.currentPlayer == playerId
-        Log.v(TAG, "Aktueller Spieler: ${newStatus.currentPlayer}, Ich bin dran: ${_isMyTurn.value}")
+        _currentPlayer.value = newStatus.currentPlayerId
+        _isMyTurn.value = newStatus.currentPlayerId == playerId
+        Log.v(TAG, "Aktueller Spieler: ${newStatus.currentPlayerId}, Ich bin dran: ${_isMyTurn.value}")
 
         _thisPlayersHand.value = newStatus.playerCardIds
         Log.v(TAG, "Eigene Hand: ${newStatus.playerCardIds.size} Karten, IDs: ${newStatus.playerCardIds}")

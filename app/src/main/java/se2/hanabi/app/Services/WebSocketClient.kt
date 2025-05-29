@@ -78,10 +78,9 @@ class WebSocketClient(
             webSocketService.gameState.collect { gameState ->
                 gameState?.let {
                     Log.d(TAG, "Received game state: ${it.players.size} players, " +
-                            "${it.numRemainingCard} cards remaining")
+                            "${it.numRemainingCards} cards remaining")
                 }
-            }
-        }
+            }        }
         
         CoroutineScope(Dispatchers.Main).launch {
             webSocketService.actionResult.collect { result ->
