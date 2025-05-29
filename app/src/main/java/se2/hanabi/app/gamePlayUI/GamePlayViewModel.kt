@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import se2.hanabi.app.model.GameStatus
 import se2.hanabi.app.model.Player
@@ -109,9 +110,9 @@ class GamePlayViewModel(
     private val _isValidHint = MutableStateFlow(false)
     val isValidHint: MutableStateFlow<Boolean> = _isValidHint
 
-    private val _cardsShowingColorHints = MutableStateFlow<Map<Int, Card.Color>>(gameStatus.cardsShowingColorHints)
+    private val _cardsShowingColorHints = MutableStateFlow<Map<Int, Card.Color>>(emptyMap())
     val cardsShowingColorHints: StateFlow<Map<Int, Card.Color>> = _cardsShowingColorHints
-    private val _cardsShowingValueHints =  MutableStateFlow<Map<Int, Int>>(gameStatus.cardsShowingValueHints)
+    private val _cardsShowingValueHints =  MutableStateFlow<Map<Int, Int>>(emptyMap())
     val cardsShowingValueHints: StateFlow<Map<Int,Int>> = _cardsShowingValueHints
 
     init {

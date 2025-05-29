@@ -113,8 +113,8 @@ fun PlayersHand(
                     isFlipped = true,
                     isSelected = cardId == selectedCard,
                     onClick = { onCardClick(cardId) },
-                    colorHint = viewModel.cardsShowingColorHints.value[cardId],
-                    valueHint = viewModel.cardsShowingValueHints.value[cardId],
+                    colorHint = viewModel.cardsShowingColorHints.collectAsState().value[cardId],
+                    valueHint = viewModel.cardsShowingValueHints.collectAsState().value[cardId],
                 )
             }
         }
