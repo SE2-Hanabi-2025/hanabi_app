@@ -16,7 +16,10 @@ import se2.hanabi.app.model.Hint
 import se2.hanabi.app.model.websocket.ResultType
 
 /**
- * GamePlayViewModel displays a gameStatus object and manages game actions via WebSocket.
+ * GamePlayViewModel displays a gameStatus object.
+ * it passes on action (hint, play, discard) to the GamePlayService.
+ * handles local logic of showing selected card/hand/ih, as well as when hint selecter is shown.
+ *
  */
 class GamePlayViewModel(
     private val lobbyId: String,
@@ -25,12 +28,12 @@ class GamePlayViewModel(
     companion object {
         private const val TAG = "HanabiGamePlayVM"
     }
-    
+
     private val gamePlayService: GamePlayService = GamePlayService(
         lobbyId = lobbyId,
         playerId = playerId
     )
-    
+
     private val webSocketService = WebSocketService()
 
     // Leerer initialer GameStatus, wird vom Backend gefüllt
@@ -51,7 +54,7 @@ class GamePlayViewModel(
     // Status-Nachricht für Feedback
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage
-    
+
     // Connection state
     private val _connectionState = MutableStateFlow(WebSocketService.ConnectionState.DISCONNECTED)
     val connectionState: StateFlow<WebSocketService.ConnectionState> = _connectionState
@@ -62,10 +65,10 @@ class GamePlayViewModel(
 
     private val _thisPlayer = MutableStateFlow(playerId)
     val thisPlayer: MutableStateFlow<Int> = _thisPlayer
-    
+
     private val _currentPlayer = MutableStateFlow(0)
     val currentPlayer: StateFlow<Int> = _currentPlayer
-    
+
     private val _isMyTurn = MutableStateFlow(false)
     val isMyTurn: StateFlow<Boolean> = _isMyTurn
 
@@ -89,7 +92,7 @@ class GamePlayViewModel(
 
     private val _numRemainingFuseTokens = MutableStateFlow(0)
     val numRemainingFuseTokens: MutableStateFlow<Int> = _numRemainingFuseTokens
-    
+
     private val _gameOver = MutableStateFlow(false)
     val gameOver: StateFlow<Boolean> = _gameOver
 
@@ -106,20 +109,20 @@ class GamePlayViewModel(
     private val _isValidHint = MutableStateFlow(false)
     val isValidHint: MutableStateFlow<Boolean> = _isValidHint
 
-    private val _shownColorHints = MutableStateFlow<MutableMap<Int, Card.Color>>(mutableMapOf())
-    val shownColorHints: StateFlow<MutableMap<Int, Card.Color>> = _shownColorHints
-    private val _shownValueHints =  MutableStateFlow<MutableMap<Int, Int>>(mutableMapOf())
-    val shownValueHints: StateFlow<MutableMap<Int,Int>> = _shownValueHints
+    private val _cardsShowingColorHints = MutableStateFlow<Map<Int, Card.Color>>(gameStatus.cardsShowingColorHints)
+    val cardsShowingColorHints: StateFlow<Map<Int, Card.Color>> = _cardsShowingColorHints
+    private val _cardsShowingValueHints =  MutableStateFlow<Map<Int, Int>>(gameStatus.cardsShowingValueHints)
+    val cardsShowingValueHints: StateFlow<Map<Int,Int>> = _cardsShowingValueHints
 
     init {
         Log.d(TAG, "Initialisiere GamePlayViewModel - LobbyId: $lobbyId, PlayerId: $playerId")
 
         // Set up WebSocket listeners
         setupWebSocketListeners()
-        
+
         // Connect to WebSocket
         connectToWebSocket()
-        
+
         // Initialen Spielstatus abrufen (für den Fall, dass WebSocket nicht sofort verbindet)
         viewModelScope.launch {
             _statusMessage.value = "Spieldaten werden geladen..."
@@ -136,18 +139,18 @@ class GamePlayViewModel(
             }
         }
     }
-    
+
     override fun onCleared() {
         super.onCleared()
         // Disconnect WebSocket when ViewModel is cleared
         webSocketService.disconnect()
     }
-    
+
     private fun connectToWebSocket() {
         Log.d(TAG, "Verbinde mit WebSocket - Lobby: $lobbyId, Spieler: $playerId")
         webSocketService.connect(lobbyId, playerId)
     }
-    
+
     private fun setupWebSocketListeners() {
         viewModelScope.launch {
             // Listen for connection state changes
@@ -169,7 +172,7 @@ class GamePlayViewModel(
                 }
             }
         }
-        
+
         viewModelScope.launch {
             // Listen for game state updates
             webSocketService.gameState.collect { newGameState ->
@@ -179,7 +182,7 @@ class GamePlayViewModel(
                 }
             }
         }
-        
+
         viewModelScope.launch {
             // Listen for action results
             webSocketService.actionResult.collect { result ->
@@ -199,7 +202,7 @@ class GamePlayViewModel(
                 }
             }
         }
-        
+
         viewModelScope.launch {
             // Listen for errors
             webSocketService.error.collect { errorMsg ->
@@ -215,7 +218,7 @@ class GamePlayViewModel(
 
         _players.value = newStatus.players
         Log.v(TAG, "Spieler: ${newStatus.players.joinToString { it.name }}")
-        
+
         _currentPlayer.value = newStatus.currentPlayer
         _isMyTurn.value = newStatus.currentPlayer == playerId
         Log.v(TAG, "Aktueller Spieler: ${newStatus.currentPlayer}, Ich bin dran: ${_isMyTurn.value}")
@@ -243,7 +246,7 @@ class GamePlayViewModel(
 
         _numRemainingFuseTokens.value = newStatus.strikes
         Log.v(TAG, "Fehlschläge: ${newStatus.strikes}")
-        
+
         _gameOver.value = newStatus.gameOver
         Log.v(TAG, "Spiel beendet: ${newStatus.gameOver}")
 
@@ -299,7 +302,7 @@ class GamePlayViewModel(
 
             Log.d(TAG, "Prüfe, ob Hinweis für Spieler $targetPlayerId gültig ist")
             val playerHand = _otherPlayersHands.value[targetPlayerId]
-            
+
             if (playerHand != null) {
                 playerHand.forEach { card ->
                     val matchColor = card.color == _selectedHint.value?.getColor()
@@ -334,12 +337,12 @@ class GamePlayViewModel(
             _statusMessage.value = "Wähle zuerst eine Karte aus"
             return
         }
-        
+
         if (!_isMyTurn.value) {
             _statusMessage.value = "Du bist nicht an der Reihe"
             return
         }
-        
+
         viewModelScope.launch {
             val cardIndex = _thisPlayersHand.value.indexOf(_selectedCard.value)
             if (cardIndex >= 0) {
@@ -352,23 +355,23 @@ class GamePlayViewModel(
             }
         }
     }
-    
+
     fun onDiscardCardClick() {
         if (_selectedCard.value < 0) {
             _statusMessage.value = "Wähle zuerst eine Karte aus"
             return
         }
-        
+
         if (!_isMyTurn.value) {
             _statusMessage.value = "Du bist nicht an der Reihe"
             return
         }
-        
+
         if (_numRemainingHintTokens.value >= 8) {
             _statusMessage.value = "Du kannst keine Karte abwerfen, wenn alle Hint-Token verfügbar sind"
             return
         }
-        
+
         viewModelScope.launch {
             val cardIndex = _thisPlayersHand.value.indexOf(_selectedCard.value)
             if (cardIndex >= 0) {
@@ -381,43 +384,43 @@ class GamePlayViewModel(
             }
         }
     }
-    
+
     fun onGiveHintClick() {
         val selectedPlayer = _selectedPlayer.value
         val selectedHint = _selectedHint.value
-        
+
         if (selectedPlayer < 0) {
             _statusMessage.value = "Wähle zuerst einen Spieler aus"
             return
         }
-        
+
         if (selectedHint == null) {
             _statusMessage.value = "Wähle zuerst einen Hinweis aus"
             return
         }
-        
+
         if (!_isValidHint.value) {
             _statusMessage.value = "Der ausgewählte Hinweis ist nicht gültig"
             return
         }
-        
+
         if (!_isMyTurn.value) {
             _statusMessage.value = "Du bist nicht an der Reihe"
             return
         }
-        
+
         if (_numRemainingHintTokens.value <= 0) {
             _statusMessage.value = "Keine Hinweis-Token mehr verfügbar"
             return
         }
-        
+
         viewModelScope.launch {
             _statusMessage.value = "Gebe Hinweis..."
             Log.d(TAG, "Gebe Hinweis an Spieler $selectedPlayer: $selectedHint")
             webSocketService.giveHint(lobbyId, playerId, selectedPlayer, selectedHint)
         }
     }
-    
+
     fun reconnectWebSocket() {
         webSocketService.disconnect()
         connectToWebSocket()
