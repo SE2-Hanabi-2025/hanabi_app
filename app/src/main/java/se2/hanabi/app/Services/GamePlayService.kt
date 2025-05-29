@@ -12,6 +12,7 @@ import io.ktor.http.isSuccess
 import kotlinx.serialization.json.Json
 import se2.hanabi.app.model.GameStatus
 import se2.hanabi.app.model.Hint
+import se2.hanabi.app.model.HintType
 
 /**
  * Vereinfachte Version des GamePlayService, die nur den initialen Spielstatus lädt
