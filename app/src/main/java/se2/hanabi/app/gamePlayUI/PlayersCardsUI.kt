@@ -249,8 +249,8 @@ fun OtherPlayersHand(
                                     card.value == viewModel.selectedHint.collectAsState().value?.getValue()
                             ),
                     highlightColor = if (viewModel.selectedHint.collectAsState().value?.getColor()!=null) colorFromColorEnum(card.color) else Color.White,
-                    colorHint = viewModel.cardsShowingColorHints.value[card.getID()],
-                    valueHint = viewModel.cardsShowingValueHints.value[card.getID()],
+                    colorHint = viewModel.cardsShowingColorHints.collectAsState().value[card.getID()],
+                    valueHint = viewModel.cardsShowingValueHints.collectAsState().value[card.getID()],
                 )
             }
         }
