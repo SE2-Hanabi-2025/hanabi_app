@@ -150,11 +150,15 @@ class StartMenuActivity: ComponentActivity() {
                     val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
                     val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code?name=$encodedName&avatarResID=$selectedAvatarResId")
                     statusMessage = response.body()
+                    val joinResponseBody: String = response.body()
                     isConnected = true
+
+                    val playerId = joinResponseBody.split(" ").last().toIntOrNull()
                     val intent = Intent(context, LobbyActivity::class.java).apply {
-                        putExtra("avatarResID", selectedAvatarResId)
-                        putExtra("username", username)
                         putExtra("lobbyCode", code)
+                        putExtra("playerId", playerId)
+                        putExtra("username", username)
+                        putExtra("avatarResID", selectedAvatarResId)
                         putExtra("isHost", false)
                     }
                     context.startActivity(intent)
@@ -179,8 +183,10 @@ class StartMenuActivity: ComponentActivity() {
                     println("-> Join Response: $joinResponseBody")
 
                     if (joinResponseBody.startsWith("Joined lobby", ignoreCase = true)) {
+                    val playerId = joinResponseBody.split(" ").last().toIntOrNull()
                         val intent = Intent(context, LobbyActivity::class.java).apply {
                             putExtra("lobbyCode", createdCode)
+                            putExtra("playerId", playerId)
                             putExtra("username", username)
                             putExtra("avatarResID", selectedAvatarResId)
                             putExtra("isHost", true)

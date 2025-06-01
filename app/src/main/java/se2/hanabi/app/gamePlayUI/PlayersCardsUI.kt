@@ -1,5 +1,6 @@
 package se2.hanabi.app.gamePlayUI
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -24,6 +25,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.model.Card
 import kotlin.math.roundToInt
@@ -63,11 +65,42 @@ fun PlayersHand(
     selectedCard: Int?
 ) {
     val viewModel: GamePlayViewModel = viewModel()
+    val playerId by viewModel.thisPlayer.collectAsState()
+    val players by viewModel.players.collectAsState()
+    
+    // Find current player's name
+    val playerName = players.find { it.id == playerId }?.name ?: "Spieler $playerId"
+    
     Box(
         modifier = Modifier
             .fillMaxSize(),
         contentAlignment = Alignment.BottomCenter
     ) {
+        // Display player's name and ID
+        androidx.compose.foundation.layout.Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 130.dp)
+                .background(Color.Black.copy(alpha = 0.6f))
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+        ) {
+            androidx.compose.material3.Text(
+                text = playerName,
+                color = Color.White,
+                style = androidx.compose.ui.text.TextStyle(
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+            )
+            androidx.compose.material3.Text(
+                text = "ID: $playerId",
+                color = Color.White.copy(alpha = 0.7f),
+                style = androidx.compose.ui.text.TextStyle(
+                    fontSize = 12.sp
+                )
+            )
+        }
+        
         Row(
             modifier = Modifier
                 .padding(5.dp)
@@ -75,17 +108,13 @@ fun PlayersHand(
             Arrangement.SpaceEvenly,
         ) {
             hand.forEach() { cardId ->
-                val colorHint = viewModel.shownColorHints.value[cardId]
-                val color: Card.Color = colorHint ?: Card.Color.WHITE // WHITE is dummy color
-                val valueHint = viewModel.shownValueHints.value[cardId]
-                val value: Int = valueHint ?: 1 // 1 is dummy value
                 CardItem(
-                    card = Card(color=color, value=value, id = -1), // dummy card id = -1
+                    card = Card(color=Card.Color.RED, value=1, id = -1), // dummy card: red|1 id = -1
                     isFlipped = true,
                     isSelected = cardId == selectedCard,
                     onClick = { onCardClick(cardId) },
-                    showColorHint = colorHint!=null,
-                    showValueHint = valueHint!=null,
+                    colorHint = viewModel.cardsShowingColorHints.collectAsState().value[cardId],
+                    valueHint = viewModel.cardsShowingValueHints.collectAsState().value[cardId],
                 )
             }
         }
@@ -97,8 +126,13 @@ fun OtherPlayersHands(
     hands: Map<Int, List<Card>>,
     onOtherPlayersHandClick: (Int) -> Unit,
     selectedHandIndex: Int,
-) {
+){
+    val viewModel: GamePlayViewModel = viewModel()
+    val players by viewModel.players.collectAsState()
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
+    
+    // Create a map of player IDs to player names
+    val playerMap = players.associateBy { it.id }
 
     Box(
         modifier = Modifier
@@ -126,12 +160,18 @@ fun OtherPlayersHands(
                     boxSize.height * 0.6f
                 }
             val handOffset = Offset(handOffsetX, handOffsetY)
+              // Find the player details
+            val playerId = hand.key
+            val playerName = playerMap[playerId]?.name ?: "Spieler $playerId"
+            
             OtherPlayersHand(
                 offset = handOffset,
                 hand = hand,
+                playerId = playerId,
+                playerName = playerName,
                 rotationAmountZ = rotationAmountZ.floatValue,
-                isSelected = index == selectedHandIndex,
-                onClick = { onOtherPlayersHandClick(index) }
+                isSelected = playerId == selectedHandIndex,
+                onClick = { onOtherPlayersHandClick(playerId) }
             )
         }
     }
@@ -141,6 +181,8 @@ fun OtherPlayersHands(
 fun OtherPlayersHand(
     offset: Offset,
     hand: Map.Entry<Int, List<Card>>,
+    playerId: Int,
+    playerName: String,
     rotationAmountZ: Float,
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
@@ -150,21 +192,48 @@ fun OtherPlayersHand(
 
     Box(
         modifier = Modifier
-            .offset { IntOffset((offset.x-rowSize.width/2).roundToInt(), offset.y.roundToInt()) } //-rowSize.width/2).dp
+            .offset { IntOffset((offset.x-rowSize.width/2).roundToInt(), offset.y.roundToInt()) }
             .graphicsLayer {
                 rotationZ = rotationAmountZ
             }
             .onSizeChanged { newSize -> rowSize = newSize },
         contentAlignment = Alignment.Center
-
         ) {
+        // Player name and ID display
+        androidx.compose.foundation.layout.Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .offset(y = (-120).dp)
+                .graphicsLayer {
+                    rotationZ = -rotationAmountZ // Counter-rotate so text is always upright
+                }
+                .background(Color.Black.copy(alpha = 0.6f))
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            androidx.compose.material3.Text(
+                text = playerName,
+                color = Color.White,
+                style = androidx.compose.ui.text.TextStyle(
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+            )
+            androidx.compose.material3.Text(
+                text = "ID: $playerId",
+                color = Color.White.copy(alpha = 0.7f),
+                style = androidx.compose.ui.text.TextStyle(
+                    fontSize = 12.sp
+                )
+            )
+        }
+        
         if (isSelected) {
             BackGlow(
                 width = with (LocalDensity.current) {rowSize.width.toDp() - 20.dp},
                 height = with (LocalDensity.current) {rowSize.height.toDp() - 20.dp },
                 glowSize = 30.dp,
-                )
+            )
         }
+        
         Row(
             horizontalArrangement = Arrangement.spacedBy((-45.dp)),
             verticalAlignment = Alignment.CenterVertically,
@@ -180,8 +249,8 @@ fun OtherPlayersHand(
                                     card.value == viewModel.selectedHint.collectAsState().value?.getValue()
                             ),
                     highlightColor = if (viewModel.selectedHint.collectAsState().value?.getColor()!=null) colorFromColorEnum(card.color) else Color.White,
-                    showColorHint = viewModel.shownColorHints.value.contains(card.getID()),
-                    showValueHint = viewModel.shownValueHints.value.contains(card.getID())
+                    colorHint = viewModel.cardsShowingColorHints.collectAsState().value[card.getID()],
+                    valueHint = viewModel.cardsShowingValueHints.collectAsState().value[card.getID()],
                 )
             }
         }

@@ -58,15 +58,15 @@ class LobbyActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         val receivedLobbyCode = intent.getStringExtra("lobbyCode") ?: "Kein Code"
+        val receivedPlayerId = intent.getIntExtra("playerId", -1)
         val isHost = intent.getBooleanExtra("isHost", false)
-
-        //val avatarResID = intent.getIntExtra("avatarResID", R.drawable.whiteavatar)
-        //val username = intent.getStringExtra("username") ?: "Anonym"
+        val username = intent.getStringExtra("username") ?: ""
 
         viewModel.setLobbyCode(receivedLobbyCode)
+        viewModel.setPlayerId(receivedPlayerId)
         viewModel.setIsHost(isHost)
+        viewModel.setUsername(username)
         viewModel.startPlayerSync()
 
 
@@ -79,7 +79,12 @@ class LobbyActivity : ComponentActivity() {
 
                 LaunchedEffect(isGameStarted) {
                     if (isGameStarted) {
-                        navigateToGame()
+                        lobbyCode?.let { lc ->
+                            val currentPlayerId = viewModel.getPlayerId()
+                            if (currentPlayerId != null) {
+                                navigateToGame(lc, currentPlayerId)
+                            }
+                        }
                     }
                 }
 
@@ -88,16 +93,17 @@ class LobbyActivity : ComponentActivity() {
                     lobbyCode = lobbyCode,
                     isHost = isHostState,
                     onLeaveLobby = { finish() },
-                    onStartGame = { lobbyCode?.let { startGameRequest(lobbyCode) } }//,
-                    //avatarResID = avatarResID,
-                    //username = username
+                    onStartGame = { lobbyCode?.let { startGameRequest(it) } },
                 )
             }
         }
     }
 
-    private fun navigateToGame() {
-        val intent = Intent(this, GameActivity::class.java)
+    private fun navigateToGame(lobbyId: String, playerId: Int) {
+        val intent = Intent(this, GameActivity::class.java).apply {
+            putExtra("lobbyId", lobbyId)
+            putExtra("playerId", playerId)
+        }
         startActivity(intent)
     }
 
@@ -107,7 +113,11 @@ class LobbyActivity : ComponentActivity() {
                 val response: HttpResponse =
                     HttpClient(CIO).get("http://10.0.2.2:8080/start-game/$lobbyCode")
                 if (response.status == HttpStatusCode.OK) {
-                    navigateToGame()
+                    // Assuming viewModel.getPlayerId() returns the current player's ID
+                    val currentPlayerId = viewModel.getPlayerId() // Placeholder for actual player ID retrieval
+                    if (currentPlayerId != null) {
+                        navigateToGame(lobbyCode, currentPlayerId)
+                    }
                 }
             } catch (e: Exception) {
             }
