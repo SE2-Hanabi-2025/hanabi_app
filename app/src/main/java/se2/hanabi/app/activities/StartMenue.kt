@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.OptIn
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -84,16 +85,7 @@ import androidx.camera.core.Preview
 import se2.hanabi.app.Handler.CameraPermissionHandler
 
 
-class StartMenuActivity: ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            ClientTheme {
-                StartMenuScreen()
-            }
-        }
-    }
-
+class StartMenue {
     @Composable
     fun StartMenuScreen() {
         var showConnectDialog by remember { mutableStateOf(false) }
@@ -476,30 +468,37 @@ class StartMenuActivity: ComponentActivity() {
             )
         }
         if (showQRScanner) {
-
             CameraPermissionHandler(
                 onPermissionGranted = {
                     hasCameraPermission = true
                     permissionDenied = false
+                    println("Camera permission granted in StartMenue!")
                 },
                 onPermissionDenied = {
                     hasCameraPermission = false
                     permissionDenied = true
+                    println("Camera permission denied in StartMenue!")
                 }
             )
 
             if (hasCameraPermission) {
-                QRScanner(
-                    onScanned = { scannedCode ->
-                        joinLobby(scannedCode)
-                        showQRScanner = false
-                        showJoinDialog = false
-                    },
-                    onDismiss = { showQRScanner = false }
-                )
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    QRScanner(
+                        onScanned = { scannedCode ->
+                            println("QR Code scanned: $scannedCode")
+                            joinLobby(scannedCode)
+                            showQRScanner = false
+                            showJoinDialog = false
+                        },
+                        onDismiss = { showQRScanner = false }
+                    )
+                }
             } else if (permissionDenied) {
                 // Zeige Snackbar oder Dialog
-                statusMessage = "Camera permission denied"
+                statusMessage = "Camera permission denied. Please grant camera permission in app settings."
                 showStatusDialog = true
                 showQRScanner = false
             }
@@ -589,7 +588,6 @@ fun Title(modifier: Modifier = Modifier) {
     )
 }
 
-@androidx.annotation.OptIn(ExperimentalGetImage::class)
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun QRScanner(
@@ -597,68 +595,108 @@ fun QRScanner(
     onDismiss: () -> Unit
 ) {
     AndroidView(factory = { context ->
-        val previewView = PreviewView(context)
+        val previewView = PreviewView(context).apply {
+            // Setzt wichtige Eigenschaften für PreviewView
+            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+            scaleType = PreviewView.ScaleType.FILL_CENTER
+        }
 
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
+            try {
+                val cameraProvider = cameraProviderFuture.get()
 
-            val preview: Preview = Preview.Builder()
-                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
-                .setTargetRotation(previewView.display.rotation)
-                .build()
+                val preview: Preview = Preview.Builder()
+                    .setTargetResolution(android.util.Size(720, 1280))
+                    .setTargetRotation(previewView.display.rotation)
+                    .build()
+                    .also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
+                    }
 
-            val barcodeScanner = BarcodeScanning.getClient()
-            val analyzer: ImageAnalysis = ImageAnalysis.Builder()
-                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
-                .setTargetRotation(previewView.display.rotation)
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-                .also { analysis ->
-                    analysis.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
-                        val mediaImage = imageProxy.image
-                        if (mediaImage != null) {
-                            val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-                            barcodeScanner.process(inputImage)
-                                .addOnSuccessListener { barcodes ->
-                                    for (barcode in barcodes) {
-                                        val rawValue = barcode.rawValue
-                                        if (rawValue != null && rawValue.length == 6) {
-                                            onScanned(rawValue.uppercase())
+                val barcodeScanner = BarcodeScanning.getClient()
+                val analyzer: ImageAnalysis = ImageAnalysis.Builder()
+                    .setTargetResolution(android.util.Size(720, 1280))
+                    .setTargetRotation(previewView.display.rotation)
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also { analysis ->
+                        analysis.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
+                            val mediaImage = imageProxy.image
+                            if (mediaImage != null) {
+                                val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                                barcodeScanner.process(inputImage)
+                                    .addOnSuccessListener { barcodes ->
+                                        for (barcode in barcodes) {
+                                            val rawValue = barcode.rawValue
+                                            if (rawValue != null && rawValue.length == 6) {
+                                                onScanned(rawValue.uppercase())
+                                            }
                                         }
                                     }
-                                }
-                                .addOnFailureListener {
-                                }
-                                .addOnCompleteListener {
-                                    imageProxy.close()
-                                }
-                        } else {
-                            imageProxy.close()
+                                    .addOnFailureListener { e ->
+                                        // Fehler beim Scannen loggen
+                                        println("Barcode scanning failed: ${e.message}")
+                                    }
+                                    .addOnCompleteListener {
+                                        imageProxy.close()
+                                    }
+                            } else {
+                                imageProxy.close()
+                            }
                         }
                     }
+
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                try {
+                    cameraProvider.unbindAll()
+                    cameraProvider.bindToLifecycle(
+                        context as LifecycleOwner, cameraSelector, preview, analyzer
+                    )
+                } catch (exc: Exception) {
+                    exc.printStackTrace()
+                    println("Camera binding failed: ${exc.message}")
                 }
-
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    context as LifecycleOwner, cameraSelector, preview, analyzer
-                )
-            } catch (exc: Exception) {
-                exc.printStackTrace()
+            } catch (e: Exception) {
+                println("Camera provider future failed: ${e.message}")
             }
         }, ContextCompat.getMainExecutor(context))
 
         previewView
     },
-        modifier = Modifier.fillMaxSize()
+    modifier = Modifier.fillMaxSize()
     )
-
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
-        IconButton(onClick = onDismiss) {
-            Icon(imageVector = Icons.Default.Close, contentDescription = "Close Scanner")
+    
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Scanüberlagerung anzeigen (optional)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // Hier könnte ein Scan-Rahmen angezeigt werden
+        }
+        
+        // Schließen-Button
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp), 
+            contentAlignment = Alignment.TopEnd
+        ) {
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.5f), shape = CircleShape)
+                    .size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close, 
+                    contentDescription = "Close Scanner",
+                    tint = Color.White
+                )
+            }
         }
     }
 }
