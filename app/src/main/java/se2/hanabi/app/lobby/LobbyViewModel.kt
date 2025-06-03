@@ -33,6 +33,14 @@ class LobbyViewModel : ViewModel() {
     private val _isHost = mutableStateOf(false)
     val isHost: Boolean
         get() = _isHost.value
+        
+    // Username of the current player
+    private val _username = mutableStateOf("")
+    val username: String
+        get() = _username.value
+
+    // Server URL for the game server
+    private val serverUrl = "http://10.0.2.2:8080"
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -42,7 +50,6 @@ class LobbyViewModel : ViewModel() {
             })
         }
     }
-
     fun setIsHost(isHost: Boolean) {
         _isHost.value = isHost
     }
@@ -55,28 +62,63 @@ class LobbyViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val code = _lobbyCode.value ?: return@launch
-                val response: List<String> =  client.get("http://10.0.2.2:8080/lobby/$code/players").body()
-                _players.value = response
-
-                val gameStatusResponse = client.get("http://10.0.2.2:8080/start-game/$code/status")
+                
+                // Fetch players from server
+                val response: List<String> = client.get("$serverUrl/lobby/$code/players").body()
+                
+                // Filter out duplicates
+                val uniquePlayers = response.toSet().toList()
+                
+                // Make sure current player is in the list
+                val currentUsername = _username.value
+                if (currentUsername.isNotEmpty() && !uniquePlayers.contains(currentUsername)) {
+                    val updatedList = uniquePlayers.toMutableList()
+                    updatedList.add(currentUsername)
+                    _players.value = updatedList
+                    
+                    // Log for debugging
+                    println("Added current player ($currentUsername) to list: ${updatedList.joinToString()}")
+                } else {
+                    _players.value = uniquePlayers
+                    
+                    // Log for debugging
+                    println("Updated player list: ${uniquePlayers.joinToString()}")
+                }
+                
+                // Check game status
+                val gameStatusResponse = client.get("$serverUrl/start-game/$code/status")
                 if (gameStatusResponse.status == HttpStatusCode.OK) {
                     val gameStarted: Boolean = gameStatusResponse.body()
-                    if (gameStarted){
+                    if (gameStarted) {
                         _isGameStarted.value = true
                     }
                 }
-            }catch (e: Exception){
+            } catch (e: Exception) {
                 e.printStackTrace()
-                _players.value = emptyList()
+                println("Error fetching players: ${e.message}")
+                
+                // If there's an error, ensure at least the current player is in the list
+                val currentUsername = _username.value
+                if (currentUsername.isNotEmpty() && (_players.value.isEmpty() || !_players.value.contains(currentUsername))) {
+                    _players.value = listOf(currentUsername)
+                    println("Added only current player ($currentUsername) after error")
+                }
             }
         }
     }
 
-    fun startPlayerSync(intervalMillis : Long = 1000L){
+    fun startPlayerSync(intervalMillis: Long = 2000L) {
         viewModelScope.launch {
+            // Initial delay to make sure any join operations are completed
+            delay(500L)
+            
+            // Fetch players immediately once
+            fetchPlayers()
+            
+            // Then start regular polling
             while (true) {
-                fetchPlayers()
                 delay(intervalMillis)
+                fetchPlayers()
             }
         }
     }

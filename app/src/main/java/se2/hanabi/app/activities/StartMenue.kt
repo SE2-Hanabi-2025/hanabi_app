@@ -1,10 +1,6 @@
 package se2.hanabi.app.activities
 
 import android.content.Intent
-import androidx.annotation.OptIn
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -53,11 +49,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-//import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import com.google.mlkit.vision.barcode.BarcodeScanning
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -67,18 +60,10 @@ import kotlinx.coroutines.launch
 import se2.hanabi.app.EndAnimations.FireworkLauncher
 import se2.hanabi.app.lobby.LobbyActivity
 import se2.hanabi.app.R
-import se2.hanabi.app.ui.theme.ClientTheme
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import androidx.camera.core.*
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
-import com.google.mlkit.vision.common.InputImage
-
-import androidx.compose.material.icons.filled.Close
-
-import androidx.camera.core.Preview
 import se2.hanabi.app.Handler.CameraPermissionHandler
+import se2.hanabi.app.components.QRScanner
 
 
 class StartMenue {
@@ -99,7 +84,7 @@ class StartMenue {
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
         val urlEmulator = "http://10.0.2.2:8080"
-        val urlLocalHost = "http://localhost:8080"
+        //val urlLocalHost = "http://localhost:8080"
         val context = LocalContext.current
         var showQRScanner by remember { mutableStateOf(false) }
         var hasCameraPermission by remember { mutableStateOf(false) }
@@ -150,31 +135,46 @@ class StartMenue {
                 isLoading = false
             }
         }
-
         fun joinLobby(code: String) {
+            if (code.length != 6) {
+                statusMessage = "Invalid lobby code. Code must be 6 characters."
+                showStatusDialog = true
+                return
+            }
+            
             coroutineScope.launch {
                 isLoading = true
                 try {
+                    // Encode the username to handle special characters
                     val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
+                    
+                    // Join the lobby
                     val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code?name=$encodedName")
-                    statusMessage = response.body()
-                    isConnected = true
-                    val intent = Intent(context, LobbyActivity::class.java).apply {
-                        putExtra("avatarResID", selectedAvatarResId)
-                        putExtra("username", username)
-                        putExtra("lobbyCode", code)
-                        putExtra("isHost", false)
+                    val responseBody: String = response.body()
+                    
+                    if (responseBody.startsWith("Joined lobby", ignoreCase = true)) {
+                        isConnected = true
+                        // Launch the LobbyActivity with the necessary extras
+                        val intent = Intent(context, LobbyActivity::class.java).apply {
+                            putExtra("avatarResID", selectedAvatarResId)
+                            putExtra("username", username)
+                            putExtra("lobbyCode", code)
+                            putExtra("isHost", false)
+                        }
+                        context.startActivity(intent)
+                    } else {
+                        statusMessage = "Failed to join lobby: $responseBody"
+                        showStatusDialog = true
                     }
-                    context.startActivity(intent)
                 } catch (e: Exception) {
-                    statusMessage = "Failed to join lobby"
+                    statusMessage = "Error joining lobby: ${e.localizedMessage}"
+                    showStatusDialog = true
+                } finally {
+                    isLoading = false
                 }
-                showStatusDialog = true
-                isLoading = false
             }
         }
-
-        fun createLobbyAndJoin(currentUsername: String) {
+        fun createLobbyAndJoin() {
             coroutineScope.launch {
                 isLoading = true
                 try {
@@ -307,9 +307,8 @@ class StartMenue {
                     )
                 }
 
-                Button(
-                    onClick = {
-                        createLobbyAndJoin(username)
+                Button(                    onClick = {
+                        createLobbyAndJoin()
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.DarkGray,
@@ -485,9 +484,16 @@ class StartMenue {
                     QRScanner(
                         onScanned = { scannedCode ->
                             println("QR Code scanned: $scannedCode")
-                            joinLobby(scannedCode)
-                            showQRScanner = false
-                            showJoinDialog = false
+                            if (scannedCode.length == 6) {
+                                // Make sure we have a 6-character lobby code
+                                joinLobby(scannedCode)
+                                showQRScanner = false
+                                showJoinDialog = false
+                            } else {
+                                statusMessage = "Invalid QR code format. Expected 6-character lobby code."
+                                showStatusDialog = true
+                                showQRScanner = false
+                            }
                         },
                         onDismiss = { showQRScanner = false }
                     )
@@ -582,118 +588,5 @@ fun Title(modifier: Modifier = Modifier) {
         ),
         modifier = modifier
     )
-}
-
-@OptIn(ExperimentalGetImage::class)
-@Composable
-fun QRScanner(
-    onScanned: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    AndroidView(factory = { context ->
-        val previewView = PreviewView(context).apply {
-            // Setzt wichtige Eigenschaften für PreviewView
-            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-            scaleType = PreviewView.ScaleType.FILL_CENTER
-        }
-
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-        cameraProviderFuture.addListener({
-            try {
-                val cameraProvider = cameraProviderFuture.get()
-
-                val preview: Preview = Preview.Builder()
-                    .setTargetResolution(android.util.Size(720, 1280))
-                    .setTargetRotation(previewView.display.rotation)
-                    .build()
-                    .also {
-                        it.setSurfaceProvider(previewView.surfaceProvider)
-                    }
-
-                val barcodeScanner = BarcodeScanning.getClient()
-                val analyzer: ImageAnalysis = ImageAnalysis.Builder()
-                    .setTargetResolution(android.util.Size(720, 1280))
-                    .setTargetRotation(previewView.display.rotation)
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                    .also { analysis ->
-                        analysis.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
-                            val mediaImage = imageProxy.image
-                            if (mediaImage != null) {
-                                val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-                                barcodeScanner.process(inputImage)
-                                    .addOnSuccessListener { barcodes ->
-                                        for (barcode in barcodes) {
-                                            val rawValue = barcode.rawValue
-                                            if (rawValue != null && rawValue.length == 6) {
-                                                onScanned(rawValue.uppercase())
-                                            }
-                                        }
-                                    }
-                                    .addOnFailureListener { e ->
-                                        // Fehler beim Scannen loggen
-                                        println("Barcode scanning failed: ${e.message}")
-                                    }
-                                    .addOnCompleteListener {
-                                        imageProxy.close()
-                                    }
-                            } else {
-                                imageProxy.close()
-                            }
-                        }
-                    }
-
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                try {
-                    cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
-                        context as LifecycleOwner, cameraSelector, preview, analyzer
-                    )
-                } catch (exc: Exception) {
-                    exc.printStackTrace()
-                    println("Camera binding failed: ${exc.message}")
-                }
-            } catch (e: Exception) {
-                println("Camera provider future failed: ${e.message}")
-            }
-        }, ContextCompat.getMainExecutor(context))
-
-        previewView
-    },
-    modifier = Modifier.fillMaxSize()
-    )
-    
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Scanüberlagerung anzeigen (optional)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            // Hier könnte ein Scan-Rahmen angezeigt werden
-        }
-        
-        // Schließen-Button
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp), 
-            contentAlignment = Alignment.TopEnd
-        ) {
-            IconButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .background(Color.Black.copy(alpha = 0.5f), shape = CircleShape)
-                    .size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close, 
-                    contentDescription = "Close Scanner",
-                    tint = Color.White
-                )
-            }
-        }
-    }
 }
 

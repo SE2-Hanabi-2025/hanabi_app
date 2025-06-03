@@ -62,6 +62,8 @@ import android.graphics.Color as AndroidColor
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.common.BitMatrix
+import androidx.core.graphics.set
+import androidx.core.graphics.createBitmap
 
 class LobbyActivity : ComponentActivity() {
 
@@ -114,11 +116,11 @@ class LobbyActivity : ComponentActivity() {
         return try {
             val writer = QRCodeWriter()
             val bitMatrix: BitMatrix = writer.encode(lobbyCode, BarcodeFormat.QR_CODE, size, size)
-            val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565)
+            val bitmap = createBitmap(size, size, Bitmap.Config.RGB_565)
             
             for (x in 0 until size) {
                 for (y in 0 until size) {
-                    bitmap.setPixel(x, y, if (bitMatrix[x, y]) AndroidColor.BLACK else AndroidColor.WHITE)
+                    bitmap[x, y] = if (bitMatrix[x, y]) AndroidColor.BLACK else AndroidColor.WHITE
                 }
             }
             
