@@ -1,11 +1,7 @@
 package se2.hanabi.app.activities
 
 import android.content.Intent
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.annotation.OptIn
-import androidx.camera.core.AspectRatio
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView

@@ -132,26 +132,22 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
-
+    
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.content.negotiation)
-
-    implementation(libs.kotlinx.serialization.json.v180)
     implementation(libs.ktor.client.websockets)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-
+    
     implementation(libs.camera.core)
     implementation(libs.camera.camera2)
     implementation(libs.camera.lifecycle)
     implementation(libs.camera.view)
     implementation(libs.mlkit.barcode.scanning)
-    implementation (libs.androidx.material.icons.extended)
+    implementation(libs.androidx.material.icons.extended)
 
-    implementation("com.google.guava:guava:32.1.3-android")
+    implementation(libs.guava)
+    implementation(libs.core)
 }
