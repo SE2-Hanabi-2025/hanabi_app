@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.implementation
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -109,6 +111,8 @@ sonar {
 
 
 dependencies {
+
+    implementation ("androidx.fragment:fragment-ktx:1.3.6")
 
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
