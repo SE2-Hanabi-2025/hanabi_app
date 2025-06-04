@@ -54,7 +54,7 @@ fun GameBoardUI() {
                 RemainingCardsStack(numRemainingCards = viewModel.numRemainingCard.collectAsState().value)
                 DiscardedCardsStack(
                     lastDiscardedCard = viewModel.lastDiscardedCard.collectAsState().value,
-                    onClick = viewModel::onDiscardStackClick
+                    onClick = viewModel::onDiscardCardClick
                 )
             }
             HintTokens(numRemaining = viewModel.numRemainingHintTokens.collectAsState().value)
@@ -192,7 +192,7 @@ fun EmptyStack(
         isFlipped = true,
         isPortrait = isPortrait,
         onClick = onClick,
-        showColorHint = true
+        colorHint = color
     )
 }
 

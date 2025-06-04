@@ -71,15 +71,15 @@ class LobbyActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         val receivedLobbyCode = intent.getStringExtra("lobbyCode") ?: "Kein Code"
+        val receivedPlayerId = intent.getIntExtra("playerId", -1)
         val isHost = intent.getBooleanExtra("isHost", false)
-
-        val avatarResID = intent.getIntExtra("avatarResID", R.drawable.whiteavatar)
-        val username = intent.getStringExtra("username") ?: "Anonym"
+        val username = intent.getStringExtra("username") ?: ""
 
         viewModel.setLobbyCode(receivedLobbyCode)
+        viewModel.setPlayerId(receivedPlayerId)
         viewModel.setIsHost(isHost)
+        viewModel.setUsername(username)
         viewModel.startPlayerSync()
 
 
@@ -92,7 +92,12 @@ class LobbyActivity : ComponentActivity() {
 
                 LaunchedEffect(isGameStarted) {
                     if (isGameStarted) {
-                        navigateToGame()
+                        lobbyCode?.let { lc ->
+                            val currentPlayerId = viewModel.getPlayerId()
+                            if (currentPlayerId != null) {
+                                navigateToGame(lc, currentPlayerId)
+                            }
+                        }
                     }
                 }
 
@@ -101,14 +106,18 @@ class LobbyActivity : ComponentActivity() {
                     lobbyCode = lobbyCode,
                     isHost = isHostState,
                     onLeaveLobby = { finish() },
-                    onStartGame = { lobbyCode?.let { startGameRequest(lobbyCode) } },
-                    avatarResID = avatarResID,
-                    username = username
+                    onStartGame = { lobbyCode?.let { startGameRequest(it) } },
                 )
             }
         }
-    }    private fun navigateToGame() {
-        val intent = Intent(this, GameActivity::class.java)
+    }
+
+    private fun navigateToGame(lobbyId: String, playerId: Int) {
+        val intent = Intent(this, GameActivity::class.java).apply {
+            putExtra("lobbyId", lobbyId)
+            putExtra("playerId", playerId)
+        }
+        
         startActivity(intent)
     }
 
@@ -171,7 +180,11 @@ class LobbyActivity : ComponentActivity() {
                 val response: HttpResponse =
                     HttpClient(CIO).get("http://10.0.2.2:8080/start-game/$lobbyCode")
                 if (response.status == HttpStatusCode.OK) {
-                    navigateToGame()
+                    // Assuming viewModel.getPlayerId() returns the current player's ID
+                    val currentPlayerId = viewModel.getPlayerId() // Placeholder for actual player ID retrieval
+                    if (currentPlayerId != null) {
+                        navigateToGame(lobbyCode, currentPlayerId)
+                    }
                 }
             } catch (e: Exception) {
             }
@@ -179,13 +192,14 @@ class LobbyActivity : ComponentActivity() {
     }
     @Composable
     fun LobbyScreen(
-        playerList: List<String>,
+        playerList: List<PlayerInLobby>,
+
         lobbyCode: String?,
         onLeaveLobby: () -> Unit,
         onStartGame: () -> Unit,
         isHost: Boolean,
-        avatarResID: Int,
-        username: String
+        //avatarResID: Int,
+        //username: String
     ) {
         var showQRCodeDialog by remember { mutableStateOf(false) }
         
@@ -197,8 +211,6 @@ class LobbyActivity : ComponentActivity() {
                 contentScale = ContentScale.Crop
             )
 
-
-            //TODO: Implement server connection
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
@@ -244,17 +256,18 @@ class LobbyActivity : ComponentActivity() {
                                     .clip(CircleShape)
                                     .background(Color.DarkGray)
                             ){
-                                if (player == username){
-                                    Image( painter = painterResource(id = avatarResID),
+                                //if (player == username){
+
+                                Image( painter = painterResource(id = player.avatarResID),
                                         contentDescription = "Avatar",
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
-                            }
+                            //}
 
                             Text(
-                                text = player,
+                                text = player.name,
                                 color = Color.White,
                                 modifier = Modifier.weight(1f),
                                 textAlign = TextAlign.Start,

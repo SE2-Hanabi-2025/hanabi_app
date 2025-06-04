@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.model.Card
 import se2.hanabi.app.model.Hint
+import androidx.compose.runtime.getValue
 
 @Composable
 fun HintSelector(
@@ -101,13 +102,24 @@ fun GiveHintButton(
     isAvailable: Boolean = false,
     onClick: () -> Unit
 ) {
+    val viewModel: GamePlayViewModel = viewModel()
+    val isMyTurn by viewModel.isMyTurn.collectAsState()
+    val numRemainingHintTokens by viewModel.numRemainingHintTokens.collectAsState()
+    
+    // The hint is only truly available if:
+    // 1. The hint is valid
+    // 2. It's the player's turn
+    // 3. There are hint tokens available
+    val isTrulyAvailable = isAvailable && isMyTurn && numRemainingHintTokens > 0
+    
     val backgroundBrush = Brush.verticalGradient(
-        if (isAvailable) {
+        if (isTrulyAvailable) {
             listOf(Color(0xFF282828), Color(0xFF282828).copy(alpha = 0.9f))
         } else {
             listOf(Color(0xFF282828).copy(alpha = 0.7f), Color(0xFF282828).copy(alpha = 0.6f))
         }
     )
+    
     Box(
         modifier = modifier
             .width(width)
@@ -115,14 +127,14 @@ fun GiveHintButton(
             .background(
                 brush = backgroundBrush
             )
-            .clickable { onClick() },
+            .clickable(enabled = isTrulyAvailable) { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = "Give hint",
             fontSize = (width.value/5).sp,
             fontFamily = FontFamily.Cursive,
-            color = if (!isAvailable) Color(0x566290FF) else Color(0xFFF2FF90),
+            color = if (!isTrulyAvailable) Color(0x566290FF) else Color(0xFFF2FF90),
         )
     }
 }
