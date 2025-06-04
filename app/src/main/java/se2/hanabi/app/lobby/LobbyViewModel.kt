@@ -16,19 +16,25 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
+@kotlinx.serialization.Serializable
+data class PlayerInLobby(
+    val name: String,
+    val avatarResID: Int
+)
 
 class LobbyViewModel : ViewModel() {
 
     private val _isGameStarted = MutableStateFlow(false)
     val isGameStarted: StateFlow<Boolean> = _isGameStarted
 
-    private val _players = MutableStateFlow<List<String>>(emptyList())
-    val players: StateFlow<List<String>> = _players
+    private val _players = MutableStateFlow<List<PlayerInLobby>>(emptyList())
+    val players: StateFlow<List<PlayerInLobby>> = _players
 
     private val _lobbyCode = mutableStateOf<String?>(null)
-
     val lobbyCode: String?
         get() = _lobbyCode.value
+
+    private val _playerId = mutableStateOf<Int?>(null)
 
     private val _isHost = mutableStateOf(false)
     val isHost: Boolean
@@ -58,35 +64,43 @@ class LobbyViewModel : ViewModel() {
         _lobbyCode.value = code
     }
 
+    fun setPlayerId(playerId: Int?) {
+        _playerId.value = playerId
+    }
+
+    fun getPlayerId(): Int? {
+        return _playerId.value
+    }
+
     fun fetchPlayers() {
         viewModelScope.launch {
             try {
                 val code = _lobbyCode.value ?: return@launch
+
                 
                 // Fetch players from server
-                val response: List<String> = client.get("$serverUrl/lobby/$code/players").body()
+                val response: List<PlayerInLobby> =  client.get("$serverUrl/lobby/$code/players").body()
                 
                 // Filter out duplicates
-                val uniquePlayers = response.toSet().toList()
+                val uniquePlayers = response.distinctBy { it.name }.toMutableList()
                 
                 // Make sure current player is in the list
                 val currentUsername = _username.value
+              
                 if (currentUsername.isNotEmpty() && !uniquePlayers.contains(currentUsername)) {
-                    val updatedList = uniquePlayers.toMutableList()
-                    updatedList.add(currentUsername)
-                    _players.value = updatedList
+                    uniquePlayers.add(PlayerInLobby(currentUsername, 0))
                     
-                    // Log for debugging
-                    println("Added current player ($currentUsername) to list: ${updatedList.joinToString()}")
+                    println("Added current player ($currentUsername) to list: ${uniquePlayers.joinToString { it.name }}")
                 } else {
-                    _players.value = uniquePlayers
                     
                     // Log for debugging
-                    println("Updated player list: ${uniquePlayers.joinToString()}")
+                    println("Updated player list: ${uniquePlayers.joinToString { it.name }}")
                 }
                 
+                _players.value = response
                 // Check game status
                 val gameStatusResponse = client.get("$serverUrl/start-game/$code/status")
+
                 if (gameStatusResponse.status == HttpStatusCode.OK) {
                     val gameStarted: Boolean = gameStatusResponse.body()
                     if (gameStarted) {
@@ -100,7 +114,7 @@ class LobbyViewModel : ViewModel() {
                 // If there's an error, ensure at least the current player is in the list
                 val currentUsername = _username.value
                 if (currentUsername.isNotEmpty() && (_players.value.isEmpty() || !_players.value.contains(currentUsername))) {
-                    _players.value = listOf(currentUsername)
+                    _players.value = listOf(PlayerInLobby(currentUsername, 0))
                     println("Added only current player ($currentUsername) after error")
                 }
             }
@@ -121,6 +135,30 @@ class LobbyViewModel : ViewModel() {
                 fetchPlayers()
             }
         }
+    } 
+    
+    // Set username when joining a lobby
+    fun setUsername(username: String) {
+        _username.value = username
     }
+
+    /*// Get player ID by matching username in the players list
+    fun getPlayerId(): Int {
+        val username = _username.value
+        val playersList = _players.value
+        
+        // If we have a username, find its index in the players list
+        // The index corresponds to the player ID assigned by the server
+        if (username.isNotEmpty()) {
+            val index = playersList.indexOf(username)
+            if (index != -1) {
+                return index
+            }
+        }
+        
+        // If we can't find the player or have no username, return -1
+        // The calling code should handle this appropriately
+        return 0
+    }*/
 }
 
