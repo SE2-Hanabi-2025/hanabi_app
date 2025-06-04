@@ -65,7 +65,6 @@ import java.nio.charset.StandardCharsets
 import se2.hanabi.app.Handler.CameraPermissionHandler
 import se2.hanabi.app.components.QRScanner
 
-
 class StartMenue {
     @Composable
     fun StartMenuScreen() {

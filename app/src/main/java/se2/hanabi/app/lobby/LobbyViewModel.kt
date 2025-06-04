@@ -16,6 +16,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
+
 @kotlinx.serialization.Serializable
 data class PlayerInLobby(
     val name: String,
@@ -87,7 +88,7 @@ class LobbyViewModel : ViewModel() {
                 // Make sure current player is in the list
                 val currentUsername = _username.value
               
-                if (currentUsername.isNotEmpty() && !uniquePlayers.contains(currentUsername)) {
+                if (currentUsername.isNotEmpty() && !uniquePlayers.any{it.name ==currentUsername}) {
                     uniquePlayers.add(PlayerInLobby(currentUsername, 0))
                     
                     println("Added current player ($currentUsername) to list: ${uniquePlayers.joinToString { it.name }}")
@@ -113,7 +114,7 @@ class LobbyViewModel : ViewModel() {
                 
                 // If there's an error, ensure at least the current player is in the list
                 val currentUsername = _username.value
-                if (currentUsername.isNotEmpty() && (_players.value.isEmpty() || !_players.value.contains(currentUsername))) {
+                if (currentUsername.isNotEmpty() && (_players.value.isEmpty() || !_players.value.any{it.name == currentUsername})) {
                     _players.value = listOf(PlayerInLobby(currentUsername, 0))
                     println("Added only current player ($currentUsername) after error")
                 }
