@@ -103,21 +103,6 @@ class StartMenue {
             }
         }
 
-        fun connectToServer() {
-            coroutineScope.launch {
-                isLoading = true
-                try {
-                    val response: HttpResponse = client.get("$urlEmulator/connect")
-                    statusMessage = response.body()
-                    //After connecting, navigate to LobbyScreen
-                    context.startActivity(Intent(context, LobbyActivity::class.java))
-                } catch (e: Exception) {
-                    statusMessage = "Failed to connect"
-                }
-                showStatusDialog = true
-                isLoading = false
-            }
-        }
 
         fun startGame() {
             coroutineScope.launch {
@@ -347,19 +332,6 @@ class StartMenue {
                         textAlign = TextAlign.Center,
                         fontSize = 20.sp)
                 }
-                /*Button(
-                    onClick = {
-                        context.startActivity(
-                            Intent(
-                                context,
-                                LobbyActivity::class.java
-                            )
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth().height(60.dp)
-                ) {
-                    Text("Temporary: Go to lobby")
-                }*/
             }
             Surface(
                 modifier = Modifier
@@ -550,14 +522,6 @@ class StartMenue {
                 Button(onClick = onDismiss) { Text("Cancel") }
             }
         )}
-
-   // @Preview(showBackground = true)
-    //@Composable
-    //fun StartMenuScreenPreview() {
-      //  ClientTheme {
-        //    StartMenuScreen()
-      //  }
-  //  }
 
     @Composable
     fun PopupDialog(title: String, message: String, onDismiss: () -> Unit) {
