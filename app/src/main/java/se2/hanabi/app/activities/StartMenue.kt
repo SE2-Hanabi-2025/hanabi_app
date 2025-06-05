@@ -1,6 +1,7 @@
 package se2.hanabi.app.activities
 
 import android.content.Intent
+import androidx.annotation.RawRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -16,8 +17,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Info
@@ -27,6 +30,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +55,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -88,6 +94,7 @@ class StartMenue {
         var showQRScanner by remember { mutableStateOf(false) }
         var hasCameraPermission by remember { mutableStateOf(false) }
         var permissionDenied by remember { mutableStateOf(false) }
+        var showRules by remember { mutableStateOf(false) }
 
         fun fetchStatus() {
             coroutineScope.launch {
@@ -330,8 +337,6 @@ class StartMenue {
                         fontSize = 20.sp
                     )
                 }
-
-
                 Button(
                     onClick = { startGame() },
                     colors = ButtonDefaults.buttonColors(
@@ -347,6 +352,24 @@ class StartMenue {
                     Text(text = "Start game",
                         textAlign = TextAlign.Center,
                         fontSize = 20.sp)
+                }
+                Button(
+                    onClick = { showRules = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.DarkGray,
+                        contentColor = Color.White
+                    ),
+                    border = BorderStroke(2.dp, Color.White),
+                    modifier = Modifier
+                        .padding(top = 10.dp)
+                        .width(200.dp)
+                        .height(60.dp)
+                ) {
+                    Text(
+                        text = "Rules",
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp
+                    )
                 }
                 /*Button(
                     onClick = {
@@ -509,6 +532,9 @@ class StartMenue {
                 showQRScanner = false
             }
         }
+        if (showRules){
+            FullScreenRulesDialog (onDismiss = { showRules = false })
+        }
     }
 
     @Composable
@@ -593,4 +619,60 @@ fun Title(modifier: Modifier = Modifier) {
         modifier = modifier
     )
 }
+
+@Composable
+fun loadRawResourceAsString(@RawRes resId: Int): String {
+    val context = LocalContext.current
+    val inputStream = remember { context.resources.openRawResource(resId) }
+    return remember {
+        inputStream.bufferedReader().use { it.readText() }
+    }
+}
+
+@Composable
+fun FullScreenRulesDialog(onDismiss: () -> Unit) {
+    val rulesText = loadRawResourceAsString(R.raw.hanabi_rules)
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            color = MaterialTheme.colorScheme.background,
+            shape = RoundedCornerShape(0.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "Hanabi Rules",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = rulesText,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Close")
+                }
+            }
+        }
+    }
+}
+
 

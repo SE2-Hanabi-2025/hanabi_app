@@ -1,0 +1,10 @@
+Hanabi – Rules
+
+• Each player holds their cards facing outwards. You can see everyone’s cards except your own.
+• The goal is to create stacks of cards in each color, in order from 1 to 5.
+• You take turns giving clues, playing cards, or discarding them.
+• Clues cost clue tokens. You can only give information about color or number.
+• Wrong plays cost a life. Lose 3 lives and the game ends.
+• Complete all stacks to win the game.
+
+Have fun playing Hanabi!
