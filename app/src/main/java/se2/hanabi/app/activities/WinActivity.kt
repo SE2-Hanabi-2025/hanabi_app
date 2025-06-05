@@ -76,7 +76,6 @@ fun WinScreen(onBackToMenu: () -> Unit) {
             )
 
             Spacer(modifier = Modifier.height(48.dp))
-
             Button(
                 onClick = onBackToMenu,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White ),
@@ -84,7 +83,7 @@ fun WinScreen(onBackToMenu: () -> Unit) {
                 modifier = Modifier.padding(horizontal = 16.dp).height(50.dp)
             ) {
                 Text(
-                    text = "Bact to Main Menu",
+                    text = "Back to Main Menu",
                     color = Color(0xFF28C76F),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold

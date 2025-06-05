@@ -1,9 +1,6 @@
 package se2.hanabi.app.activities
 
 import android.content.Intent
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -12,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -50,7 +49,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.ktor.client.HttpClient
@@ -62,21 +60,12 @@ import kotlinx.coroutines.launch
 import se2.hanabi.app.EndAnimations.FireworkLauncher
 import se2.hanabi.app.lobby.LobbyActivity
 import se2.hanabi.app.R
-import se2.hanabi.app.ui.theme.ClientTheme
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import se2.hanabi.app.Handler.CameraPermissionHandler
+import se2.hanabi.app.components.QRScanner
 
-
-class StartMenuActivity: ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            ClientTheme {
-                StartMenuScreen()
-            }
-        }
-    }
-
+class StartMenue {
     @Composable
     fun StartMenuScreen() {
         var showConnectDialog by remember { mutableStateOf(false) }
@@ -94,8 +83,11 @@ class StartMenuActivity: ComponentActivity() {
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
         val urlEmulator = "http://10.0.2.2:8080"
-        val urlLocalHost = "http://localhost:8080"
+        //val urlLocalHost = "http://localhost:8080"
         val context = LocalContext.current
+        var showQRScanner by remember { mutableStateOf(false) }
+        var hasCameraPermission by remember { mutableStateOf(false) }
+        var permissionDenied by remember { mutableStateOf(false) }
 
         fun fetchStatus() {
             coroutineScope.launch {
@@ -142,35 +134,49 @@ class StartMenuActivity: ComponentActivity() {
                 isLoading = false
             }
         }
-
         fun joinLobby(code: String) {
+            if (code.length != 6) {
+                statusMessage = "Invalid lobby code. Code must be 6 characters."
+                showStatusDialog = true
+                return
+            }
+            
             coroutineScope.launch {
                 isLoading = true
                 try {
+                    // Encode the username to handle special characters
                     val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
+                    
+                    // Join the lobby
                     val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code?name=$encodedName&avatarResID=$selectedAvatarResId")
-                    statusMessage = response.body()
-                    val joinResponseBody: String = response.body()
-                    isConnected = true
+                    val responseBody: String = response.body()
+                    
+                    if (responseBody.startsWith("Joined lobby", ignoreCase = true)) {
+                        isConnected = true
+              
+                        val playerId = responseBody.split(" ").last().toIntOrNull()
+                        val intent = Intent(context, LobbyActivity::class.java).apply {
+                           putExtra("lobbyCode", code)
+                           putExtra("playerId", playerId)
+                           putExtra("username", username)
+                           putExtra("avatarResID", selectedAvatarResId)
+                           putExtra("isHost", false)
+                        }
+                        context.startActivity(intent)
+                    } else {
+                        statusMessage = "Failed to join lobby: $responseBody"
+                        showStatusDialog = true
 
-                    val playerId = joinResponseBody.split(" ").last().toIntOrNull()
-                    val intent = Intent(context, LobbyActivity::class.java).apply {
-                        putExtra("lobbyCode", code)
-                        putExtra("playerId", playerId)
-                        putExtra("username", username)
-                        putExtra("avatarResID", selectedAvatarResId)
-                        putExtra("isHost", false)
                     }
-                    context.startActivity(intent)
                 } catch (e: Exception) {
-                    statusMessage = "Failed to join lobby"
+                    statusMessage = "Error joining lobby: ${e.localizedMessage}"
+                    showStatusDialog = true
+                } finally {
+                    isLoading = false
                 }
-                showStatusDialog = true
-                isLoading = false
             }
         }
-
-        fun createLobbyAndJoin(currentUsername: String) {
+        fun createLobbyAndJoin() {
             coroutineScope.launch {
                 isLoading = true
                 try {
@@ -305,9 +311,8 @@ class StartMenuActivity: ComponentActivity() {
                     )
                 }
 
-                Button(
-                    onClick = {
-                        createLobbyAndJoin(username)
+                Button(                    onClick = {
+                        createLobbyAndJoin()
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.DarkGray,
@@ -425,6 +430,15 @@ class StartMenuActivity: ComponentActivity() {
                             onValueChange = { lobbyCode = it.filter { char -> char.isLetterOrDigit()}.take(6).uppercase()},
                             label = { Text("Enter Lobby Code with 6 chars") }
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {showQRScanner = true},
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(imageVector = Icons.Default.Camera, contentDescription = "Scan QR Code")
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Scan QR Code")
+                        }
                     } },
                 confirmButton = {
                     Button(onClick = {
@@ -452,6 +466,49 @@ class StartMenuActivity: ComponentActivity() {
                 }
             )
         }
+        if (showQRScanner) {
+            CameraPermissionHandler(
+                onPermissionGranted = {
+                    hasCameraPermission = true
+                    permissionDenied = false
+                    println("Camera permission granted in StartMenue!")
+                },
+                onPermissionDenied = {
+                    hasCameraPermission = false
+                    permissionDenied = true
+                    println("Camera permission denied in StartMenue!")
+                }
+            )
+
+            if (hasCameraPermission) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    QRScanner(
+                        onScanned = { scannedCode ->
+                            println("QR Code scanned: $scannedCode")
+                            if (scannedCode.length == 6) {
+                                // Make sure we have a 6-character lobby code
+                                joinLobby(scannedCode)
+                                showQRScanner = false
+                                showJoinDialog = false
+                            } else {
+                                statusMessage = "Invalid QR code format. Expected 6-character lobby code."
+                                showStatusDialog = true
+                                showQRScanner = false
+                            }
+                        },
+                        onDismiss = { showQRScanner = false }
+                    )
+                }
+            } else if (permissionDenied) {
+                // Zeige Snackbar oder Dialog
+                statusMessage = "Camera permission denied. Please grant camera permission in app settings."
+                showStatusDialog = true
+                showQRScanner = false
+            }
+        }
     }
 
     @Composable
@@ -472,14 +529,20 @@ class StartMenuActivity: ComponentActivity() {
             title = { Text("Choose your Avatar")},
             text = {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ){
                     avatarOptions.forEach {avatarRes ->
                         Image(painter = painterResource(id = avatarRes),
                             contentDescription = "Choose your player",
-                            modifier = Modifier.size(50.dp).clip(CircleShape).clickable { onAvatarSelected(avatarRes) }.padding(4.dp),
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .clickable { onAvatarSelected(avatarRes) }
+                                .padding(4.dp),
                             contentScale = ContentScale.Crop)
                     }
                 }
@@ -489,13 +552,13 @@ class StartMenuActivity: ComponentActivity() {
             }
         )}
 
-    @Preview(showBackground = true)
-    @Composable
-    fun StartMenuScreenPreview() {
-        ClientTheme {
-            StartMenuScreen()
-        }
-    }
+   // @Preview(showBackground = true)
+    //@Composable
+    //fun StartMenuScreenPreview() {
+      //  ClientTheme {
+        //    StartMenuScreen()
+      //  }
+  //  }
 
     @Composable
     fun PopupDialog(title: String, message: String, onDismiss: () -> Unit) {
@@ -530,3 +593,4 @@ fun Title(modifier: Modifier = Modifier) {
         modifier = modifier
     )
 }
+

@@ -34,6 +34,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +54,16 @@ import io.ktor.client.statement.*
 import kotlinx.coroutines.launch
 import se2.hanabi.app.activities.GameActivity
 import se2.hanabi.app.ui.theme.ClientTheme
+import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import android.graphics.Bitmap
+import android.graphics.Color as AndroidColor
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
+import com.google.zxing.common.BitMatrix
+import androidx.core.graphics.set
+import androidx.core.graphics.createBitmap
 
 class LobbyActivity : ComponentActivity() {
 
@@ -104,7 +117,61 @@ class LobbyActivity : ComponentActivity() {
             putExtra("lobbyId", lobbyId)
             putExtra("playerId", playerId)
         }
+        
         startActivity(intent)
+    }
+
+    private fun generateQRCode(lobbyCode: String, size: Int): ImageBitmap? {
+        return try {
+            val writer = QRCodeWriter()
+            val bitMatrix: BitMatrix = writer.encode(lobbyCode, BarcodeFormat.QR_CODE, size, size)
+            val bitmap = createBitmap(size, size, Bitmap.Config.RGB_565)
+            
+            for (x in 0 until size) {
+                for (y in 0 until size) {
+                    bitmap[x, y] = if (bitMatrix[x, y]) AndroidColor.BLACK else AndroidColor.WHITE
+                }
+            }
+            
+            bitmap.asImageBitmap()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    @Composable
+    fun QRCodeDialog(lobbyCode: String, onDismiss: () -> Unit) {
+        val qrCodeBitmap = remember { generateQRCode(lobbyCode, 300) }
+        
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Scan to Join Lobby") },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Lobby Code: $lobbyCode", fontSize = 18.sp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    qrCodeBitmap?.let {
+                        Image(
+                            bitmap = it,
+                            contentDescription = "QR Code",
+                            modifier = Modifier
+                                .size(250.dp)
+                                .background(Color.White)
+                                .padding(8.dp)
+                        )
+                    } ?: Text("Could not generate QR code")
+                }
+            },
+            confirmButton = {
+                Button(onClick = onDismiss) {
+                    Text("Close")
+                }
+            }
+        )
     }
 
     private fun startGameRequest(lobbyCode: String) {
@@ -123,8 +190,6 @@ class LobbyActivity : ComponentActivity() {
             }
         }
     }
-
-
     @Composable
     fun LobbyScreen(
         playerList: List<PlayerInLobby>,
@@ -136,6 +201,8 @@ class LobbyActivity : ComponentActivity() {
         //avatarResID: Int,
         //username: String
     ) {
+        var showQRCodeDialog by remember { mutableStateOf(false) }
+        
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.lobbyscreen_bg),
@@ -235,20 +302,45 @@ class LobbyActivity : ComponentActivity() {
 
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-                //leave Lobby
-                Button(
-                    onClick = onLeaveLobby,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.DarkGray
-                    ),
-                    border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier.width(200.dp).height(60.dp)
+                
+                // QR Code and Leave Lobby buttons in a row
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Leave Lobby", color = Color.White, fontSize = 20.sp)
+                    // QR Code Button
+                    Button(
+                        onClick = { showQRCodeDialog = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF3498db)
+                        ),
+                        border = BorderStroke(2.dp, Color.White),
+                        modifier = Modifier.width(95.dp).height(60.dp)
+                    ) {
+                        Text("QR Code", color = Color.White, fontSize = 16.sp)
+                    }
+                    
+                    // Leave Lobby Button
+                    Button(
+                        onClick = onLeaveLobby,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.DarkGray
+                        ),
+                        border = BorderStroke(2.dp, Color.White),
+                        modifier = Modifier.width(95.dp).height(60.dp)
+                    ) {
+                        Text("Leave", color = Color.White, fontSize = 16.sp)
+                    }
                 }
-
             }
         }
-
+        
+        // QR Code Dialog
+        if (showQRCodeDialog && lobbyCode != null) {
+            QRCodeDialog(
+                lobbyCode = lobbyCode,
+                onDismiss = { showQRCodeDialog = false }
+            )
+        }
     }
 }
