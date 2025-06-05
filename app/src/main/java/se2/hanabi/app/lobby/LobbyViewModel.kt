@@ -25,7 +25,8 @@ data class PlayerInLobby(
 
 class LobbyViewModel : ViewModel() {
 
-    private val _isGameStarted = MutableStateFlow(false)
+    // Public, um direkten Zugriff aus der Activity zu ermöglichen
+    val _isGameStarted = MutableStateFlow(false)
     val isGameStarted: StateFlow<Boolean> = _isGameStarted
 
     private val _players = MutableStateFlow<List<PlayerInLobby>>(emptyList())
@@ -78,35 +79,44 @@ class LobbyViewModel : ViewModel() {
             try {
                 val code = _lobbyCode.value ?: return@launch
 
-                
-                // Fetch players from server
+                  // Fetch players from server
                 val response: List<PlayerInLobby> =  client.get("$serverUrl/lobby/$code/players").body()
-                  // Filter out duplicates
-                val uniquePlayers = response.distinctBy { it.name }.toMutableList()
+                
+                // Use all players including duplicates
+                val allPlayers = response.toMutableList()
                 
                 // Make sure current player is in the list
                 val currentUsername = _username.value
-              
-                if (currentUsername.isNotEmpty() && !uniquePlayers.any{it.name ==currentUsername}) {
-                    uniquePlayers.add(PlayerInLobby(currentUsername, 0))
+                if (currentUsername.isNotEmpty() && !allPlayers.any{it.name ==currentUsername}) {
+                    allPlayers.add(PlayerInLobby(currentUsername, 0))
                     
-                    println("Added current player ($currentUsername) to list: ${uniquePlayers.joinToString { it.name }}")
+                    println("Added current player ($currentUsername) to list: ${allPlayers.joinToString { it.name }}")
                 } else {
                     
                     // Log for debugging
-                    println("Updated player list: ${uniquePlayers.joinToString { it.name }}")
+                    println("Updated player list: ${allPlayers.joinToString { it.name }}")
                 }
+                  // Use the complete list including duplicates
+                _players.value = allPlayers
                 
-                // Wichtig: Die gefilterte Liste verwenden (uniquePlayers) statt der ungefilterten (response)
-                _players.value = uniquePlayers
                 // Check game status
-                val gameStatusResponse = client.get("$serverUrl/start-game/$code/status")
-
-                if (gameStatusResponse.status == HttpStatusCode.OK) {
-                    val gameStarted: Boolean = gameStatusResponse.body()
-                    if (gameStarted) {
-                        _isGameStarted.value = true
+                try {
+                    println("Checking game status for lobby: $code")
+                    val gameStatusUrl = "$serverUrl/start-game/$code/status"
+                    println("URL: $gameStatusUrl")
+                    
+                    val gameStatusResponse = client.get(gameStatusUrl)
+                    println("Game status response: ${gameStatusResponse.status}")
+                    
+                    if (gameStatusResponse.status == HttpStatusCode.OK) {
+                        val gameStarted: Boolean = gameStatusResponse.body()
+                        println("Game started: $gameStarted")
+                        _isGameStarted.value = gameStarted
+                    } else {
+                        println("Game status check failed: ${gameStatusResponse.status}")
                     }
+                } catch (e: Exception) {
+                    println("Error checking game status: ${e.message}")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
