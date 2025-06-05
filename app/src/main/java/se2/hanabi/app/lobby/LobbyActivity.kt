@@ -105,7 +105,16 @@ class LobbyActivity : ComponentActivity() {
                     playerList = players,
                     lobbyCode = lobbyCode,
                     isHost = isHostState,
-                    onLeaveLobby = { finish() },
+                    onLeaveLobby = {
+                        val lobbyc = viewModel.lobbyCode
+                        val playerid = viewModel.getPlayerId()
+                            if ( lobbyc != null && playerid!= null && playerid !=-1){
+                                leaveLobbyRequest(lobbyc, playerid){
+                                    finish()
+                                }
+                            } else {
+                        finish()
+            }},
                     onStartGame = { lobbyCode?.let { startGameRequest(it) } },
                 )
             }
@@ -190,6 +199,26 @@ class LobbyActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun leaveLobbyRequest(lobbyCode: String, playerId: Int, onComplete: () -> Unit){
+        lifecycleScope.launch {
+            try {
+                val client = HttpClient(CIO)
+                val response: HttpResponse = client.get("http://10.0.2.2:8080/leave-lobby/$lobbyCode/$playerId")
+
+                if (response.status == HttpStatusCode.OK){
+                    println("Leaving lobby server notification")
+                } else {
+                    println("Failed to nofity")
+                }
+            } catch (e: Exception){
+                e.printStackTrace()
+            } finally {
+                onComplete()
+            }
+        }
+    }
+
     @Composable
     fun LobbyScreen(
         playerList: List<PlayerInLobby>,
@@ -256,15 +285,12 @@ class LobbyActivity : ComponentActivity() {
                                     .clip(CircleShape)
                                     .background(Color.DarkGray)
                             ){
-                                //if (player == username){
-
                                 Image( painter = painterResource(id = player.avatarResID),
                                         contentDescription = "Avatar",
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
-                            //}
 
                             Text(
                                 text = player.name,
