@@ -47,7 +47,7 @@ class LobbyViewModel : ViewModel() {
         get() = _username.value
 
     // Server URL for the game server
-    private val serverUrl = "http://10.0.2.2:8080"
+    private val serverUrl = "http://192.168.0.77:8080"
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -81,8 +81,7 @@ class LobbyViewModel : ViewModel() {
                 
                 // Fetch players from server
                 val response: List<PlayerInLobby> =  client.get("$serverUrl/lobby/$code/players").body()
-                
-                // Filter out duplicates
+                  // Filter out duplicates
                 val uniquePlayers = response.distinctBy { it.name }.toMutableList()
                 
                 // Make sure current player is in the list
@@ -98,7 +97,8 @@ class LobbyViewModel : ViewModel() {
                     println("Updated player list: ${uniquePlayers.joinToString { it.name }}")
                 }
                 
-                _players.value = response
+                // Wichtig: Die gefilterte Liste verwenden (uniquePlayers) statt der ungefilterten (response)
+                _players.value = uniquePlayers
                 // Check game status
                 val gameStatusResponse = client.get("$serverUrl/start-game/$code/status")
 

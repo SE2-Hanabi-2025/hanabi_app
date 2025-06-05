@@ -82,7 +82,7 @@ class StartMenue {
         var selectedAvatarResId by remember { mutableIntStateOf(R.drawable.whiteavatar) }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
-        val urlEmulator = "http://10.0.2.2:8080"
+        val urlEmulator = "http://192.168.0.77:8080"
         //val urlLocalHost = "http://localhost:8080"
         val context = LocalContext.current
         var showQRScanner by remember { mutableStateOf(false) }
@@ -91,7 +91,7 @@ class StartMenue {
 
         fun fetchStatus() {
             coroutineScope.launch {
-                isLoading = true // Show loading spinner
+                isLoading = true
                 try {
                     val response: HttpResponse = client.get("$urlEmulator/status")
                     statusMessage = response.body()
@@ -99,13 +99,13 @@ class StartMenue {
                     statusMessage = "Failed to fetch status"
                 }
                 showStatusDialog = true
-                isLoading = false // Hide loading spinner
+                isLoading = false
             }
         }
 
         fun connectToServer() {
             coroutineScope.launch {
-                isLoading = true // Show loading spinner
+                isLoading = true
                 try {
                     val response: HttpResponse = client.get("$urlEmulator/connect")
                     statusMessage = response.body()
@@ -115,7 +115,7 @@ class StartMenue {
                     statusMessage = "Failed to connect"
                 }
                 showStatusDialog = true
-                isLoading = false // Hide loading spinner
+                isLoading = false
             }
         }
 
@@ -144,7 +144,6 @@ class StartMenue {
             coroutineScope.launch {
                 isLoading = true
                 try {
-                    // Encode the username to handle special characters
                     val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
                     
                     // Join the lobby

@@ -178,7 +178,7 @@ class LobbyActivity : ComponentActivity() {
         lifecycleScope.launch {
             try {
                 val response: HttpResponse =
-                    HttpClient(CIO).get("http://10.0.2.2:8080/start-game/$lobbyCode")
+                    HttpClient(CIO).get("http://192.168.0.77/start-game/$lobbyCode")
                 if (response.status == HttpStatusCode.OK) {
                     // Assuming viewModel.getPlayerId() returns the current player's ID
                     val currentPlayerId = viewModel.getPlayerId() // Placeholder for actual player ID retrieval
