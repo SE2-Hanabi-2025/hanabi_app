@@ -47,7 +47,7 @@ class LobbyViewModel : ViewModel() {
         get() = _username.value
 
     // Server URL for the game server
-    private val serverUrl = "http://192.168.0.77:8080"
+    private val serverUrl = "http://10.0.2.2:8080"
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {

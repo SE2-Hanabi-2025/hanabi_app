@@ -21,8 +21,7 @@ import se2.hanabi.app.model.HintType
 class GamePlayService(
     private val lobbyId: String,
     private val playerId: Int
-) {
-    companion object {
+) {    companion object {
         private const val TAG = "HanabiGamePlayService"
     }
 
