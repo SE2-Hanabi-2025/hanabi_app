@@ -16,6 +16,7 @@ data class GameStatus(
     val strikes: Int,
     val gameOver: Boolean,
     val gameLost: Boolean,
+    val currentScore: Int,
     val currentPlayerId: Int
 ) {
 

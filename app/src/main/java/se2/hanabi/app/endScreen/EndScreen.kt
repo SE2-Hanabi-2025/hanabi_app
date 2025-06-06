@@ -40,6 +40,7 @@ fun EndScreen(onBackToMenu: () -> Unit) {
     val viewModel : GamePlayViewModel = viewModel()
 
     val gameLost = viewModel.gameLost.collectAsState().value
+    val finalScore = viewModel.currentScore.collectAsState().value
 
     val winMessage = "\uD83C\uDF89 Congratulations! You win! \uD83C\uDF89"
     val loseMessage = "\uD83D\uDE2D Game Over! You lose! \uD83D\uDE2D"
@@ -101,7 +102,7 @@ fun EndScreen(onBackToMenu: () -> Unit) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Congratulations on completing the stack!",
+                    text = "Final score: $finalScore/${viewModel.getMaxScore()}",
                     fontSize = 20.sp,
                     color = Color.White
                 )
