@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,9 +23,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -42,8 +43,8 @@ fun EndScreen(onBackToMenu: () -> Unit) {
     val gameLost = viewModel.gameLost.collectAsState().value
     val finalScore = viewModel.currentScore.collectAsState().value
 
-    val winMessage = "\uD83C\uDF89 Congratulations! You win! \uD83C\uDF89"
-    val loseMessage = "\uD83D\uDE2D Game Over! You lose! \uD83D\uDE2D"
+    val winMessage = "Congratulations!"
+    val loseMessage = "Game Over!"
 
     val alpha = remember { Animatable(0f) }
     val fadeInDelay = 2000
@@ -94,41 +95,52 @@ fun EndScreen(onBackToMenu: () -> Unit) {
             ) {
                 Text(
                     text = if (gameLost) loseMessage else winMessage,
-                    fontSize = 40.sp,
+                    fontSize = 60.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = if (gameLost) Color.Red else Color(0xFFF2FF90),
+                    fontFamily = FontFamily.Cursive,
+                    textAlign = TextAlign.Center
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
                     text = "Final score: $finalScore/${viewModel.getMaxScore()}",
-                    fontSize = 20.sp,
-                    color = Color.White
+                    fontFamily = FontFamily.Cursive,
+                    fontSize = 30.sp,
+                    color = Color(0xFFF2FF90),
                 )
 
                 Spacer(modifier = Modifier.height(48.dp))
-                Button(
-                    onClick = onBackToMenu,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.padding(horizontal = 16.dp).height(50.dp)
+                Box(
+                    modifier = Modifier
+
+                        .height(50.dp)
+                        .clip(RoundedCornerShape(15.dp))
+                        .background(
+                        brush = Brush.verticalGradient(
+                            listOf(Color(0xFF282828).copy(alpha = 0.35f), Color(0xFF282828).copy(alpha = 0.9f))
+                            )
+                        )
+                        .clickable( onClick = onBackToMenu ),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Back to Main Menu",
-                        color = Color(0xFF28C76F),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        modifier = Modifier.padding(horizontal = 15.dp),
+                        text = "Back to main menu",
+                        color = Color(0xFFF2FF90),
+                        fontFamily = FontFamily.Cursive,
+                        fontSize = 25.sp,
                     )
                 }
 
 
             }
-            if (gameLost) {
-                BombLauncher() { }
-            } else {
-                FireworkLauncher() { }
-            }
+        }
+        if (gameLost) {
+            BombLauncher() { }
+        } else {
+            FireworkLauncher() { }
         }
     }
 }
