@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import se2.hanabi.app.endScreen.endAnimations.BombLauncher
 import se2.hanabi.app.endScreen.endAnimations.FireworkLauncher
 import se2.hanabi.app.gamePlayUI.GamePlayViewModel
 
@@ -81,6 +82,10 @@ fun EndScreen(onBackToMenu: () -> Unit) {
 
 
         }
-        FireworkLauncher() {  }
+        if (gameLost) {
+            BombLauncher() { }
+        } else {
+            FireworkLauncher() { }
+        }
     }
 }
