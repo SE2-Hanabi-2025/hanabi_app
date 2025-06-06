@@ -27,11 +27,11 @@ import androidx.compose.ui.unit.sp
 import se2.hanabi.app.EndAnimations.FireworkLauncher
 import se2.hanabi.app.MainActivity
 
-class WinActivity : ComponentActivity() {
+class EndActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            WinScreen(
+            EndScreen(
                 onBackToMenu = {
                     //Navigate back to MainActiviy and clear the back stack
                     val intent = Intent(this, MainActivity::class.java)
@@ -44,7 +44,7 @@ class WinActivity : ComponentActivity() {
     }
 }
 @Composable
-fun WinScreen(onBackToMenu: () -> Unit) {
+fun EndScreen(onBackToMenu: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
