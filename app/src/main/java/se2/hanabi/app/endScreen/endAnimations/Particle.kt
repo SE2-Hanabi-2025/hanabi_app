@@ -1,9 +1,8 @@
-package se2.hanabi.app.EndAnimations
+package se2.hanabi.app.endScreen.endAnimations
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.times
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt

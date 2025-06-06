@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.MainActivity
+import se2.hanabi.app.endScreen.EndScreen
 import se2.hanabi.app.gamePlayUI.GamePlayUI
 import se2.hanabi.app.gamePlayUI.GamePlayViewModel
 import se2.hanabi.app.gamePlayUI.GamePlayViewModelFactory

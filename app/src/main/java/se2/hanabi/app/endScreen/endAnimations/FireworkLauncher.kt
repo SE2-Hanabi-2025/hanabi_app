@@ -1,4 +1,4 @@
-package se2.hanabi.app.EndAnimations
+package se2.hanabi.app.endScreen.endAnimations
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -7,10 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 
@@ -36,7 +33,7 @@ fun FireworkLauncher(onAnimationEnd: ()-> Unit) {
         modifier = Modifier
             .fillMaxSize()
     ) {
-        fireworks(
+        Fireworks(
             numFirworks = 30,
             time = animatedTime.value,
             localConfig = localConfig

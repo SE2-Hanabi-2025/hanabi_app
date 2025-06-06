@@ -1,9 +1,5 @@
-package se2.hanabi.app.activities
+package se2.hanabi.app.endScreen
 
-import android.content.Intent
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,25 +20,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import se2.hanabi.app.EndAnimations.FireworkLauncher
-import se2.hanabi.app.MainActivity
+import se2.hanabi.app.endScreen.endAnimations.FireworkLauncher
 
-class EndActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            EndScreen(
-                onBackToMenu = {
-                    //Navigate back to MainActiviy and clear the back stack
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
-                    finish()
-                }
-            )
-        }
-    }
-}
 @Composable
 fun EndScreen(onBackToMenu: () -> Unit) {
     Box(
