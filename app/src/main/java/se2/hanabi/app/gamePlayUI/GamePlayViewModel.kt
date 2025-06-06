@@ -49,6 +49,7 @@ class GamePlayViewModel(
         numRemainingHintTokens = 8,
         strikes = 0,
         gameOver = false,
+        gameLost = false,
         currentPlayerId = 0
     )
 

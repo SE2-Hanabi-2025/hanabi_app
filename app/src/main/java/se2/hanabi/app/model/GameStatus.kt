@@ -15,6 +15,7 @@ data class GameStatus(
     val numRemainingHintTokens: Int,
     val strikes: Int,
     val gameOver: Boolean,
+    val gameLost: Boolean,
     val currentPlayerId: Int
 ) {
 
