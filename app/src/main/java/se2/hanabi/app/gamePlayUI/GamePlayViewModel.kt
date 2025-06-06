@@ -98,6 +98,9 @@ class GamePlayViewModel(
     private val _gameOver = MutableStateFlow(false)
     val gameOver: StateFlow<Boolean> = _gameOver
 
+    private val _gameLost = MutableStateFlow(false)
+    val gameLost: StateFlow<Boolean> = _gameLost
+
     // game play info
     private val _selectedCard = MutableStateFlow<Int>(-1)
     val selectedCardId: MutableStateFlow<Int> = _selectedCard
@@ -266,6 +269,9 @@ class GamePlayViewModel(
 
         _gameOver.value = newStatus.gameOver
         Log.v(TAG, "Spiel beendet: ${newStatus.gameOver}")
+
+        _gameLost.value = newStatus.gameLost
+        Log.v(TAG, "Game lost: ${newStatus.gameLost}")
 
         // Reset ausgewählte Elemente nach Statusänderung
         resetSelection()
