@@ -17,17 +17,20 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import se2.hanabi.app.model.Card
 
 const val aspectRatio = 1.51f
+const val cardProportionOfWidth = 0.17f
 val cardWidth = 66.dp
 val cardHeight = cardWidth.times(aspectRatio)
 
@@ -49,6 +52,7 @@ fun getCardImageName(card: Card): String {
 @Composable
 fun CardItem(
     modifier: Modifier = Modifier,
+    cardSizeDp: DpSize,
     card: Card,
     isFlipped: Boolean = false,
     isPortrait: Boolean = true,
@@ -60,8 +64,8 @@ fun CardItem(
     colorHint: Card.Color? = null,
     valueHint: Int? = null,
 ) {
-    var actualCardWidth = if (isPortrait) cardWidth else cardHeight
-    var actualCardHeight = if (isPortrait) cardHeight else cardWidth
+    var actualCardWidth = if (isPortrait) cardSizeDp.width else cardSizeDp.height
+    var actualCardHeight = if (isPortrait) cardSizeDp.height else cardSizeDp.width
 
     Box(
         modifier = modifier
@@ -92,11 +96,11 @@ fun CardItem(
         Image(
             modifier =
                 Modifier
-                    .requiredSize(cardWidth, cardHeight)
+                    .requiredSize(cardSizeDp.width, cardSizeDp.height)
                     .graphicsLayer {
                         rotationZ = if (isPortrait) 0f else 90f
                     }
-                    .offset(x = 0.dp, y = if (!isPortrait) (-(cardHeight - cardWidth)/2) else 0.dp),
+                    .offset(x = 0.dp, y = if (!isPortrait) (-(cardSizeDp.height - cardSizeDp.width)/2) else 0.dp),
             painter = painterResource(id = imageID),
             contentDescription = "Front side: $imageName image",
             contentScale = ContentScale.Fit

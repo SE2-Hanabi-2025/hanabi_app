@@ -17,6 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,6 +29,7 @@ import se2.hanabi.app.Services.WebSocketService
 
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
+
 
 /**
  * GamePlayUI displays screen that will be active in gameplay.
@@ -37,6 +43,17 @@ fun GamePlayUI(
     lobbyId: String,
     playerId: Int
 ) {
+    val configuration = LocalConfiguration.current
+    val screenSizeDp = DpSize(
+        width = configuration.screenWidthDp.dp,
+        height = configuration.screenHeightDp.dp
+    )
+
+    val cardSizeDp = DpSize(
+        width = screenSizeDp.width.times(cardProportionOfWidth),
+        height = screenSizeDp.width.times(cardProportionOfWidth).times(aspectRatio)
+    )
+
     Box(modifier = Modifier
         .fillMaxSize()
         .background(
@@ -80,8 +97,8 @@ fun GamePlayUI(
             }
         } else {
             // Show game board and player cards
-            GameBoardUI()
-            PlayersCardsUI()
+            GameBoardUI(screenSizeDp, cardSizeDp)
+            PlayersCardsUI(screenSizeDp, cardSizeDp)
             
             // Show game status overlay at the top
             Column(
