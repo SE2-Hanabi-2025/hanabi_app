@@ -21,8 +21,8 @@ enum class TokenType {
     fuse,
 }
 
-val fuseTokenSize = 50.dp
-val hintTokenSize = 30.dp
+val fuseTokenSize = cardHeight.times(0.5f)
+val hintTokenSize = cardHeight.times(0.3f)
 
 @Composable
 fun Token(
