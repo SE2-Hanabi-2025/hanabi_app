@@ -18,17 +18,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -64,13 +68,16 @@ fun EndScreen(onBackToMenu: () -> Unit) {
             .alpha(alpha.value)
             .background(
                 Brush.verticalGradient(
-                    listOf(Color(0xFF282828).copy(alpha = 0.5f), Color(0xFF000000).copy(alpha = 0.85f))
+                    listOf(
+                        Color(0xFF282828).copy(alpha = 0.5f),
+                        Color(0xFF000000).copy(alpha = 0.85f)
+                    )
                 )
             )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-                onClick = { fadeInOver.value = true},
+                onClick = { fadeInOver.value = true },
             )
 
     ) {
@@ -93,9 +100,9 @@ fun EndScreen(onBackToMenu: () -> Unit) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
+                TextAutoWidth(
                     text = if (gameLost) loseMessage else winMessage,
-                    fontSize = 60.sp,
+                    targetFontSize = 60.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (gameLost) Color.Red else Color(0xFFF2FF90),
                     fontFamily = FontFamily.Cursive,
@@ -118,11 +125,14 @@ fun EndScreen(onBackToMenu: () -> Unit) {
                         .height(50.dp)
                         .clip(RoundedCornerShape(15.dp))
                         .background(
-                        brush = Brush.verticalGradient(
-                            listOf(Color(0xFF282828).copy(alpha = 0.35f), Color(0xFF282828).copy(alpha = 0.9f))
+                            brush = Brush.verticalGradient(
+                                listOf(
+                                    Color(0xFF282828).copy(alpha = 0.35f),
+                                    Color(0xFF282828).copy(alpha = 0.9f)
+                                )
                             )
                         )
-                        .clickable( onClick = onBackToMenu ),
+                        .clickable(onClick = onBackToMenu),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -143,4 +153,41 @@ fun EndScreen(onBackToMenu: () -> Unit) {
             FireworkLauncher() { }
         }
     }
+}
+
+@Composable
+fun TextAutoWidth(
+    text: String,
+    targetFontSize: TextUnit = 60.sp,
+    fontWeight: FontWeight = FontWeight.Normal,
+    fontFamily: FontFamily? = null,
+    color: Color = Color.Unspecified,
+    textAlign: TextAlign = TextAlign.Unspecified
+) {
+    var scaledFontSize by remember { mutableStateOf(targetFontSize) }
+    var readyToDraw by remember { mutableStateOf(false) }
+
+    Text(
+        text = text,
+        modifier = Modifier
+            .drawWithContent {
+                if (readyToDraw) {
+                    drawContent()
+                }
+            },
+        maxLines = 1,
+        onTextLayout = { textLayoutResult ->
+            if (textLayoutResult.hasVisualOverflow) {
+                // iteratively reduce font size until there is no overflow
+                scaledFontSize = scaledFontSize* 0.9f
+            } else {
+                readyToDraw = true
+            }
+        },
+        fontSize = scaledFontSize,
+        fontFamily = fontFamily,
+        fontWeight = fontWeight,
+        textAlign = textAlign,
+        color = color,
+    )
 }
