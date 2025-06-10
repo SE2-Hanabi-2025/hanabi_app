@@ -1,13 +1,19 @@
 package se2.hanabi.app.gamePlayUI
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,12 +21,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.Services.WebSocketService
+import se2.hanabi.app.model.Player
+import se2.hanabi.app.R
 
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
@@ -32,6 +42,7 @@ val colors = listOf("red","green","yellow","blue","white")
  * - fuse/hint tokens, discard/draw pile, color stacks
  *
  */
+
 @Composable
 fun GamePlayUI(
     lobbyId: String,
@@ -79,15 +90,11 @@ fun GamePlayUI(
                 }
             }
         } else {
-            // Show game board and player cards
-            GameBoardUI()
-            PlayersCardsUI()
-            
+            Column (modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally){
             // Show game status overlay at the top
             Column(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 8.dp)
                     .background(Color.Black.copy(alpha = 0.5f))
                     .padding(8.dp)
             ) {
@@ -121,7 +128,16 @@ fun GamePlayUI(
                     )
                 }
             }
-            
+
+            // Show game board and player cards
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                InGamePlayerList(players = players)}
+                GameBoardUI()
+                PlayersCardsUI()
+
+
             // Action buttons at the bottom
             if (isMyTurn && !gameOver) {
                 Row(
@@ -148,5 +164,33 @@ fun GamePlayUI(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun InGamePlayerList(players: List<Player>, modifier: Modifier = Modifier){
+    Column (
+        modifier = Modifier.padding(top = 18.dp, bottom = 9.dp)
+            .fillMaxWidth(0.5f)
+            .background(Color.DarkGray.copy(alpha = 0.20f), RoundedCornerShape(40.dp))
+            .padding(horizontal = 30.dp, vertical = 25.dp)
+    ){
+        players.forEach{player ->
+        Row (
+            modifier = Modifier
+                .fillMaxWidth().padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween) {
+
+            Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(Color.DarkGray)){
+                Image(painter = painterResource(id = R.drawable.whiteavatar),
+                    contentDescription = "Avatar",
+                    modifier = Modifier.fillMaxSize())
+            }
+            Text(text = player.name,
+                color = Color.White,
+                fontSize = 12.sp,
+                modifier = Modifier.weight(1f))
+        }}
     }
 }
