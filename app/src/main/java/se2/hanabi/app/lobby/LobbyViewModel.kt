@@ -146,8 +146,8 @@ class LobbyViewModel : ViewModel() {
         _username.value = username
     }
 
-    fun onGameModeToggle(isToggled: Boolean) {
-        _isCasualMode.value = isToggled
+    fun onGameModeToggle() {
+        _isCasualMode.value = !_isCasualMode.value
     }
 
     /*// Get player ID by matching username in the players list
