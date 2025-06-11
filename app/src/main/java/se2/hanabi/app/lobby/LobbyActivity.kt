@@ -58,6 +58,12 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import android.graphics.Bitmap
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchColors
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.ui.draw.rotate
 import android.graphics.Color as AndroidColor
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
@@ -334,6 +340,36 @@ class LobbyActivity : ComponentActivity() {
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    if (isHost) {
+                        Box(
+                            modifier = Modifier
+                                .height(60.dp),
+                                /*.clip(RoundedCornerShape(30.dp))
+                                .background(Color.Green)
+
+                                .border(border = BorderStroke(2.dp, Color.White)),*/
+
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val checked = viewModel.isCasualMode.collectAsState().value
+                            Switch(
+                                modifier = Modifier.fillMaxHeight(),
+
+                                checked = checked,
+                                onCheckedChange = { newCheckedState ->
+                                    viewModel.onGameModeToggle(newCheckedState)
+                                },
+                            )
+                            val switchLabel = if (checked) "Casual" else "Normal"
+                            Text(
+                                text = switchLabel,
+                                fontSize = 16.sp,
+                                color = Color.White,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+
                     // QR Code Button
                     Button(
                         onClick = { showQRCodeDialog = true },

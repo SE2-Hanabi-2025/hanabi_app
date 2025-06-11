@@ -25,6 +25,9 @@ data class PlayerInLobby(
 
 class LobbyViewModel : ViewModel() {
 
+    private val _isCasualMode = MutableStateFlow(false)
+    val isCasualMode: StateFlow<Boolean> = _isCasualMode
+
     private val _isGameStarted = MutableStateFlow(false)
     val isGameStarted: StateFlow<Boolean> = _isGameStarted
 
@@ -141,6 +144,10 @@ class LobbyViewModel : ViewModel() {
     // Set username when joining a lobby
     fun setUsername(username: String) {
         _username.value = username
+    }
+
+    fun onGameModeToggle(isToggled: Boolean) {
+        _isCasualMode.value = isToggled
     }
 
     /*// Get player ID by matching username in the players list
