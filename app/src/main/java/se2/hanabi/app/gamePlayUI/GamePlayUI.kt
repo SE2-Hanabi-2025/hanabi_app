@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -172,21 +175,26 @@ fun InGamePlayerList(players: List<Player>, modifier: Modifier = Modifier){
     Column (
         modifier = Modifier.padding(top = 18.dp, bottom = 9.dp)
             .fillMaxWidth(0.5f)
+            .heightIn(max = 200.dp)
             .background(Color.DarkGray.copy(alpha = 0.20f), RoundedCornerShape(40.dp))
-            .padding(horizontal = 30.dp, vertical = 25.dp)
+            .padding(horizontal = 30.dp, vertical = 25.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ){
         players.forEach{player ->
         Row (
             modifier = Modifier
                 .fillMaxWidth().padding(vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween) {
+            horizontalArrangement = Arrangement.Start) {
 
             Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(Color.DarkGray)){
-                Image(painter = painterResource(id = R.drawable.whiteavatar),
-                    contentDescription = "Avatar",
+                Image(painter = painterResource(id = player.avatarResID),
+                    contentDescription = "${player.name} avatar",
                     modifier = Modifier.fillMaxSize())
             }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
             Text(text = player.name,
                 color = Color.White,
                 fontSize = 12.sp,
