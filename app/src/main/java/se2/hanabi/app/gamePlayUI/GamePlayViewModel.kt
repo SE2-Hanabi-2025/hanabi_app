@@ -23,7 +23,8 @@ import se2.hanabi.app.model.websocket.ResultType
  */
 class GamePlayViewModel(
     private val lobbyId: String,
-    private val playerId: Int
+    private val playerId: Int,
+    private val max_score: Int = 25,
 ): ViewModel() {
     companion object {
         private const val TAG = "HanabiGamePlayVM"
@@ -49,6 +50,8 @@ class GamePlayViewModel(
         numRemainingHintTokens = 8,
         strikes = 0,
         gameOver = false,
+        gameLost = false,
+        currentScore = 0,
         currentPlayerId = 0
     )
 
@@ -96,6 +99,12 @@ class GamePlayViewModel(
 
     private val _gameOver = MutableStateFlow(false)
     val gameOver: StateFlow<Boolean> = _gameOver
+
+    private val _gameLost = MutableStateFlow(false)
+    val gameLost: StateFlow<Boolean> = _gameLost
+
+    private val _currentScore = MutableStateFlow(0)
+    val currentScore: StateFlow<Int> = _currentScore
 
     // game play info
     private val _selectedCard = MutableStateFlow<Int>(-1)
@@ -265,6 +274,13 @@ class GamePlayViewModel(
 
         _gameOver.value = newStatus.gameOver
         Log.v(TAG, "Spiel beendet: ${newStatus.gameOver}")
+
+        _gameLost.value = newStatus.gameLost
+        Log.v(TAG, "Game lost: ${newStatus.gameLost}")
+
+        _currentScore.value = newStatus.currentScore
+        Log.v(TAG, "Current score: ${newStatus.currentScore}")
+
 
         // Reset ausgewählte Elemente nach Statusänderung
         resetSelection()
@@ -454,5 +470,9 @@ class GamePlayViewModel(
         Log.v(TAG, "Setze Hinweis-Auswahl zurück")
         _selectedHint.value = null
         _isValidHint.value = false
+    }
+
+    fun getMaxScore(): Int {
+        return max_score
     }
 }

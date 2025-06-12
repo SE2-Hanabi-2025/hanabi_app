@@ -33,10 +33,7 @@ val colors = listOf("red","green","yellow","blue","white")
  *
  */
 @Composable
-fun GamePlayUI(
-    lobbyId: String,
-    playerId: Int
-) {
+fun GamePlayUI() {
     Box(modifier = Modifier
         .fillMaxSize()
         .background(
@@ -46,9 +43,7 @@ fun GamePlayUI(
         ),
         contentAlignment = Alignment.Center
     ) {
-        val viewModel = viewModel<GamePlayViewModel>(
-            factory = GamePlayViewModelFactory(lobbyId, playerId)
-        )
+        val viewModel: GamePlayViewModel = viewModel()
 
         val players by viewModel.players.collectAsState()
         val statusMessage by viewModel.statusMessage.collectAsState()
