@@ -1,5 +1,6 @@
 package se2.hanabi.app.activities
 
+import android.content.Context
 import android.content.Intent
 import androidx.annotation.RawRes
 import androidx.compose.foundation.BorderStroke
@@ -32,8 +33,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -70,6 +74,9 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import se2.hanabi.app.Handler.CameraPermissionHandler
 import se2.hanabi.app.components.QRScanner
+
+
+
 
 class StartMenue {
     @Composable
@@ -629,50 +636,129 @@ fun loadRawResourceAsString(@RawRes resId: Int): String {
     }
 }
 
+
+fun loadMarkdownFromRaw(@RawRes resId: Int, context: Context): String {
+    return context.resources.openRawResource(resId)
+        .bufferedReader()
+        .use { it.readText() }
+}
+
 @Composable
 fun FullScreenRulesDialog(onDismiss: () -> Unit) {
-    val rulesText = loadRawResourceAsString(R.raw.hanabi_rules)
+    val context = LocalContext.current
+
+    var standardRulesText by remember { mutableStateOf("") }
+    var extrasRulesText by remember { mutableStateOf("") }
+    var selectedTabIndex by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        standardRulesText = loadMarkdownFromRaw(R.raw.hanabi_rules, context)
+        extrasRulesText = loadMarkdownFromRaw(R.raw.hanabi_extras, context)
+    }
+
+    val currentMarkdown = when (selectedTabIndex) {
+        0 -> standardRulesText
+        else -> extrasRulesText
+    }
+
+    val lightGray = Color(0xFFBB86FC)
+    val darkGray = Color(0xFF6200EE)
 
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Surface(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            color = MaterialTheme.colorScheme.background,
-            shape = RoundedCornerShape(0.dp)
+                .background(Color.Gray.copy(alpha = 0.5f))
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
+            Surface(
+                modifier = Modifier.fillMaxSize(0.95f),
+                color = MaterialTheme.colorScheme.background,
+                shape = RoundedCornerShape(20.dp)
             ) {
-                Text(
-                    "Hanabi Rules",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = rulesText,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.End)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp)
                 ) {
-                    Text("Close")
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Hanabi Rules",
+                            style = MaterialTheme.typography.headlineMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    TabRow(
+                        selectedTabIndex = selectedTabIndex,
+                        containerColor = Color.Transparent,
+                        indicator = {},
+                    ) {
+                        listOf("Standard Rules", "Extras").forEachIndexed { index, title ->
+                            val isSelected = selectedTabIndex == index
+                            Tab(
+                                selected = isSelected,
+                                onClick = { selectedTabIndex = index },
+                                modifier = Modifier
+                                    .background(if (isSelected) darkGray else lightGray, RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                text = {
+                                    Text(
+                                        title,
+                                        color = if (isSelected) Color.Black else Color.DarkGray,
+                                    )
+                                },
+                                selectedContentColor = Color.Black,
+                                unselectedContentColor = Color.DarkGray
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .background(Color(0xFFF0F0F0), shape = RoundedCornerShape(12.dp))
+                            .padding(16.dp)
+                    ) {
+                        if (currentMarkdown.isNotEmpty()) {
+                            Text(
+                                text = currentMarkdown,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.Black
+                            )
+                        } else {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Button(onClick = onDismiss) {
+                            Text("Close")
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+
 
 
