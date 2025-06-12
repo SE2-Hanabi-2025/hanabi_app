@@ -1,4 +1,4 @@
-package se2.hanabi.app.EndAnimations
+package se2.hanabi.app.endScreen.endAnimations
 
 import android.content.res.Configuration
 import androidx.compose.runtime.Composable
@@ -13,7 +13,7 @@ import kotlin.math.min
 import kotlin.random.Random
 
 @Composable
-fun fireworks(
+fun Fireworks(
     numFirworks: Int,
     time: Float,
     localConfig: Configuration

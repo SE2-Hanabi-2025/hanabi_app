@@ -57,7 +57,7 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.launch
-import se2.hanabi.app.EndAnimations.FireworkLauncher
+import se2.hanabi.app.endScreen.endAnimations.FireworkLauncher
 import se2.hanabi.app.lobby.LobbyActivity
 import se2.hanabi.app.R
 import java.net.URLEncoder

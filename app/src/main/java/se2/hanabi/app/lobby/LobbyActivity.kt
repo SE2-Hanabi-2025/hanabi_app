@@ -1,18 +1,18 @@
 package se2.hanabi.app.lobby
 
-import androidx.activity.viewModels
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import se2.hanabi.app.R
-import androidx.compose.ui.unit.sp
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
@@ -41,29 +42,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.ktor.http.HttpStatusCode
+import androidx.compose.ui.unit.sp
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.set
 import androidx.lifecycle.lifecycleScope
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.common.BitMatrix
+import com.google.zxing.qrcode.QRCodeWriter
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.get
+import io.ktor.client.request.parameter
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.launch
+import se2.hanabi.app.R
 import se2.hanabi.app.activities.GameActivity
 import se2.hanabi.app.ui.theme.ClientTheme
-import androidx.compose.material3.AlertDialog
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.qrcode.QRCodeWriter
-import com.google.zxing.common.BitMatrix
-import androidx.core.graphics.set
-import androidx.core.graphics.createBitmap
 
 class LobbyActivity : ComponentActivity() {
 
@@ -105,7 +108,16 @@ class LobbyActivity : ComponentActivity() {
                     playerList = players,
                     lobbyCode = lobbyCode,
                     isHost = isHostState,
-                    onLeaveLobby = { finish() },
+                    onLeaveLobby = {
+                        val lobbyc = viewModel.lobbyCode
+                        val playerid = viewModel.getPlayerId()
+                            if ( lobbyc != null && playerid!= null && playerid !=-1){
+                                leaveLobbyRequest(lobbyc, playerid){
+                                    finish()
+                                }
+                            } else {
+                        finish()
+            }},
                     onStartGame = { lobbyCode?.let { startGameRequest(it) } },
                 )
             }
@@ -178,7 +190,9 @@ class LobbyActivity : ComponentActivity() {
         lifecycleScope.launch {
             try {
                 val response: HttpResponse =
-                    HttpClient(CIO).get("http://10.0.2.2:8080/start-game/$lobbyCode")
+                    HttpClient(CIO).get("http://10.0.2.2:8080/start-game/$lobbyCode") {
+                        parameter("isCasualMode", viewModel.isCasualMode.value)
+                    }
                 if (response.status == HttpStatusCode.OK) {
                     // Assuming viewModel.getPlayerId() returns the current player's ID
                     val currentPlayerId = viewModel.getPlayerId() // Placeholder for actual player ID retrieval
@@ -190,6 +204,26 @@ class LobbyActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun leaveLobbyRequest(lobbyCode: String, playerId: Int, onComplete: () -> Unit){
+        lifecycleScope.launch {
+            try {
+                val client = HttpClient(CIO)
+                val response: HttpResponse = client.get("http://10.0.2.2:8080/leave-lobby/$lobbyCode/$playerId")
+
+                if (response.status == HttpStatusCode.OK){
+                    println("Leaving lobby server notification")
+                } else {
+                    println("Failed to nofity")
+                }
+            } catch (e: Exception){
+                e.printStackTrace()
+            } finally {
+                onComplete()
+            }
+        }
+    }
+
     @Composable
     fun LobbyScreen(
         playerList: List<PlayerInLobby>,
@@ -256,15 +290,12 @@ class LobbyActivity : ComponentActivity() {
                                     .clip(CircleShape)
                                     .background(Color.DarkGray)
                             ){
-                                //if (player == username){
-
                                 Image( painter = painterResource(id = player.avatarResID),
                                         contentDescription = "Avatar",
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
-                            //}
 
                             Text(
                                 text = player.name,
@@ -285,6 +316,10 @@ class LobbyActivity : ComponentActivity() {
                     .padding(bottom = 62.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                val midButtonWidth = 80.dp
+                val smallButtonWidth = 60.dp
+                val buttonSpacing = 10.dp
+                val startButtonWidth = midButtonWidth.times(2)+smallButtonWidth+buttonSpacing.times(2)
 
                 //start game
                 if (isHost) {
@@ -295,7 +330,7 @@ class LobbyActivity : ComponentActivity() {
                             contentColor = Color.White
                         ),
                         border = BorderStroke(2.dp, Color.White),
-                        modifier = Modifier.width(200.dp).height(60.dp)
+                        modifier = Modifier.width(startButtonWidth).height(60.dp)
                     ) {
                         Text("Start Game", color = Color.White, fontSize = 20.sp)
                     }
@@ -303,23 +338,11 @@ class LobbyActivity : ComponentActivity() {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
                 
-                // QR Code and Leave Lobby buttons in a row
+                // Leave Lobby, QR Code, and game mode buttons in a row
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(buttonSpacing),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // QR Code Button
-                    Button(
-                        onClick = { showQRCodeDialog = true },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF3498db)
-                        ),
-                        border = BorderStroke(2.dp, Color.White),
-                        modifier = Modifier.width(95.dp).height(60.dp)
-                    ) {
-                        Text("QR Code", color = Color.White, fontSize = 16.sp)
-                    }
-                    
                     // Leave Lobby Button
                     Button(
                         onClick = onLeaveLobby,
@@ -327,9 +350,48 @@ class LobbyActivity : ComponentActivity() {
                             containerColor = Color.DarkGray
                         ),
                         border = BorderStroke(2.dp, Color.White),
-                        modifier = Modifier.width(95.dp).height(60.dp)
+                        modifier = Modifier.width(midButtonWidth).height(60.dp),
+                        contentPadding = PaddingValues(4.dp)
                     ) {
                         Text("Leave", color = Color.White, fontSize = 16.sp)
+                    }
+
+                    // QR Code Button
+                    Button(
+                        onClick = { showQRCodeDialog = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF3498db)
+                        ),
+                        border = BorderStroke(2.dp, Color.White),
+                        modifier = Modifier.width(smallButtonWidth).height(60.dp),
+                        contentPadding = PaddingValues(4.dp)
+
+                    ) {
+                        Text("QR", color = Color.White, fontSize = 16.sp)
+                    }
+
+                    // Game Mode toggle
+                    if (isHost) {
+                        val checked = viewModel.isCasualMode.collectAsState().value
+                        val gameModeLabel = if (checked) "Casual" else "Normal"
+                        val buttonColor = if (checked) Color(0xFF7E1FBB) else Color.DarkGray
+                        Button(
+                            onClick = viewModel::onGameModeToggle,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = buttonColor
+                            ),
+                            border = BorderStroke(2.dp, Color.White),
+                            modifier = Modifier.width(midButtonWidth).height(60.dp),
+                            contentPadding = PaddingValues(4.dp)
+                        ) {
+                            Text(
+                                text = gameModeLabel,
+                                fontSize = 16.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Visible,
+                                color = Color.White,
+                                )
+                        }
                     }
                 }
             }

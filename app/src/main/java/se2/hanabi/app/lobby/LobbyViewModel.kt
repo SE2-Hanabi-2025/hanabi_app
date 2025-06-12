@@ -25,8 +25,10 @@ data class PlayerInLobby(
 
 class LobbyViewModel : ViewModel() {
 
-    // Public, um direkten Zugriff aus der Activity zu ermöglichen
-    val _isGameStarted = MutableStateFlow(false)
+    private val _isCasualMode = MutableStateFlow(false)
+    val isCasualMode: StateFlow<Boolean> = _isCasualMode
+
+    private val _isGameStarted = MutableStateFlow(false)
     val isGameStarted: StateFlow<Boolean> = _isGameStarted
 
     private val _players = MutableStateFlow<List<PlayerInLobby>>(emptyList())
@@ -98,16 +100,16 @@ class LobbyViewModel : ViewModel() {
                 }
                   // Use the complete list including duplicates
                 _players.value = allPlayers
-                
+
                 // Check game status
                 try {
                     println("Checking game status for lobby: $code")
                     val gameStatusUrl = "$serverUrl/start-game/$code/status"
                     println("URL: $gameStatusUrl")
-                    
+
                     val gameStatusResponse = client.get(gameStatusUrl)
                     println("Game status response: ${gameStatusResponse.status}")
-                    
+
                     if (gameStatusResponse.status == HttpStatusCode.OK) {
                         val gameStarted: Boolean = gameStatusResponse.body()
                         println("Game started: $gameStarted")
@@ -151,6 +153,10 @@ class LobbyViewModel : ViewModel() {
     // Set username when joining a lobby
     fun setUsername(username: String) {
         _username.value = username
+    }
+
+    fun onGameModeToggle() {
+        _isCasualMode.value = !_isCasualMode.value
     }
 
     /*// Get player ID by matching username in the players list
