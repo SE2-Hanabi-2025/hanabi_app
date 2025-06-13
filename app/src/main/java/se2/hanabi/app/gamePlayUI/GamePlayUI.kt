@@ -30,7 +30,6 @@ import se2.hanabi.app.Services.WebSocketService
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
 
-
 /**
  * GamePlayUI displays screen that will be active in gameplay.
  * This includes:
@@ -39,10 +38,7 @@ val colors = listOf("red","green","yellow","blue","white")
  *
  */
 @Composable
-fun GamePlayUI(
-    lobbyId: String,
-    playerId: Int
-) {
+fun GamePlayUI() {
     val configuration = LocalConfiguration.current
     val screenSizeDp = DpSize(
         width = configuration.screenWidthDp.dp,
@@ -63,9 +59,7 @@ fun GamePlayUI(
         ),
         contentAlignment = Alignment.Center
     ) {
-        val viewModel = viewModel<GamePlayViewModel>(
-            factory = GamePlayViewModelFactory(lobbyId, playerId)
-        )
+        val viewModel: GamePlayViewModel = viewModel()
 
         val players by viewModel.players.collectAsState()
         val statusMessage by viewModel.statusMessage.collectAsState()

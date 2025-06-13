@@ -1,4 +1,4 @@
-package se2.hanabi.app.EndAnimations
+package se2.hanabi.app.endScreen.endAnimations
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
