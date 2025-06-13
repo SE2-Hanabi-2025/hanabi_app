@@ -6,6 +6,7 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.request.post
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
@@ -68,5 +69,17 @@ class GamePlayService(
             Log.e(TAG, "Exception beim Aktualisieren des Spielstatus | $msg", e)
         }
         return null
+    }
+
+    suspend fun defuseStrike(): Boolean {
+        try {
+            val response: HttpResponse = client.post("$baseURL/$lobbyId/defuse") {
+                parameter("playerId", playerId)
+            }
+            return response.status.isSuccess()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error defusing strike: ${e.message}")
+            return false
+        }
     }
 }

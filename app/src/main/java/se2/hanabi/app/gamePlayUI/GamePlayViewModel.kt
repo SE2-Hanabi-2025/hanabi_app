@@ -475,4 +475,21 @@ class GamePlayViewModel(
     fun getMaxScore(): Int {
         return max_score
     }
+
+    fun defuseStrikeCheat() {
+        viewModelScope.launch {
+            webSocketService.defuseStrike(lobbyId, playerId)
+            // No need to manually fetch game state; UI will update via WebSocket
+            Log.i(TAG, "[CHEAT] Defuse strike triggered via WebSocket!")
+        }
+    }
+
+    // Make this function public so it can be called from GameActivity
+    fun fetchAndUpdateGameStatus() {
+        viewModelScope.launch {
+            gamePlayService.getGameStatus()?.let { status ->
+                updateGameStatus(status)
+            }
+        }
+    }
 }

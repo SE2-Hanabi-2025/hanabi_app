@@ -54,6 +54,15 @@ data class GiveHintAction(
 }
 
 @Serializable
+@SerialName("DEFUSE")
+data class DefuseAction(
+    override val lobbyId: String,
+    override val playerId: Int
+) : ClientAction() {
+    override val action: String = "DEFUSE"
+}
+
+@Serializable
 enum class HintType {
     COLOR,
     VALUE;
