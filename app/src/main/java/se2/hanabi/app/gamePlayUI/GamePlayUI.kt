@@ -167,20 +167,29 @@ fun GamePlayUI() {
 
 @Composable
 fun InGamePlayerList(players: List<Player>, modifier: Modifier = Modifier){
+
+    val rows = players.chunked(2)
+
     Column (
-        modifier = Modifier.padding(top = 18.dp, bottom = 9.dp)
+        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
             .fillMaxWidth(0.5f)
-            .heightIn(max = 200.dp)
+            .heightIn()
             .background(Color.DarkGray.copy(alpha = 0.20f), RoundedCornerShape(40.dp))
-            .padding(horizontal = 30.dp, vertical = 25.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(2.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ){
-        players.forEach{player ->
+        rows.forEach{rowPlayers ->
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically)
+
+            {
+        rowPlayers.forEach{player ->
         Row (
             modifier = Modifier
-                .fillMaxWidth().padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start) {
+                .weight(1f).padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically) {
 
             Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(Color.DarkGray)){
                 Image(painter = painterResource(id = player.avatarResID),
@@ -188,12 +197,16 @@ fun InGamePlayerList(players: List<Player>, modifier: Modifier = Modifier){
                     modifier = Modifier.fillMaxSize())
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(5.dp))
 
             Text(text = player.name,
                 color = Color.White,
                 fontSize = 12.sp,
-                modifier = Modifier.weight(1f))
+                maxLines = 1)
         }}
+                if (rowPlayers.size == 1){
+                    Spacer(modifier = Modifier.weight(1f))
+                }
     }
 }
+    }}
