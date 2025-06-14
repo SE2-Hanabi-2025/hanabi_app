@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -96,9 +95,9 @@ fun CardItem(
                 Modifier
                     .requiredSize(cardSizeDp.width, cardSizeDp.height)
                     .graphicsLayer {
-                        rotationZ = if (isPortrait) 0f else 90f
+                        rotationZ = if (isPortrait) 0f else -90f
                     }
-                    .offset(x = 0.dp, y = if (!isPortrait) (-(cardSizeDp.height - cardSizeDp.width)/2) else 0.dp),
+                    .offset(x = 0.dp, y = if (!isPortrait) ((cardSizeDp.height - cardSizeDp.width)/2) else 0.dp),
             painter = painterResource(id = imageID),
             contentDescription = "Front side: $imageName image",
             contentScale = ContentScale.Fit

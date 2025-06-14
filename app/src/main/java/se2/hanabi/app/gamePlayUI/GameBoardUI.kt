@@ -1,5 +1,6 @@
 package se2.hanabi.app.gamePlayUI
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -37,16 +40,19 @@ val boardElementPadding = 10.dp
  */
 @Composable
 fun GameBoardUI(
-    screenSizeDp: DpSize,
     cardSizeDp: DpSize,
     shrinkRatio: Float
 ) {
     val viewModel: GamePlayViewModel = viewModel()
 
     val tokenAreaHeight = ( cardSizeDp.width.times(3) + cardSpacing.times(3) - boardElementPadding.times(2) ).div(2)
+    val landscape = when (LocalConfiguration.current.orientation) { Configuration.ORIENTATION_LANDSCAPE -> true else -> false }
 
     Row(
         modifier = Modifier
+            .graphicsLayer {
+                rotationZ = when (landscape) {true -> 90f else -> 0f}
+            }
             .clip(RoundedCornerShape(boardElementPadding))
             .background(Color(0xFF566290).copy(alpha = 0.5f)),
         verticalAlignment = Alignment.CenterVertically,
@@ -68,6 +74,7 @@ fun GameBoardUI(
                 RemainingCardsStack(
                     cardSizeDp = cardSizeDp,
                     shrinkRatio = shrinkRatio,
+                    landscape = landscape,
                     numRemainingCards = viewModel.numRemainingCard.collectAsState().value)
                 DiscardedCardsStack(
                     cardSizeDp = cardSizeDp,
@@ -166,6 +173,7 @@ fun FuseTokens(
 fun RemainingCardsStack(
     cardSizeDp: DpSize,
     shrinkRatio: Float,
+    landscape: Boolean,
     modifier: Modifier = Modifier,
     numRemainingCards: Int
 ) {
@@ -183,7 +191,11 @@ fun RemainingCardsStack(
             )
         }
         Text(
-            modifier = Modifier.alpha(if (numRemainingCards==0) 0.5f else 1f),
+            modifier = Modifier
+                .alpha(if (numRemainingCards==0) 0.5f else 1f)
+                .graphicsLayer {
+                    rotationZ = if (landscape) -90f else 0f
+                },
             text = "$numRemainingCards",
             fontFamily = FontFamily.Cursive,
             color = Color(0xFFF2FF90),

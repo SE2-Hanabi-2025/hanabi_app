@@ -39,7 +39,7 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun PlayersCardsUI(
-    screenSizeDp: DpSize,
+    landscape: Boolean,
     cardSizeDp: DpSize
 ) {
     val viewModel: GamePlayViewModel = viewModel()
@@ -58,6 +58,8 @@ fun PlayersCardsUI(
     )
     if (viewModel.selectedPlayerId.collectAsState().value != -1) {
         HintSelector(
+            landscape = landscape,
+            cardSizeDp = cardSizeDp,
             selectedHint = viewModel.selectedHint.collectAsState().value,
             onHintClick = viewModel::onHintClick,
         )
