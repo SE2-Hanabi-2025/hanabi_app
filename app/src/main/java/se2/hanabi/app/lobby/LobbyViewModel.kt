@@ -15,6 +15,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import se2.hanabi.app.utils.ServerAddressManager
 
 
 @kotlinx.serialization.Serializable
@@ -43,14 +44,10 @@ class LobbyViewModel : ViewModel() {
     private val _isHost = mutableStateOf(false)
     val isHost: Boolean
         get() = _isHost.value
-        
-    // Username of the current player
+          // Username of the current player
     private val _username = mutableStateOf("")
     val username: String
         get() = _username.value
-
-    // Server URL for the game server
-    private val serverUrl = "http://10.0.2.2:8080"
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -82,7 +79,7 @@ class LobbyViewModel : ViewModel() {
                 val code = _lobbyCode.value ?: return@launch
 
                   // Fetch players from server
-                val response: List<PlayerInLobby> =  client.get("$serverUrl/lobby/$code/players").body()
+                val response: List<PlayerInLobby> =  client.get(ServerAddressManager.getLobbyPlayersUrl(code)).body()
                 
                 // Use all players including duplicates
                 val allPlayers = response.toMutableList()
@@ -100,11 +97,9 @@ class LobbyViewModel : ViewModel() {
                 }
                   // Use the complete list including duplicates
                 _players.value = allPlayers
-
-                // Check game status
                 try {
                     println("Checking game status for lobby: $code")
-                    val gameStatusUrl = "$serverUrl/start-game/$code/status"
+                    val gameStatusUrl = ServerAddressManager.getStartGameUrl(code) + "/status"
                     println("URL: $gameStatusUrl")
 
                     val gameStatusResponse = client.get(gameStatusUrl)
