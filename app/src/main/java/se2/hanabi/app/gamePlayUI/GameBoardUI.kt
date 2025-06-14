@@ -54,14 +54,13 @@ fun GameBoardUI(
                 rotationZ = when (landscape) {true -> 90f else -> 0f}
             }
             .clip(RoundedCornerShape(boardElementPadding))
-            .background(Color(0xFF566290).copy(alpha = 0.5f)),
+            .background(Color(0xFF566290).copy(alpha = 0.5f))
+            .padding(boardElementPadding),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.spacedBy(boardElementPadding)
     ) {
         //left column
         Column(
-            modifier = Modifier
-                .padding(boardElementPadding),
             verticalArrangement = Arrangement.spacedBy(boardElementPadding)
         ) {
             FuseTokens(
@@ -90,7 +89,6 @@ fun GameBoardUI(
         // right column
         ColorStacks(
             cardSizeDp = cardSizeDp,
-            boardElementPadding = boardElementPadding,
             cardSpacing = cardSpacing,
             stackValues = viewModel.stackValues.collectAsState().value,
             onColorStackClick = viewModel::onColorStackClick,
@@ -255,15 +253,12 @@ fun EmptyStack(
 @Composable
 fun ColorStacks(
     cardSizeDp: DpSize,
-    boardElementPadding: Dp,
     cardSpacing: Dp,
     modifier: Modifier = Modifier,
     stackValues: Map<Card.Color, Int>,
     onColorStackClick: (Card.Color) -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .padding(boardElementPadding),
         verticalArrangement = Arrangement.spacedBy(cardSpacing),
     ) {
         Card.Color.entries.forEach() { color ->
