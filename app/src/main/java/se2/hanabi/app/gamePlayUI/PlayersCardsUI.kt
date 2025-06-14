@@ -112,9 +112,8 @@ fun PlayersHand(
         
         Row(
             modifier = Modifier
-                .padding(5.dp)
-                .fillMaxWidth(),
-            Arrangement.SpaceEvenly,
+                .padding(5.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             hand.forEach() { cardId ->
                 CardItem(
