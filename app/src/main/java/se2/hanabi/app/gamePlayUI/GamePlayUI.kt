@@ -17,11 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -29,6 +26,7 @@ import se2.hanabi.app.Services.WebSocketService
 
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
+const val maxGameBoardHeightProportion = 0.5f
 
 /**
  * GamePlayUI displays screen that will be active in gameplay.
@@ -45,9 +43,20 @@ fun GamePlayUI() {
         height = configuration.screenHeightDp.dp
     )
 
+    var cardWidth = screenSizeDp.width.times(cardProportionOfWidth)
+    val gameBoardPaddingElementsSum = cardSpacing.times(4) + boardElementPadding.times(2)
+    val gameBoardHeight = cardWidth.times(5) + gameBoardPaddingElementsSum
+    var shrinkRatio = 1f
+    if (gameBoardHeight.div(screenSizeDp.height)>maxGameBoardHeightProportion) {
+        val availableSpace = screenSizeDp.height.times(maxGameBoardHeightProportion) - gameBoardPaddingElementsSum
+        val oldCardWidth = cardWidth
+        cardWidth = availableSpace.div(5)
+        shrinkRatio = cardWidth.div(oldCardWidth)
+    }
+
     val cardSizeDp = DpSize(
-        width = screenSizeDp.width.times(cardProportionOfWidth),
-        height = screenSizeDp.width.times(cardProportionOfWidth).times(aspectRatio)
+        width = cardWidth,
+        height = cardWidth.times(aspectRatio)
     )
 
     Box(modifier = Modifier
@@ -91,7 +100,7 @@ fun GamePlayUI() {
             }
         } else {
             // Show game board and player cards
-            GameBoardUI(screenSizeDp, cardSizeDp)
+            GameBoardUI(screenSizeDp, cardSizeDp, shrinkRatio)
             PlayersCardsUI(screenSizeDp, cardSizeDp)
             
             // Show game status overlay at the top

@@ -27,6 +27,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.model.Card
 
+val cardSpacing = 5.dp
+val boardElementPadding = 10.dp
+
 /**
  * GameBoardUI display the features of the game board.
  * These include: fuse/hint tokens, discard/draw pile, and color stacks
@@ -35,17 +38,16 @@ import se2.hanabi.app.model.Card
 @Composable
 fun GameBoardUI(
     screenSizeDp: DpSize,
-    cardSizeDp: DpSize
+    cardSizeDp: DpSize,
+    shrinkRatio: Float
 ) {
     val viewModel: GamePlayViewModel = viewModel()
 
-    val cardSpacing = 5.dp
-    val boardElementPadding = 10.dp
     val tokenAreaHeight = ( cardSizeDp.width.times(3) + cardSpacing.times(3) - boardElementPadding.times(2) ).div(2)
 
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(boardElementPadding))
             .background(Color(0xFF566290).copy(alpha = 0.5f)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
@@ -65,6 +67,7 @@ fun GameBoardUI(
             ) {
                 RemainingCardsStack(
                     cardSizeDp = cardSizeDp,
+                    shrinkRatio = shrinkRatio,
                     numRemainingCards = viewModel.numRemainingCard.collectAsState().value)
                 DiscardedCardsStack(
                     cardSizeDp = cardSizeDp,
@@ -162,6 +165,7 @@ fun FuseTokens(
 @Composable
 fun RemainingCardsStack(
     cardSizeDp: DpSize,
+    shrinkRatio: Float,
     modifier: Modifier = Modifier,
     numRemainingCards: Int
 ) {
@@ -183,7 +187,7 @@ fun RemainingCardsStack(
             text = "$numRemainingCards",
             fontFamily = FontFamily.Cursive,
             color = Color(0xFFF2FF90),
-            fontSize = 40.sp,
+            fontSize = (40f*shrinkRatio).sp,
             fontWeight = FontWeight.Bold,
             style = TextStyle(
                 shadow = Shadow(

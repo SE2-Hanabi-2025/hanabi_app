@@ -31,8 +31,6 @@ import se2.hanabi.app.model.Card
 
 const val aspectRatio = 1.51f
 const val cardProportionOfWidth = 0.17f
-val cardWidth = 66.dp
-val cardHeight = cardWidth.times(aspectRatio)
 
 // Returns name of the corresponding card image, following the schema "color_number"
 fun getCardImageName(card: Card): String {
