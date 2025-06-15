@@ -87,6 +87,9 @@ class StartMenue {
         var showQRScanner by remember { mutableStateOf(false) }
         var hasCameraPermission by remember { mutableStateOf(false) }
         var permissionDenied by remember { mutableStateOf(false) }
+        val elementSpacing = 10.dp
+        val elementWidth = 200.dp
+        val elementHeight = 60.dp
 
         fun fetchStatus() {
             coroutineScope.launch {
@@ -100,22 +103,7 @@ class StartMenue {
                 showStatusDialog = true
                 isLoading = false            }
         }
-        
-        fun startGame() {
-            coroutineScope.launch {
-                isLoading = true
-                try {
-                    val response: HttpResponse = client.get(ServerAddressManager.getStartGameUrl(lobbyCode))
-                    statusMessage = response.body()
-                    val intent = Intent(context, GameActivity::class.java)
-                    context.startActivity(intent)
-                } catch (e: Exception) {
-                    statusMessage = "Failed to start the game: ${e.localizedMessage}"
-                    showStatusDialog = true
-                }
-                isLoading = false
-            }
-        }
+
         fun joinLobby(code: String) {
             if (code.length != 6) {
                 statusMessage = "Invalid lobby code. Code must be 6 characters."
@@ -189,7 +177,10 @@ class StartMenue {
             }
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.backgroundimage),
                 contentDescription = "Background Image",
@@ -215,10 +206,8 @@ class StartMenue {
             Title(modifier = titleModifier)
 
             Column(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(bottom = 62.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(elementSpacing)
             ) {
                 //Avatar Placeholder
                 Box(modifier = Modifier
@@ -267,8 +256,8 @@ class StartMenue {
                     },
                     shape = RoundedCornerShape(50),
                     modifier = Modifier
-                        .padding(top = 16.dp, bottom = 24.dp)
-                        .width(220.dp))
+                        .width(elementWidth)
+                )
 
                 Button(
                     onClick = { showJoinDialog = true },
@@ -278,9 +267,7 @@ class StartMenue {
                     ),
                     border = BorderStroke(2.dp, Color.White),
                     modifier = Modifier
-                        .padding(top = 10.dp)
-                        .width(200.dp)
-                        .height(60.dp)
+                        .size(elementWidth, elementHeight)
                 ) {
                     Text(
                         text = "Join Lobby",
@@ -289,7 +276,8 @@ class StartMenue {
                     )
                 }
 
-                Button(                    onClick = {
+                Button(
+                    onClick = {
                         createLobbyAndJoin()
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -298,33 +286,13 @@ class StartMenue {
                     ),
                     border = BorderStroke(2.dp, Color.White),
                     modifier = Modifier
-                        .padding(top = 10.dp)
-                        .width(200.dp)
-                        .height(60.dp)
+                        .size(elementWidth, elementHeight)
                 ) {
                     Text(
                         text = "Create Lobby",
                         textAlign = TextAlign.Center,
                         fontSize = 20.sp
                     )
-                }
-
-
-                Button(
-                    onClick = { startGame() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.DarkGray,
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier
-                        .padding(top = 10.dp)
-                        .width(200.dp)
-                        .height(60.dp)
-                ) {
-                    Text(text = "Start game",
-                        textAlign = TextAlign.Center,
-                        fontSize = 20.sp)
                 }
             }
             Surface(
