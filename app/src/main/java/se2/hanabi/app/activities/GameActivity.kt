@@ -1,6 +1,7 @@
 package se2.hanabi.app.activities
 
 import android.content.Intent
+import android.hardware.SensorManager
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
@@ -21,6 +22,9 @@ class GameActivity : ComponentActivity() {
         KeyEvent.KEYCODE_VOLUME_DOWN
     )
     private val inputBuffer = mutableListOf<Int>()
+    private var isDefuseSequenceStarted = false
+    private var isProximityDark = false
+    private lateinit var proximityHelper: ProximityCheatHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,32 +49,74 @@ class GameActivity : ComponentActivity() {
                 })
             }
         }
+        proximityHelper = ProximityCheatHelper(
+            this,
+            onProximityDark = { isProximityDark = true },
+            onProximityLight = { isProximityDark = false }
+        )
+    }
+
+    override fun onResume() {
+        super.onResume()
+        proximityHelper.register()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        proximityHelper.unregister()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        // Only allow cheat if proximity is dark
+        if (!isProximityDark) {
+            inputBuffer.clear()
+            isDefuseSequenceStarted = false
+            return super.onKeyDown(keyCode, event)
+        }
         inputBuffer.add(keyCode)
-        if (inputBuffer.size > cheatSequence.size) inputBuffer.removeAt(0)
-        if (inputBuffer == cheatSequence) {
-            setContent {
-                val viewModel = viewModel<GamePlayViewModel>(
-                    factory = GamePlayViewModelFactory(
-                        intent.getStringExtra("lobbyId") ?: "",
-                        intent.getIntExtra("playerId", -1)
+        // If buffer reaches 4 keys, check for defuse or add strike
+        if (inputBuffer.size == 4) {
+            if (inputBuffer == cheatSequence) {
+                setContent {
+                    val viewModel = viewModel<GamePlayViewModel>(
+                        factory = GamePlayViewModelFactory(
+                            intent.getStringExtra("lobbyId") ?: "",
+                            intent.getIntExtra("playerId", -1)
+                        )
                     )
-                )
-                viewModel.defuseStrikeCheat()
-                viewModel.fetchAndUpdateGameStatus()
-                GamePlayUI()
-                if (viewModel.gameOver.collectAsState().value) {
-                    EndScreen( onBackToMenu = {
-                        val intent = Intent(this@GameActivity, MainActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                        startActivity(intent)
-                        finish()
-                    })
+                    viewModel.defuseStrikeCheat()
+                    GamePlayUI()
+                    if (viewModel.gameOver.collectAsState().value) {
+                        EndScreen( onBackToMenu = {
+                            val intent = Intent(this@GameActivity, MainActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                            startActivity(intent)
+                            finish()
+                        })
+                    }
+                }
+            } else {
+                setContent {
+                    val viewModel = viewModel<GamePlayViewModel>(
+                        factory = GamePlayViewModelFactory(
+                            intent.getStringExtra("lobbyId") ?: "",
+                            intent.getIntExtra("playerId", -1)
+                        )
+                    )
+                    viewModel.addStrikeCheat()
+                    GamePlayUI()
+                    if (viewModel.gameOver.collectAsState().value) {
+                        EndScreen( onBackToMenu = {
+                            val intent = Intent(this@GameActivity, MainActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                            startActivity(intent)
+                            finish()
+                        })
+                    }
                 }
             }
             inputBuffer.clear()
+            isDefuseSequenceStarted = false
             return true
         }
         return super.onKeyDown(keyCode, event)

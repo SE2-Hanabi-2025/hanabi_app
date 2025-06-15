@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DIALOG" />
-        <DropdownSelection timestamp="2025-06-13T18:55:03.107341300Z">
+        <DropdownSelection timestamp="2025-06-13T22:45:09.200272200Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\ermin\.android\avd\kita.avd" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\ermin\.android\avd\pickurina.avd" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -20,7 +20,7 @@
             </Target>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\ermin\.android\avd\Pixel_9_Pro_XL_KARINA.avd" />
+                <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\ermin\.android\avd\Medium_Phone_2.avd" />
               </handle>
             </Target>
           </targets>

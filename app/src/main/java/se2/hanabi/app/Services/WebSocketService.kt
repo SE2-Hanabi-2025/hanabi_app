@@ -189,6 +189,20 @@ class WebSocketService(
     }
     
     /**
+     * Send an add strike (cheat) action
+     *
+     * @param lobbyId The ID of the game lobby
+     * @param playerId The ID of the player
+     */
+    suspend fun addStrikeCheat(lobbyId: String, playerId: Int) {
+        val action = AddStrikeAction(
+            lobbyId = lobbyId,
+            playerId = playerId
+        )
+        sendAction(action)
+    }
+    
+    /**
      * Send an action to the server
      *
      * @param action The action to send
@@ -212,6 +226,9 @@ class WebSocketService(
                 }
                 is DefuseAction -> {
                     Log.d(TAG, "Preparing DEFUSE action: lobbyId=${action.lobbyId}, playerId=${action.playerId}")
+                }
+                is AddStrikeAction -> {
+                    Log.d(TAG, "Preparing ADD_STRIKE action: lobbyId=${action.lobbyId}, playerId=${action.playerId}")
                 }
             }
             
@@ -246,6 +263,14 @@ class WebSocketService(
                 """.trimIndent()
                 
                 is DefuseAction -> """
+                    {
+                        "action": "${action.action}",
+                        "lobbyId": "${action.lobbyId}",
+                        "playerId": ${action.playerId}
+                    }
+                """.trimIndent()
+                
+                is AddStrikeAction -> """
                     {
                         "action": "${action.action}",
                         "lobbyId": "${action.lobbyId}",

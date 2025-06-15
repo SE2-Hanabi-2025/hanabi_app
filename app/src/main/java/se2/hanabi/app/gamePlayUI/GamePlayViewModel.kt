@@ -484,6 +484,13 @@ class GamePlayViewModel(
         }
     }
 
+    fun addStrikeCheat() {
+        viewModelScope.launch {
+            webSocketService.addStrikeCheat(lobbyId, playerId)
+            Log.i(TAG, "[CHEAT] Add strike triggered via WebSocket!")
+        }
+    }
+
     // Make this function public so it can be called from GameActivity
     fun fetchAndUpdateGameStatus() {
         viewModelScope.launch {

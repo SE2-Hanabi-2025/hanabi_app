@@ -35,6 +35,7 @@
             android:theme="@style/Theme.App">
         </activity>
         <activity android:name=".lobby.LobbyActivity"/>
+        <service android:name=".Services.MusicService" />
     </application>
 
 </manifest>
