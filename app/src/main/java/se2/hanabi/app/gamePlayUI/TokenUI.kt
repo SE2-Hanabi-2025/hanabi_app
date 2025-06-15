@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 
 enum class TokenType {
@@ -21,15 +22,17 @@ enum class TokenType {
     fuse,
 }
 
-val fuseTokenSize = 50.dp
-val hintTokenSize = 30.dp
-
 @Composable
 fun Token(
+    cardSizeDp: DpSize,
     modifier: Modifier = Modifier,
     type: TokenType = TokenType.hint,
     isFlipped: Boolean
 ) {
+
+    val fuseTokenSize = cardSizeDp.height.times(0.5f)
+    val hintTokenSize = cardSizeDp.height.times(0.3f)
+
     val rotationAmountY by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
         label = "tokenFlip"

@@ -28,13 +28,16 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>        </activity>
-
-    <activity android:name=".activities.StartMenuActivity"
+            </intent-filter>
+        </activity>
+        <activity android:name=".activities.StartMenuActivity"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.App">
         </activity>
-        <activity android:name=".lobby.LobbyActivity"/>
+        <activity android:name=".lobby.LobbyActivity"
+            android:screenOrientation="portrait" >
+        </activity>
     </application>
 
 </manifest>
