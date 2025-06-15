@@ -25,6 +25,7 @@ class GameActivity : ComponentActivity() {
     private var isDefuseSequenceStarted = false
     private var isProximityDark = false
     private lateinit var proximityHelper: ProximityCheatHelper
+    private lateinit var viewModel: GamePlayViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,12 +33,11 @@ class GameActivity : ComponentActivity() {
         // Get the lobby ID and player ID from the intent
         val lobbyId = intent.getStringExtra("lobbyId") ?: ""
         val playerId = intent.getIntExtra("playerId", -1)
-        
+        viewModel = androidx.lifecycle.ViewModelProvider(
+            this,
+            GamePlayViewModelFactory(lobbyId, playerId)
+        )[GamePlayViewModel::class.java]
         setContent {
-            val viewModel = viewModel<GamePlayViewModel>(
-                factory = GamePlayViewModelFactory(lobbyId, playerId)
-            )
-
             GamePlayUI()
             if (viewModel.gameOver.collectAsState().value) {
                 EndScreen( onBackToMenu = {
@@ -74,47 +74,17 @@ class GameActivity : ComponentActivity() {
             return super.onKeyDown(keyCode, event)
         }
         inputBuffer.add(keyCode)
-        // If buffer reaches 4 keys, check for defuse or add strike
+        // If buffer reaches 4 keys, always use defuseAttemptCheat
         if (inputBuffer.size == 4) {
-            if (inputBuffer == cheatSequence) {
-                setContent {
-                    val viewModel = viewModel<GamePlayViewModel>(
-                        factory = GamePlayViewModelFactory(
-                            intent.getStringExtra("lobbyId") ?: "",
-                            intent.getIntExtra("playerId", -1)
-                        )
-                    )
-                    viewModel.defuseStrikeCheat()
-                    GamePlayUI()
-                    if (viewModel.gameOver.collectAsState().value) {
-                        EndScreen( onBackToMenu = {
-                            val intent = Intent(this@GameActivity, MainActivity::class.java)
-                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                            startActivity(intent)
-                            finish()
-                        })
-                    }
-                }
-            } else {
-                setContent {
-                    val viewModel = viewModel<GamePlayViewModel>(
-                        factory = GamePlayViewModelFactory(
-                            intent.getStringExtra("lobbyId") ?: "",
-                            intent.getIntExtra("playerId", -1)
-                        )
-                    )
-                    viewModel.addStrikeCheat()
-                    GamePlayUI()
-                    if (viewModel.gameOver.collectAsState().value) {
-                        EndScreen( onBackToMenu = {
-                            val intent = Intent(this@GameActivity, MainActivity::class.java)
-                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                            startActivity(intent)
-                            finish()
-                        })
-                    }
+            val sequence = inputBuffer.map {
+                when (it) {
+                    KeyEvent.KEYCODE_VOLUME_DOWN -> "DOWN"
+                    KeyEvent.KEYCODE_VOLUME_UP -> "UP"
+                    else -> "DOWN" // fallback to DOWN for any other key
                 }
             }
+            val proximity = if (isProximityDark) "DARK" else "LIGHT"
+            viewModel.defuseAttemptCheat(sequence, proximity)
             inputBuffer.clear()
             isDefuseSequenceStarted = false
             return true

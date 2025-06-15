@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import se2.hanabi.app.model.GameStatus
 import se2.hanabi.app.model.Hint
@@ -175,29 +178,19 @@ class WebSocketService(
     }
     
     /**
-     * Send a defuse (cheat) action
+     * Send a defuse attempt (cheat) action
      *
      * @param lobbyId The ID of the game lobby
      * @param playerId The ID of the player
+     * @param sequence The list of button presses
+     * @param proximity The proximity sensor state
      */
-    suspend fun defuseStrike(lobbyId: String, playerId: Int) {
-        val action = DefuseAction(
+    suspend fun defuseAttempt(lobbyId: String, playerId: Int, sequence: List<String>, proximity: String) {
+        val action = DefuseAttemptAction(
             lobbyId = lobbyId,
-            playerId = playerId
-        )
-        sendAction(action)
-    }
-    
-    /**
-     * Send an add strike (cheat) action
-     *
-     * @param lobbyId The ID of the game lobby
-     * @param playerId The ID of the player
-     */
-    suspend fun addStrikeCheat(lobbyId: String, playerId: Int) {
-        val action = AddStrikeAction(
-            lobbyId = lobbyId,
-            playerId = playerId
+            playerId = playerId,
+            sequence = sequence,
+            proximity = proximity
         )
         sendAction(action)
     }
@@ -224,11 +217,8 @@ class WebSocketService(
                 is GiveHintAction -> {
                     Log.d(TAG, "Preparing HINT action: lobbyId=${action.lobbyId}, playerId=${action.playerId}, toPlayerId=${action.toPlayerId}, hintType=${action.hintType}, hintValue=${action.hintValue}")
                 }
-                is DefuseAction -> {
-                    Log.d(TAG, "Preparing DEFUSE action: lobbyId=${action.lobbyId}, playerId=${action.playerId}")
-                }
-                is AddStrikeAction -> {
-                    Log.d(TAG, "Preparing ADD_STRIKE action: lobbyId=${action.lobbyId}, playerId=${action.playerId}")
+                is DefuseAttemptAction -> {
+                    Log.d(TAG, "Preparing DEFUSE_ATTEMPT action: lobbyId=${action.lobbyId}, playerId=${action.playerId}, sequence=${action.sequence}, proximity=${action.proximity}")
                 }
             }
             
@@ -262,19 +252,13 @@ class WebSocketService(
                     }
                 """.trimIndent()
                 
-                is DefuseAction -> """
+                is DefuseAttemptAction -> """
                     {
-                        "action": "${action.action}",
+                        "action": "DEFUSE_ATTEMPT",
                         "lobbyId": "${action.lobbyId}",
-                        "playerId": ${action.playerId}
-                    }
-                """.trimIndent()
-                
-                is AddStrikeAction -> """
-                    {
-                        "action": "${action.action}",
-                        "lobbyId": "${action.lobbyId}",
-                        "playerId": ${action.playerId}
+                        "playerId": ${action.playerId},
+                        "sequence": ${Json.encodeToString(ListSerializer(String.serializer()), action.sequence)},
+                        "proximity": "${action.proximity}"
                     }
                 """.trimIndent()
             }

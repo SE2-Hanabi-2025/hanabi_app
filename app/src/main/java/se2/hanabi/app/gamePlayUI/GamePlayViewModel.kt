@@ -476,18 +476,12 @@ class GamePlayViewModel(
         return max_score
     }
 
-    fun defuseStrikeCheat() {
+    // Remove old cheat methods and use new defuseAttempt
+    // Example usage: call this from UI with the actual sequence and proximity
+    fun defuseAttemptCheat(sequence: List<String>, proximity: String) {
         viewModelScope.launch {
-            webSocketService.defuseStrike(lobbyId, playerId)
-            // No need to manually fetch game state; UI will update via WebSocket
-            Log.i(TAG, "[CHEAT] Defuse strike triggered via WebSocket!")
-        }
-    }
-
-    fun addStrikeCheat() {
-        viewModelScope.launch {
-            webSocketService.addStrikeCheat(lobbyId, playerId)
-            Log.i(TAG, "[CHEAT] Add strike triggered via WebSocket!")
+            webSocketService.defuseAttempt(lobbyId, playerId, sequence, proximity)
+            Log.i(TAG, "[CHEAT] Defuse attempt sent via WebSocket! Sequence: $sequence, Proximity: $proximity")
         }
     }
 

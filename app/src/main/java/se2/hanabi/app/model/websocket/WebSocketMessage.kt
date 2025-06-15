@@ -54,21 +54,14 @@ data class GiveHintAction(
 }
 
 @Serializable
-@SerialName("DEFUSE")
-data class DefuseAction(
+@SerialName("DEFUSE_ATTEMPT")
+data class DefuseAttemptAction(
     override val lobbyId: String,
-    override val playerId: Int
+    override val playerId: Int,
+    val sequence: List<String>, // e.g. ["down", "down", "up", "down"]
+    val proximity: String // e.g. "dark" or "light"
 ) : ClientAction() {
-    override val action: String = "DEFUSE"
-}
-
-@Serializable
-@SerialName("ADD_STRIKE")
-data class AddStrikeAction(
-    override val lobbyId: String,
-    override val playerId: Int
-) : ClientAction() {
-    override val action: String = "ADD_STRIKE"
+    override val action: String = "DEFUSE_ATTEMPT"
 }
 
 @Serializable
