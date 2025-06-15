@@ -64,6 +64,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import se2.hanabi.app.Handler.CameraPermissionHandler
 import se2.hanabi.app.components.QRScanner
+import se2.hanabi.app.utils.ServerAddressManager
 
 class StartMenue {
     @Composable
@@ -82,8 +83,6 @@ class StartMenue {
         var selectedAvatarResId by remember { mutableIntStateOf(R.drawable.whiteavatar) }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
-        val urlEmulator = "http://10.0.2.2:8080"
-        //val urlLocalHost = "http://localhost:8080"
         val context = LocalContext.current
         var showQRScanner by remember { mutableStateOf(false) }
         var hasCameraPermission by remember { mutableStateOf(false) }
@@ -91,39 +90,22 @@ class StartMenue {
 
         fun fetchStatus() {
             coroutineScope.launch {
-                isLoading = true // Show loading spinner
+                isLoading = true
                 try {
-                    val response: HttpResponse = client.get("$urlEmulator/status")
+                    val response: HttpResponse = client.get(ServerAddressManager.STATUS_URL)
                     statusMessage = response.body()
                 } catch (e: Exception) {
                     statusMessage = "Failed to fetch status"
                 }
                 showStatusDialog = true
-                isLoading = false // Hide loading spinner
-            }
+                isLoading = false            }
         }
-
-        fun connectToServer() {
-            coroutineScope.launch {
-                isLoading = true // Show loading spinner
-                try {
-                    val response: HttpResponse = client.get("$urlEmulator/connect")
-                    statusMessage = response.body()
-                    //After connecting, navigate to LobbyScreen
-                    context.startActivity(Intent(context, LobbyActivity::class.java))
-                } catch (e: Exception) {
-                    statusMessage = "Failed to connect"
-                }
-                showStatusDialog = true
-                isLoading = false // Hide loading spinner
-            }
-        }
-
+        
         fun startGame() {
             coroutineScope.launch {
                 isLoading = true
                 try {
-                    val response: HttpResponse = client.get("$urlEmulator/start-game/$lobbyCode")
+                    val response: HttpResponse = client.get(ServerAddressManager.getStartGameUrl(lobbyCode))
                     statusMessage = response.body()
                     val intent = Intent(context, GameActivity::class.java)
                     context.startActivity(intent)
@@ -140,20 +122,16 @@ class StartMenue {
                 showStatusDialog = true
                 return
             }
-            
-            coroutineScope.launch {
+              coroutineScope.launch {
                 isLoading = true
                 try {
-                    // Encode the username to handle special characters
                     val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
-                    
                     // Join the lobby
-                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code?name=$encodedName&avatarResID=$selectedAvatarResId")
+                    val response: HttpResponse = client.get(ServerAddressManager.getJoinLobbyUrl(code) + "?name=$encodedName&avatarResID=$selectedAvatarResId")
                     val responseBody: String = response.body()
                     
                     if (responseBody.startsWith("Joined lobby", ignoreCase = true)) {
                         isConnected = true
-              
                         val playerId = responseBody.split(" ").last().toIntOrNull()
                         val intent = Intent(context, LobbyActivity::class.java).apply {
                            putExtra("lobbyCode", code)
@@ -172,24 +150,24 @@ class StartMenue {
                     statusMessage = "Error joining lobby: ${e.localizedMessage}"
                     showStatusDialog = true
                 } finally {
-                    isLoading = false
-                }
+                    isLoading = false                }
             }
         }
+        
         fun createLobbyAndJoin() {
             coroutineScope.launch {
                 isLoading = true
                 try {
-                    val response: HttpResponse = client.get("$urlEmulator/create-lobby")
+                    val response: HttpResponse = client.get(ServerAddressManager.getCreateLobbyUrl())
                     val createdCode: String = response.body()
                     val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
-                    val joinResponse: HttpResponse = client.get("$urlEmulator/join-lobby/$createdCode?name=$encodedName&avatarResID=$selectedAvatarResId")
+                    val joinResponse: HttpResponse = client.get(ServerAddressManager.getJoinLobbyUrl(createdCode) + "?name=$encodedName&avatarResID=$selectedAvatarResId")
                     val joinResponseBody: String = joinResponse.body()
 
                     println("-> Join Response: $joinResponseBody")
-
+                    
                     if (joinResponseBody.startsWith("Joined lobby", ignoreCase = true)) {
-                    val playerId = joinResponseBody.split(" ").last().toIntOrNull()
+                        val playerId = joinResponseBody.split(" ").last().toIntOrNull()
                         val intent = Intent(context, LobbyActivity::class.java).apply {
                             putExtra("lobbyCode", createdCode)
                             putExtra("playerId", playerId)
@@ -348,19 +326,6 @@ class StartMenue {
                         textAlign = TextAlign.Center,
                         fontSize = 20.sp)
                 }
-                /*Button(
-                    onClick = {
-                        context.startActivity(
-                            Intent(
-                                context,
-                                LobbyActivity::class.java
-                            )
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth().height(60.dp)
-                ) {
-                    Text("Temporary: Go to lobby")
-                }*/
             }
             Surface(
                 modifier = Modifier
@@ -551,14 +516,6 @@ class StartMenue {
                 Button(onClick = onDismiss) { Text("Cancel") }
             }
         )}
-
-   // @Preview(showBackground = true)
-    //@Composable
-    //fun StartMenuScreenPreview() {
-      //  ClientTheme {
-        //    StartMenuScreen()
-      //  }
-  //  }
 
     @Composable
     fun PopupDialog(title: String, message: String, onDismiss: () -> Unit) {

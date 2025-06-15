@@ -66,6 +66,7 @@ import kotlinx.coroutines.launch
 import se2.hanabi.app.R
 import se2.hanabi.app.activities.GameActivity
 import se2.hanabi.app.ui.theme.ClientTheme
+import se2.hanabi.app.utils.ServerAddressManager
 import android.graphics.Color as AndroidColor
 
 class LobbyActivity : ComponentActivity() {
@@ -189,8 +190,7 @@ class LobbyActivity : ComponentActivity() {
     private fun startGameRequest(lobbyCode: String) {
         lifecycleScope.launch {
             try {
-                val response: HttpResponse =
-                    HttpClient(CIO).get("http://10.0.2.2:8080/start-game/$lobbyCode") {
+                val response: HttpResponse = HttpClient(CIO).get(ServerAddressManager.getStartGameUrl(lobbyCode)) {
                         parameter("isCasualMode", viewModel.isCasualMode.value)
                     }
                 if (response.status == HttpStatusCode.OK) {
@@ -209,7 +209,7 @@ class LobbyActivity : ComponentActivity() {
         lifecycleScope.launch {
             try {
                 val client = HttpClient(CIO)
-                val response: HttpResponse = client.get("http://10.0.2.2:8080/leave-lobby/$lobbyCode/$playerId")
+                val response: HttpResponse = client.get(ServerAddressManager.getLeaveLobbyUrl(lobbyCode, playerId))
 
                 if (response.status == HttpStatusCode.OK){
                     println("Leaving lobby server notification")
