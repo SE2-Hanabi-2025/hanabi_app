@@ -28,12 +28,12 @@ class TiltCheatSensor(context: Context) : SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
-            val y = it.values[1]
+            val x = it.values[0]
             val z = it.values[2]
-            // Calculate horizontal rotation (roll) in degrees
-            val roll = Math.toDegrees(Math.atan2(y.toDouble(), z.toDouble())).toFloat()
-            // Cheat active if roll exceeds 40 degrees (either direction)
-            isTilted.value = kotlin.math.abs(roll) > 40f
+            // Calculate pitch (sideways tilt) in degrees
+            val pitch = Math.toDegrees(Math.atan2(-x.toDouble(), z.toDouble())).toFloat()
+            // Cheat active if pitch exceeds 40 degrees (either direction)
+            isTilted.value = kotlin.math.abs(pitch) > 40f
         }
     }
 

@@ -115,39 +115,53 @@ fun PlayersHand(
                 .padding(5.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            hand.forEachIndexed { idx, cardId ->
-                val offset = cardOffsets[cardId] ?: Offset.Zero
-                val card = if (showRealCards && idx < realCards.size) realCards[idx] else Card(color=Card.Color.RED, value=1, id = -1)
-                CardItem(
-                    cardSizeDp = cardSizeDp,
-                    card = card,
-                    isFlipped = !showRealCards,
-                    isSelected = cardId == selectedCard,
-                    onClick = { onCardClick(cardId) },
-                    colorHint = viewModel.cardsShowingColorHints.collectAsState().value[cardId],
-                    valueHint = viewModel.cardsShowingValueHints.collectAsState().value[cardId],
-                    modifier = Modifier
-                        .offset { IntOffset(offset.x.roundToInt(), offset.y.roundToInt()) }
-                        .pointerInput(cardId) {
-                            detectDragGestures(
-                                onDragStart = {
-                                    viewModel.startDraggingCard(cardId)
-                                },
-                                onDragEnd = {
-                                    viewModel.stopDraggingCard()
-                                    cardOffsets[cardId] = Offset.Zero // Snap back to original position
-                                },
-                                onDragCancel = {
-                                    viewModel.stopDraggingCard()
-                                    cardOffsets[cardId] = Offset.Zero // Snap back to original position
-                                },
-                                onDrag = { change, dragAmount ->
-                                    change.consume()
-                                    cardOffsets[cardId] = cardOffsets[cardId]?.plus(dragAmount) ?: dragAmount
-                                }
-                            )
-                        }
-                )
+            if (showRealCards && realCards.isNotEmpty()) {
+                realCards.forEachIndexed { idx, card ->
+                    val cardId = card.getID()
+                    val offset = cardOffsets[cardId] ?: Offset.Zero
+                    CardItem(
+                        cardSizeDp = cardSizeDp,
+                        card = card,
+                        isFlipped = false,
+                        isSelected = cardId == selectedCard,
+                        onClick = { onCardClick(cardId) },
+                        colorHint = viewModel.cardsShowingColorHints.collectAsState().value[cardId],
+                        valueHint = viewModel.cardsShowingValueHints.collectAsState().value[cardId],
+                        modifier = Modifier
+                            .offset { IntOffset(offset.x.roundToInt(), offset.y.roundToInt()) }
+                            .pointerInput(cardId) {
+                                detectDragGestures(
+                                    onDragStart = { viewModel.startDraggingCard(cardId) },
+                                    onDragEnd = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
+                                    onDragCancel = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
+                                    onDrag = { change, dragAmount -> change.consume(); cardOffsets[cardId] = cardOffsets[cardId]?.plus(dragAmount) ?: dragAmount }
+                                )
+                            }
+                    )
+                }
+            } else {
+                hand.forEach { cardId ->
+                    val offset = cardOffsets[cardId] ?: Offset.Zero
+                    CardItem(
+                        cardSizeDp = cardSizeDp,
+                        card = Card(color=Card.Color.RED, value=1, id = -1), // dummy card for back
+                        isFlipped = true,
+                        isSelected = cardId == selectedCard,
+                        onClick = { onCardClick(cardId) },
+                        colorHint = viewModel.cardsShowingColorHints.collectAsState().value[cardId],
+                        valueHint = viewModel.cardsShowingValueHints.collectAsState().value[cardId],
+                        modifier = Modifier
+                            .offset { IntOffset(offset.x.roundToInt(), offset.y.roundToInt()) }
+                            .pointerInput(cardId) {
+                                detectDragGestures(
+                                    onDragStart = { viewModel.startDraggingCard(cardId) },
+                                    onDragEnd = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
+                                    onDragCancel = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
+                                    onDrag = { change, dragAmount -> change.consume(); cardOffsets[cardId] = cardOffsets[cardId]?.plus(dragAmount) ?: dragAmount }
+                                )
+                            }
+                    )
+                }
             }
         }
     }
