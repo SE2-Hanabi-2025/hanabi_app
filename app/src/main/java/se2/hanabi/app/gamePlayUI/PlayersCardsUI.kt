@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -78,10 +79,10 @@ fun PlayersHand(
     val viewModel: GamePlayViewModel = viewModel()
     val playerId by viewModel.thisPlayer.collectAsState()
     val players by viewModel.players.collectAsState()
-    
     // Find current player's name
     val playerName = players.find { it.id == playerId }?.name ?: "Spieler $playerId"
-    
+    // Track offset for each card by cardId
+    val cardOffsets = remember { mutableStateMapOf<Int, Offset>() }
     Box(
         modifier = Modifier
             .fillMaxSize(),
@@ -111,13 +112,13 @@ fun PlayersHand(
                 )
             )
         }
-        
         Row(
             modifier = Modifier
                 .padding(5.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             hand.forEach() { cardId ->
+                val offset = cardOffsets[cardId] ?: Offset.Zero
                 CardItem(
                     cardSizeDp = cardSizeDp,
                     card = Card(color=Card.Color.RED, value=1, id = -1), // dummy card: red|1 id = -1
@@ -126,20 +127,27 @@ fun PlayersHand(
                     onClick = { onCardClick(cardId) },
                     colorHint = viewModel.cardsShowingColorHints.collectAsState().value[cardId],
                     valueHint = viewModel.cardsShowingValueHints.collectAsState().value[cardId],
-                    modifier = Modifier.pointerInput(cardId) {
-                        detectDragGestures(
-                            onDragStart = {
-                                viewModel.startDraggingCard(cardId)
-                            },
-                            onDragEnd = {
-                                viewModel.stopDraggingCard()
-                            },
-                            onDragCancel = {
-                                viewModel.stopDraggingCard()
-                            },
-                            onDrag = { _, _ -> }
-                        )
-                    }
+                    modifier = Modifier
+                        .offset { IntOffset(offset.x.roundToInt(), offset.y.roundToInt()) }
+                        .pointerInput(cardId) {
+                            detectDragGestures(
+                                onDragStart = {
+                                    viewModel.startDraggingCard(cardId)
+                                },
+                                onDragEnd = {
+                                    viewModel.stopDraggingCard()
+                                    cardOffsets[cardId] = Offset.Zero // Snap back to original position
+                                },
+                                onDragCancel = {
+                                    viewModel.stopDraggingCard()
+                                    cardOffsets[cardId] = Offset.Zero // Snap back to original position
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    cardOffsets[cardId] = cardOffsets[cardId]?.plus(dragAmount) ?: dragAmount
+                                }
+                            )
+                        }
                 )
             }
         }
