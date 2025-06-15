@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.model.Card
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 /**
@@ -44,11 +45,25 @@ fun PlayersCardsUI() {
         onCardClick = viewModel::onPlayersCardClick,
         selectedCard = viewModel.selectedCardId.collectAsState().value
     )
+
+    // ensure others players cards are display clockwise in terms of player order
+    val visibleHands = viewModel.otherPlayersHands.collectAsState().value
+    val handsDisplayOrder: MutableMap<Int, List<Card>> =  mutableMapOf()
+    val thisPlayerId = viewModel.thisPlayer.collectAsState().value
+    val playerIds = viewModel.players.collectAsState().value.map { player -> player.id }
+    val thisPlayerIndex = playerIds.indexOf(thisPlayerId)
+    val numPLayers = playerIds.size
+    for (i in 1..numPLayers-1) {
+        val nextPlayerIndex = modPositive(thisPlayerIndex+((-1f).pow(i)*((i+1)/2)).toInt(), numPLayers) // sequence -1, +1, -2, +2, ...
+        val nextPlayersID = playerIds[nextPlayerIndex]
+        val nextPlayersHand = visibleHands.get(key = nextPlayersID)
+        handsDisplayOrder.put(nextPlayersID, nextPlayersHand!!)
+    }
+
     OtherPlayersHands(
-        hands = viewModel.otherPlayersHands.collectAsState().value,
+        hands = handsDisplayOrder,
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
         selectedHandIndex = viewModel.selectedPlayerId.collectAsState().value,
-//        thisPlayerIndex = viewModel.thisPlayerId.collectAsState().value
     )
     if (viewModel.selectedPlayerId.collectAsState().value != -1) {
         HintSelector(
@@ -130,7 +145,7 @@ fun OtherPlayersHands(
     val viewModel: GamePlayViewModel = viewModel()
     val players by viewModel.players.collectAsState()
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
-    
+
     // Create a map of player IDs to player names
     val playerMap = players.associateBy { it.id }
 
@@ -255,4 +270,8 @@ fun OtherPlayersHand(
             }
         }
     }
+}
+
+fun modPositive(x: Int, y: Int): Int {
+    return ((x%y) + y ) % y
 }
