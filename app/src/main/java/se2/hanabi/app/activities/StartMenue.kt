@@ -71,6 +71,7 @@ import se2.hanabi.app.Handler.CameraPermissionHandler
 import se2.hanabi.app.components.QRScanner
 import se2.hanabi.app.ui.theme.customFont
 import se2.hanabi.app.utils.ServerAddressManager
+import androidx.compose.foundation.layout.BoxWithConstraints
 
 class StartMenue {
     @Composable
@@ -183,54 +184,78 @@ class StartMenue {
             }
         }
 
-        Box(
+        BoxWithConstraints(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
+            val screenHeight = maxHeight
+            val titleHeight = screenHeight * 0.27f
+            val showFireworksCounter = remember { mutableIntStateOf(0) }
+            val fireworkOn = showFireworksCounter.intValue >= 3
+
             Image(
                 painter = painterResource(id = R.drawable.backgroundimage),
                 contentDescription = "Background Image",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
-            // EasterEgg, click three times on title and watch firework display
-            val showFireworksCounter = remember { mutableIntStateOf(0) }
-            if (showFireworksCounter.intValue >= 3) {
+
+            if (fireworkOn) {
                 FireworkLauncher(onAnimationEnd = {
                     showFireworksCounter.intValue = 0
                 })
             }
-            val titleModifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 50.dp)
-                .clickable(
-//                        interactionSource = remember { MutableInteractionSource() },
-//                        indication = null
-                ) {
-                    showFireworksCounter.intValue += 1
-                }
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(elementSpacing)
+                verticalArrangement = Arrangement.spacedBy(elementSpacing),
+                modifier = Modifier.fillMaxSize()
             ) {
+                // Title area (reserves space, clickable for fireworks)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(titleHeight)
+                        .background(Color.Transparent)
+                        .clickable { showFireworksCounter.intValue += 1 },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "",
+                        fontSize = 40.sp,
+                        color = Color.White,
+                        fontFamily = customFont,
+                        style = TextStyle(
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.5f),
+                                offset = Offset(2f, 4f),
+                                blurRadius = 8f
+                            )
+                        )
+                    )
+                }
                 //Avatar Placeholder
-                Box(modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(Color.DarkGray)
-                    .clickable { showAvatarDialog = true },
-                    contentAlignment = Alignment.Center){
-                    Image(painter = painterResource(id = selectedAvatarResId),
+                Box(
+                    modifier = Modifier
+                        .size(elementHeight)
+                        .clip(CircleShape)
+                        .background(Color.DarkGray)
+                        .clickable { showAvatarDialog = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = selectedAvatarResId),
                         contentDescription = "Select Avatar",
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop)
+                        contentScale = ContentScale.Crop
+                    )
                 }
                 androidx.compose.material3.TextField(
                     value = username,
                     onValueChange = { newValue ->
                         val maxLength = 6
                         val allowedChars = "a-zA-Z0-9,.!_;:?"
+
                         val regex = Regex("^[$allowedChars]*$")
                         if (newValue.length <= maxLength){
                             if (newValue.matches(regex)){
@@ -260,7 +285,8 @@ class StartMenue {
                     },
                     shape = RoundedCornerShape(50),
                     modifier = Modifier
-                        .width(elementWidth),
+                        .width(elementWidth)
+                        .height(elementHeight),
                     colors = TextFieldDefaults.colors(
                         unfocusedIndicatorColor = Color.Transparent,
                         focusedIndicatorColor = Color.Transparent,
@@ -269,8 +295,6 @@ class StartMenue {
                     ),
                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
                 val wiggleAnim2 = rememberInfiniteTransition(label = "wiggle2").animateFloat(
                     initialValue = 2f,
                     targetValue = -2f,
@@ -283,8 +307,9 @@ class StartMenue {
                     text = "CREATE A LOBBY",
                     modifier = Modifier
                         .clickable { createLobbyAndJoin() }
-                        .padding(vertical = 35.dp)
+                        .padding(screenHeight * 0.05f)
                         .fillMaxWidth()
+
                         .graphicsLayer {
                             rotationZ = wiggleAnim2.value
                         },
@@ -300,7 +325,6 @@ class StartMenue {
                         )
                     )
                 )
-
                 val wiggleAnim = rememberInfiniteTransition(label = "wiggle").animateFloat(
                     initialValue = -2f,
                     targetValue = 2f,
@@ -313,7 +337,7 @@ class StartMenue {
                     text = "JOIN A LOBBY",
                     modifier = Modifier
                         .clickable { showJoinDialog = true }
-                        .padding(vertical = 50.dp)
+                        .padding(screenHeight * 0.05f)
                         .fillMaxWidth()
                         .graphicsLayer {
                             rotationZ = wiggleAnim.value
@@ -330,7 +354,6 @@ class StartMenue {
                         )
                     )
                 )
-
             }
             Surface(
                 modifier = Modifier
