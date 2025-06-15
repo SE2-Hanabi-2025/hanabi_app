@@ -69,9 +69,8 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import se2.hanabi.app.Handler.CameraPermissionHandler
 import se2.hanabi.app.components.QRScanner
+import se2.hanabi.app.ui.theme.customFont
 import se2.hanabi.app.utils.ServerAddressManager
-
-val customFont = FontFamily(Font(R.font.cancandb_free))
 
 class StartMenue {
     @Composable

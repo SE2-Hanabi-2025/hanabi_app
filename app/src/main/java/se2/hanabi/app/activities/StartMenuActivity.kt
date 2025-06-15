@@ -70,4 +70,11 @@ class StartMenuActivity : ComponentActivity() {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Stop background music service to prevent resource leaks
+        val musicIntent = Intent(this, MusicService::class.java)
+        stopService(musicIntent)
+    }
 }

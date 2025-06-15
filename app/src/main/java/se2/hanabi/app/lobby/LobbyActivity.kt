@@ -72,10 +72,9 @@ import kotlinx.coroutines.launch
 import se2.hanabi.app.R
 import se2.hanabi.app.activities.GameActivity
 import se2.hanabi.app.ui.theme.ClientTheme
+import se2.hanabi.app.ui.theme.customFont
 import se2.hanabi.app.utils.ServerAddressManager
 import android.graphics.Color as AndroidColor
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 
 class LobbyActivity : ComponentActivity() {
 
@@ -474,9 +473,5 @@ class LobbyActivity : ComponentActivity() {
                 onDismiss = { showQRCodeDialog = false }
             )
         }
-    }
-
-    companion object {
-        val customFont = FontFamily(Font(R.font.cancandb_free))
     }
 }
