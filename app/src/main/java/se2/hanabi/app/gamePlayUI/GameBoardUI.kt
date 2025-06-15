@@ -2,6 +2,7 @@ package se2.hanabi.app.gamePlayUI
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -258,25 +260,53 @@ fun ColorStacks(
     stackValues: Map<Card.Color, Int>,
     onColorStackClick: (Card.Color) -> Unit,
 ) {
+    val viewModel: GamePlayViewModel = viewModel()
+    val draggedCardId by viewModel.draggedCardId.collectAsState()
+    var highlightedColor: Card.Color? = null
     Column(
         verticalArrangement = Arrangement.spacedBy(cardSpacing),
     ) {
         Card.Color.entries.forEach() { color ->
+            val isHighlighted = highlightedColor == color
+            val stackModifier = Modifier
+                .pointerInput(draggedCardId) {
+                    detectDragGestures(
+                        onDragStart = {},
+                        onDragEnd = {},
+                        onDragCancel = {},
+                        onDrag = { _, _ -> },
+                        onDragEnter = {
+                            highlightedColor = color
+                        },
+                        onDragExit = {
+                            highlightedColor = null
+                        },
+                        onDrop = {
+                            if (draggedCardId != null) {
+                                // Call play logic with draggedCardId and color
+                                viewModel.onPlayCardDrop(draggedCardId, color)
+                                viewModel.stopDraggingCard()
+                                highlightedColor = null
+                            }
+                        }
+                    )
+                }
             if (stackValues[color]==0) {
                 EmptyStack(
                     cardSizeDp = cardSizeDp,
                     isPortrait = false,
                     onClick = { onColorStackClick(color) },
                     color = color,
+                    modifier = stackModifier.background(if (isHighlighted) Color.Yellow.copy(alpha = 0.3f) else Color.Transparent)
                 )
             } else {
                 CardItem(
                     cardSizeDp = cardSizeDp,
-                    card = Card(color,
-                    stackValues[color]?:0),
+                    card = Card(color, stackValues[color]?:0),
                     isPortrait = false,
                     highlightColor = colorFromColorEnum(color),
                     onClick = { onColorStackClick(color) },
+                    modifier = stackModifier.background(if (isHighlighted) Color.Yellow.copy(alpha = 0.3f) else Color.Transparent)
                 )
             }
         }
