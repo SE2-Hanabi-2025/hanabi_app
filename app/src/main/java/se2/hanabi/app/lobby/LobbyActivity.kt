@@ -190,8 +190,7 @@ class LobbyActivity : ComponentActivity() {
     private fun startGameRequest(lobbyCode: String) {
         lifecycleScope.launch {
             try {
-                val response: HttpResponse =
-                    HttpClient(CIO).get("http://10.0.2.2:8080/start-game/$lobbyCode") {
+                val response: HttpResponse = HttpClient(CIO).get(ServerAddressManager.getStartGameUrl(lobbyCode)) {
                         parameter("isCasualMode", viewModel.isCasualMode.value)
                     }
                 if (response.status == HttpStatusCode.OK) {
