@@ -21,6 +21,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -262,33 +264,20 @@ fun ColorStacks(
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     val draggedCardId by viewModel.draggedCardId.collectAsState()
-    var highlightedColor: Card.Color? = null
+    // NOTE: highlightedColor logic removed since onDragEnter/onDragExit are not supported in detectDragGestures
     Column(
         verticalArrangement = Arrangement.spacedBy(cardSpacing),
     ) {
         Card.Color.entries.forEach() { color ->
-            val isHighlighted = highlightedColor == color
             val stackModifier = Modifier
                 .pointerInput(draggedCardId) {
                     detectDragGestures(
                         onDragStart = {},
                         onDragEnd = {},
                         onDragCancel = {},
-                        onDrag = { _, _ -> },
-                        onDragEnter = {
-                            highlightedColor = color
-                        },
-                        onDragExit = {
-                            highlightedColor = null
-                        },
-                        onDrop = {
-                            if (draggedCardId != null) {
-                                // Call play logic with draggedCardId and color
-                                viewModel.onPlayCardDrop(draggedCardId, color)
-                                viewModel.stopDraggingCard()
-                                highlightedColor = null
-                            }
-                        }
+                        onDrag = { _, _ -> }
+                        // onDragEnter, onDragExit, onDrop are NOT supported in detectDragGestures
+                        // If you want drag-over highlighting and drop, use the experimental drag-and-drop API
                     )
                 }
             if (stackValues[color]==0) {
@@ -297,7 +286,7 @@ fun ColorStacks(
                     isPortrait = false,
                     onClick = { onColorStackClick(color) },
                     color = color,
-                    modifier = stackModifier.background(if (isHighlighted) Color.Yellow.copy(alpha = 0.3f) else Color.Transparent)
+                    modifier = stackModifier // .background(...) removed since highlight logic is gone
                 )
             } else {
                 CardItem(
@@ -306,7 +295,7 @@ fun ColorStacks(
                     isPortrait = false,
                     highlightColor = colorFromColorEnum(color),
                     onClick = { onColorStackClick(color) },
-                    modifier = stackModifier.background(if (isHighlighted) Color.Yellow.copy(alpha = 0.3f) else Color.Transparent)
+                    modifier = stackModifier // .background(...) removed
                 )
             }
         }

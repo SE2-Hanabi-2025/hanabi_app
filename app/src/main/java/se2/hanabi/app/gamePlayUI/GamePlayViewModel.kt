@@ -487,4 +487,70 @@ class GamePlayViewModel(
     fun stopDraggingCard() {
         _draggedCardId.value = null
     }
+
+    /**
+     * Called when a card is dropped on a color stack.
+     * Handles Hanabi rules: auto-placement for 1s, validation, and strikes.
+     * Updated: Dropping a 1 on any empty stack auto-places it on the correct color stack.
+     */
+    fun onPlayCardDrop(cardId: Int?, targetColor: Card.Color) {
+        if (cardId == null) return
+        if (!_isMyTurn.value) {
+            _statusMessage.value = "Du bist nicht an der Reihe"
+            return
+        }
+        val hand = _thisPlayersHand.value
+        val cardIndex = hand.indexOf(cardId)
+        if (cardIndex < 0) {
+            _statusMessage.value = "Karte nicht gefunden"
+            return
+        }
+        // Get the card details from visible hands (since hand only has IDs)
+        val myVisibleHand = otherPlayersHands.value[playerId] ?: emptyList()
+        val card = myVisibleHand.find { it.getID() == cardId }
+        if (card == null) {
+            _statusMessage.value = "Karte nicht gefunden (Details fehlen)"
+            return
+        }
+        // Hanabi rules: auto-place 1s, validate others
+        if (card.value == 1) {
+            // Find the correct color stack for this 1
+            val correctStackValue = stackValues.value[card.color] ?: 0
+            if (correctStackValue == 0) {
+                // Play the card regardless of drop target if its color stack is empty
+                playCardByIndex(cardIndex)
+                return
+            } else {
+                // 1 cannot be played if its color stack is not empty
+                giveStrikeAndDiscard(cardIndex)
+                return
+            }
+        } else {
+            // For other values, must match stack color and be next in sequence
+            val stackValue = stackValues.value[targetColor] ?: 0
+            if (card.color == targetColor && stackValue == card.value - 1) {
+                playCardByIndex(cardIndex)
+                return
+            } else {
+                giveStrikeAndDiscard(cardIndex)
+                return
+            }
+        }
+    }
+
+    private fun playCardByIndex(cardIndex: Int) {
+        viewModelScope.launch {
+            _statusMessage.value = "Spiele Karte..."
+            Log.d(TAG, "Spiele Karte an Index $cardIndex (Drag-and-drop)")
+            webSocketService.playCard(lobbyId, playerId, cardIndex)
+        }
+    }
+
+    private fun giveStrikeAndDiscard(cardIndex: Int) {
+        viewModelScope.launch {
+            _statusMessage.value = "Falsche Karte! Strike erhalten."
+            Log.d(TAG, "Falsche Karte an Index $cardIndex (Drag-and-drop), Strike und Ablage")
+            webSocketService.discardCard(lobbyId, playerId, cardIndex)
+        }
+    }
 }
