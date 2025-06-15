@@ -54,6 +54,17 @@ data class GiveHintAction(
 }
 
 @Serializable
+@SerialName("DEFUSE_ATTEMPT")
+data class DefuseAttemptAction(
+    override val lobbyId: String,
+    override val playerId: Int,
+    val sequence: List<String>, // e.g. ["down", "down", "up", "down"]
+    val proximity: String // e.g. "dark" or "light"
+) : ClientAction() {
+    override val action: String = "DEFUSE_ATTEMPT"
+}
+
+@Serializable
 enum class HintType {
     COLOR,
     VALUE;
