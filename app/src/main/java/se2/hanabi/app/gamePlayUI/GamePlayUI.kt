@@ -1,7 +1,7 @@
 package se2.hanabi.app.gamePlayUI
 
-import android.content.res.Configuration
 import androidx.compose.foundation.Image
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +39,11 @@ import se2.hanabi.app.Services.WebSocketService
 import se2.hanabi.app.model.Player
 import se2.hanabi.app.R
 
+private const val cardProportionOfWidth = 0.15f
+private const val aspectRatio = 1.5f
+private val boardElementPadding = 8.dp
+private val cardSpacing = 4.dp
+
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
 const val maxGameBoardHeightProportion = 0.5f
@@ -50,6 +55,7 @@ const val maxGameBoardHeightProportion = 0.5f
  * - fuse/hint tokens, discard/draw pile, color stacks
  *
  */
+
 @Composable
 fun GamePlayUI() {
     val configuration = LocalConfiguration.current
@@ -129,15 +135,9 @@ fun GamePlayUI() {
         } else {
             Column (modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally){
-            // Show game board and player cards
-            GameBoardUI(cardSizeDp, shrinkRatio)
-            PlayersCardsUI(landscape, cardSizeDp)
-
             // Show game status overlay at the top
             Column(
                 modifier = Modifier
-                //    .align(Alignment.TopCenter)
-                 //   .padding(top = 8.dp)
                     .background(Color.Black.copy(alpha = 0.5f))
                     .padding(8.dp)
             ) {
@@ -178,8 +178,8 @@ fun GamePlayUI() {
 
                 InGamePlayerList(players = players)
             }
-                GameBoardUI(cardSizeDp, shrinkRatio)
-                PlayersCardsUI(landscape, cardSizeDp)
+            GameBoardUI()
+            PlayersCardsUI()
 
 
             // Action buttons at the bottom
