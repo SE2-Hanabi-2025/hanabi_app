@@ -16,9 +16,9 @@ import kotlinx.serialization.json.Json
 import se2.hanabi.app.model.GameStatus
 import se2.hanabi.app.model.Hint
 import se2.hanabi.app.model.websocket.*
+import se2.hanabi.app.utils.ServerAddressManager
 
 class WebSocketService(
-    private val baseUrl: String = "ws://10.0.2.2:8080", // Configurable base URL
     private val json: Json = Json {
         ignoreUnknownKeys = true
         isLenient = true
@@ -66,7 +66,7 @@ class WebSocketService(
 
         _connectionState.value = ConnectionState.CONNECTING
         
-        val wsUrl = "$baseUrl/ws/game?lobbyId=$lobbyId&playerId=$playerId"
+        val wsUrl = ServerAddressManager.getGameWebSocketUrl(lobbyId, playerId)
         Log.d(TAG, "Connecting to $wsUrl")
         
         connectionJob = CoroutineScope(Dispatchers.IO).launch {

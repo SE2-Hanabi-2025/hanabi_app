@@ -15,6 +15,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import se2.hanabi.app.utils.ServerAddressManager
 
 
 @kotlinx.serialization.Serializable
@@ -43,14 +44,10 @@ class LobbyViewModel : ViewModel() {
     private val _isHost = mutableStateOf(false)
     val isHost: Boolean
         get() = _isHost.value
-        
-    // Username of the current player
+          // Username of the current player
     private val _username = mutableStateOf("")
     val username: String
         get() = _username.value
-
-    // Server URL for the game server
-    private val serverUrl = "http://10.0.2.2:8080"
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -81,35 +78,42 @@ class LobbyViewModel : ViewModel() {
             try {
                 val code = _lobbyCode.value ?: return@launch
 
+                  // Fetch players from server
+                val response: List<PlayerInLobby> =  client.get(ServerAddressManager.getLobbyPlayersUrl(code)).body()
                 
-                // Fetch players from server
-                val response: List<PlayerInLobby> =  client.get("$serverUrl/lobby/$code/players").body()
-                
-                // Filter out duplicates
-                val uniquePlayers = response.distinctBy { it.name }.toMutableList()
+                // Use all players including duplicates
+                val allPlayers = response.toMutableList()
                 
                 // Make sure current player is in the list
                 val currentUsername = _username.value
-              
-                if (currentUsername.isNotEmpty() && !uniquePlayers.any{it.name ==currentUsername}) {
-                    uniquePlayers.add(PlayerInLobby(currentUsername, 0))
+                if (currentUsername.isNotEmpty() && !allPlayers.any{it.name ==currentUsername}) {
+                    allPlayers.add(PlayerInLobby(currentUsername, 0))
                     
-                    println("Added current player ($currentUsername) to list: ${uniquePlayers.joinToString { it.name }}")
+                    println("Added current player ($currentUsername) to list: ${allPlayers.joinToString { it.name }}")
                 } else {
                     
                     // Log for debugging
-                    println("Updated player list: ${uniquePlayers.joinToString { it.name }}")
+                    println("Updated player list: ${allPlayers.joinToString { it.name }}")
                 }
-                
-                _players.value = response
-                // Check game status
-                val gameStatusResponse = client.get("$serverUrl/start-game/$code/status")
+                  // Use the complete list including duplicates
+                _players.value = allPlayers
+                try {
+                    println("Checking game status for lobby: $code")
+                    val gameStatusUrl = ServerAddressManager.getStartGameUrl(code) + "/status"
+                    println("URL: $gameStatusUrl")
 
-                if (gameStatusResponse.status == HttpStatusCode.OK) {
-                    val gameStarted: Boolean = gameStatusResponse.body()
-                    if (gameStarted) {
-                        _isGameStarted.value = true
+                    val gameStatusResponse = client.get(gameStatusUrl)
+                    println("Game status response: ${gameStatusResponse.status}")
+
+                    if (gameStatusResponse.status == HttpStatusCode.OK) {
+                        val gameStarted: Boolean = gameStatusResponse.body()
+                        println("Game started: $gameStarted")
+                        _isGameStarted.value = gameStarted
+                    } else {
+                        println("Game status check failed: ${gameStatusResponse.status}")
                     }
+                } catch (e: Exception) {
+                    println("Error checking game status: ${e.message}")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

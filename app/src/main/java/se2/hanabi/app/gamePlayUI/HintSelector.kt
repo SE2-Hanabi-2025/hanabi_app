@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
@@ -16,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,72 +27,101 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.model.Card
 import se2.hanabi.app.model.Hint
-import androidx.compose.runtime.getValue
+
+const val hintSelecterToCardWidthProportion = 0.9f
+const val hintPaddingToHintSelectorProportion = 0.25f
 
 @Composable
 fun HintSelector(
+    landscape: Boolean,
+    cardSizeDp: DpSize,
     onHintClick: (Hint) -> Unit,
     selectedHint: Hint? = null
 ) {
     val viewModel: GamePlayViewModel = viewModel()
-    val hintItemSize = 60.dp
-    val paddingAmount = 15.dp
-    Column() {
-        Row(
+    val hintItemSize = cardSizeDp.width.times(hintSelecterToCardWidthProportion)
+    val paddingAmount = cardSizeDp.width.times(hintPaddingToHintSelectorProportion)
+
+    val hintSelectorHeight = hintItemSize.times(5) + paddingAmount.times(6)
+    val hintSelectorWidth = hintItemSize.times(2) + paddingAmount.times(3)
+
+    val layoutWidth = if (landscape) hintSelectorHeight else hintSelectorWidth
+    val layoutHeight = if (landscape) hintSelectorWidth else hintSelectorHeight
+
+    Column(
+
+    ) {
+        Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(paddingAmount))
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.5f),
-                            Color.Black.copy(alpha = 0.7f)
+                .size(layoutWidth, layoutHeight)
+        ) {
+            Row(
+                modifier = Modifier
+                    .graphicsLayer {
+                        rotationZ = if (landscape) -90f else 0f
+                    }
+                    .requiredSize(hintSelectorWidth, hintSelectorHeight)
+                    .align(Alignment.Center)
+                    .clip(RoundedCornerShape(paddingAmount))
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.5f),
+                                Color.Black.copy(alpha = 0.7f)
+                            )
                         )
                     )
-                )
-                .padding(paddingAmount),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(paddingAmount)
-        ) {
-            // colors hints
-            Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .padding(paddingAmount),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(paddingAmount)
             ) {
-                Card.Color.entries.forEach() { color ->
-                    HintItem(
-                        colorIn = color,
-                        size = hintItemSize,
-                        isSelected = (selectedHint!=null) && color==selectedHint.getColor() ,
-                        onClick = { onHintClick(Hint(color)) }
-                    )
+                // colors hints
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(paddingAmount)
+                ) {
+                    Card.Color.entries.forEach() { color ->
+                        HintItem(
+                            colorIn = color,
+                            size = hintItemSize,
+                            rotationAmountZ = if (landscape) 90f else 0f,
+                            isSelected = (selectedHint != null) && color == selectedHint.getColor(),
+                            onClick = { onHintClick(Hint(color)) }
+                        )
+                    }
                 }
-            }
-            // number hints
-            Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                for (i in 1..5) {
-                    HintItem(
-                        value = i,
-                        size = hintItemSize,
-                        isSelected = selectedHint!=null && selectedHint.getValue()==i,
-                        onClick = { onHintClick(Hint(i)) }
-                    )
+                // number hints
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(paddingAmount)
+                ) {
+                    for (i in 1..5) {
+                        HintItem(
+                            value = i,
+                            size = hintItemSize,
+                            rotationAmountZ = if (landscape) 90f else 0f,
+                            isSelected = selectedHint != null && selectedHint.getValue() == i,
+                            onClick = { onHintClick(Hint(i)) }
+                        )
+                    }
                 }
             }
         }
-       GiveHintButton(
-           width = hintItemSize.times(2) + paddingAmount.times(3),
-           height = hintItemSize,
-           modifier = Modifier
-               .clip(RoundedCornerShape(paddingAmount)),
-           isAvailable = viewModel.isValidHint.collectAsState().value,
-           onClick = viewModel::onGiveHintClick
-       )
+
+
+        GiveHintButton(
+            width = hintSelectorWidth,
+            height = hintItemSize,
+            modifier = Modifier
+                .clip(RoundedCornerShape(paddingAmount))
+                .align(Alignment.CenterHorizontally),
+            isAvailable = viewModel.isValidHint.collectAsState().value,
+            onClick = viewModel::onGiveHintClick
+        )
     }
 }
 
@@ -145,6 +176,7 @@ fun HintItem(
     colorIn: Card.Color? = null,
     value: Int = -1,
     size: Dp = 60.dp,
+    rotationAmountZ: Float = 0f,
     isSelected: Boolean = false,
     onClick: () -> Unit = {}
 
@@ -179,6 +211,9 @@ fun HintItem(
         Box(
             modifier = Modifier
                 .size(size)
+                .graphicsLayer{
+                    rotationZ = rotationAmountZ
+                }
                 .clip(CircleShape)
                 .background(
                     Brush.verticalGradient(
