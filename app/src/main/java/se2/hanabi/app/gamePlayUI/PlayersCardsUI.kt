@@ -1,6 +1,7 @@
 package se2.hanabi.app.gamePlayUI
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -124,6 +125,20 @@ fun PlayersHand(
                     onClick = { onCardClick(cardId) },
                     colorHint = viewModel.cardsShowingColorHints.collectAsState().value[cardId],
                     valueHint = viewModel.cardsShowingValueHints.collectAsState().value[cardId],
+                    modifier = Modifier.pointerInput(cardId) {
+                        detectDragGestures(
+                            onDragStart = {
+                                viewModel.startDraggingCard(cardId)
+                            },
+                            onDragEnd = {
+                                viewModel.stopDraggingCard()
+                            },
+                            onDragCancel = {
+                                viewModel.stopDraggingCard()
+                            },
+                            onDrag = { _, _ -> }
+                        )
+                    }
                 )
             }
         }
