@@ -124,6 +124,10 @@ class GamePlayViewModel(
     private val _cardsShowingValueHints =  MutableStateFlow<Map<Int, Int>>(emptyMap())
     val cardsShowingValueHints: StateFlow<Map<Int,Int>> = _cardsShowingValueHints
 
+    // Drag-and-drop state
+    private val _draggedCardId = MutableStateFlow<Int?>(null)
+    val draggedCardId: StateFlow<Int?> = _draggedCardId
+
     init {
         Log.d(TAG, "Initialisiere GamePlayViewModel - LobbyId: $lobbyId, PlayerId: $playerId")
 
@@ -474,5 +478,13 @@ class GamePlayViewModel(
 
     fun getMaxScore(): Int {
         return max_score
+    }
+
+    fun startDraggingCard(cardId: Int) {
+        _draggedCardId.value = cardId
+    }
+
+    fun stopDraggingCard() {
+        _draggedCardId.value = null
     }
 }
