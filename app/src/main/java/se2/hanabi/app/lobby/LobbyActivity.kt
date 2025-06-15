@@ -6,9 +6,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,11 +43,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -68,6 +74,8 @@ import se2.hanabi.app.activities.GameActivity
 import se2.hanabi.app.ui.theme.ClientTheme
 import se2.hanabi.app.utils.ServerAddressManager
 import android.graphics.Color as AndroidColor
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 
 class LobbyActivity : ComponentActivity() {
 
@@ -318,23 +326,40 @@ class LobbyActivity : ComponentActivity() {
             ) {
                 val midButtonWidth = 80.dp
                 val smallButtonWidth = 60.dp
-                val buttonSpacing = 10.dp
+                val buttonSpacing = 18.dp // Increased spacing between buttons
                 val startButtonWidth = midButtonWidth.times(2)+smallButtonWidth+buttonSpacing.times(2)
 
                 //start game
                 if (isHost) {
-                    Button(
-                        onClick = { onStartGame() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF2ecc71),
-                            contentColor = Color.White
-                        ),
-                        border = BorderStroke(2.dp, Color.White),
-                        modifier = Modifier.width(startButtonWidth).height(60.dp)
-                    ) {
-                        Text("Start Game", color = Color.White, fontSize = 20.sp)
-                    }
-
+                    val wiggleAnim = rememberInfiniteTransition(label = "wiggle").animateFloat(
+                        initialValue = -2f,
+                        targetValue = 2f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(durationMillis = 600, easing = LinearEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ), label = "wiggle"
+                    )
+                    Text(
+                        text = "START GAME",
+                        modifier = Modifier
+                            .clickable { onStartGame() }
+                            .padding(vertical = 16.dp)
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                rotationZ = wiggleAnim.value
+                            },
+                        textAlign = TextAlign.Center,
+                        fontSize = 35.sp,
+                        color = Color(0xFFFCAE21),
+                        fontFamily = customFont,
+                        style = TextStyle(
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.5f),
+                                offset = Offset(2f, 4f),
+                                blurRadius = 8f
+                            )
+                        )
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
                 
@@ -343,55 +368,100 @@ class LobbyActivity : ComponentActivity() {
                     horizontalArrangement = Arrangement.spacedBy(buttonSpacing),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Leave Lobby Button
-                    Button(
-                        onClick = onLeaveLobby,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.DarkGray
-                        ),
-                        border = BorderStroke(2.dp, Color.White),
-                        modifier = Modifier.width(midButtonWidth).height(60.dp),
-                        contentPadding = PaddingValues(4.dp)
+                    val wiggleAnimLeave = rememberInfiniteTransition(label = "wiggleLeave").animateFloat(
+                        initialValue = 2f,
+                        targetValue = -2f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(durationMillis = 600, easing = LinearEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ), label = "wiggleLeave"
+                    )
+                    Text(
+                        text = "LEAVE",
+                        modifier = Modifier
+                            .clickable { onLeaveLobby() }
+                            .padding(vertical = 16.dp)
+                            .graphicsLayer {
+                                rotationZ = wiggleAnimLeave.value
+                            },
+                        textAlign = TextAlign.Center,
+                        fontSize = 26.sp, 
+                        color = Color.Green,
+                        fontFamily = customFont,
+                        style = TextStyle(
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.5f),
+                                offset = Offset(2f, 4f),
+                                blurRadius = 8f
+                            )
+                        )
+                    )
+                    val wiggleAnimQR = rememberInfiniteTransition(label = "wiggleQR").animateFloat(
+                        initialValue = -2f,
+                        targetValue = 2f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(durationMillis = 600, easing = LinearEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ), label = "wiggleQR"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .graphicsLayer {
+                                rotationZ = wiggleAnimQR.value
+                            }
+                            .background(Color.Transparent, shape = RoundedCornerShape(8.dp))
+                            .border(2.dp, Color(0xFFFCAE21), shape = RoundedCornerShape(8.dp))
+                            .padding(horizontal = 12.dp, vertical = 4.dp)
                     ) {
-                        Text("Leave", color = Color.White, fontSize = 16.sp)
+                        Text(
+                            text = "Q R",
+                            modifier = Modifier
+                                .clickable { showQRCodeDialog = true },
+                            textAlign = TextAlign.Center,
+                            fontSize = 45.sp,
+                            color = Color(0xFFFCAE21),
+                            fontFamily = customFont,
+                            style = TextStyle(
+                                shadow = Shadow(
+                                    color = Color.Black.copy(alpha = 0.5f),
+                                    offset = Offset(2f, 4f),
+                                    blurRadius = 8f
+                                )
+                            )
+                        )
                     }
-
-                    // QR Code Button
-                    Button(
-                        onClick = { showQRCodeDialog = true },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF3498db)
-                        ),
-                        border = BorderStroke(2.dp, Color.White),
-                        modifier = Modifier.width(smallButtonWidth).height(60.dp),
-                        contentPadding = PaddingValues(4.dp)
-
-                    ) {
-                        Text("QR", color = Color.White, fontSize = 16.sp)
-                    }
-
-                    // Game Mode toggle
                     if (isHost) {
                         val checked = viewModel.isCasualMode.collectAsState().value
                         val gameModeLabel = if (checked) "Casual" else "Normal"
-                        val buttonColor = if (checked) Color(0xFF7E1FBB) else Color.DarkGray
-                        Button(
-                            onClick = viewModel::onGameModeToggle,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = buttonColor
-                            ),
-                            border = BorderStroke(2.dp, Color.White),
-                            modifier = Modifier.width(midButtonWidth).height(60.dp),
-                            contentPadding = PaddingValues(4.dp)
-                        ) {
-                            Text(
-                                text = gameModeLabel,
-                                fontSize = 16.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Visible,
-                                color = Color.White,
+                        val textColor = if (checked) Color.White else Color(0xFFFCAE21)
+                        val wiggleAnimMode = rememberInfiniteTransition(label = "wiggleMode").animateFloat(
+                            initialValue = 2f,
+                            targetValue = -2f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(durationMillis = 600, easing = LinearEasing),
+                                repeatMode = RepeatMode.Reverse
+                            ), label = "wiggleMode"
+                        )
+                        Text(
+                            text = gameModeLabel.uppercase(),
+                            modifier = Modifier
+                                .clickable { viewModel.onGameModeToggle() }
+                                .padding(vertical = 16.dp)
+                                .graphicsLayer {
+                                    rotationZ = wiggleAnimMode.value
+                                },
+                            textAlign = TextAlign.Center,
+                            fontSize = 26.sp, 
+                            color = textColor,
+                            fontFamily = customFont,
+                            style = TextStyle(
+                                shadow = Shadow(
+                                    color = Color.Black.copy(alpha = 0.5f),
+                                    offset = Offset(2f, 4f),
+                                    blurRadius = 8f
                                 )
-                        }
+                            )
+                        )
                     }
                 }
             }
@@ -404,5 +474,9 @@ class LobbyActivity : ComponentActivity() {
                 onDismiss = { showQRCodeDialog = false }
             )
         }
+    }
+
+    companion object {
+        val customFont = FontFamily(Font(R.font.cancandb_free))
     }
 }

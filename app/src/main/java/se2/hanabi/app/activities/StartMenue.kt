@@ -281,7 +281,7 @@ class StartMenue {
                     ), label = "wiggle2"
                 )
                 Text(
-                    text = "CREATE LOBBY",
+                    text = "CREATE A LOBBY",
                     modifier = Modifier
                         .clickable { createLobbyAndJoin() }
                         .padding(vertical = 35.dp)
@@ -311,7 +311,7 @@ class StartMenue {
                     ), label = "wiggle"
                 )
                 Text(
-                    text = "JOIN LOBBY",
+                    text = "JOIN A LOBBY",
                     modifier = Modifier
                         .clickable { showJoinDialog = true }
                         .padding(vertical = 50.dp)
