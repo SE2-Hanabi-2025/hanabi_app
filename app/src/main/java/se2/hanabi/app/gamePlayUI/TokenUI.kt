@@ -44,6 +44,7 @@ fun Token(
         "drawable",
         LocalContext.current.packageName
     )
+
     Image(
         modifier = Modifier
             .size(if (type==TokenType.hint) hintTokenSize else fuseTokenSize)

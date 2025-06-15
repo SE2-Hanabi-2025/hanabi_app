@@ -1,6 +1,7 @@
 package se2.hanabi.app.activities
 
 import android.content.Intent
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,8 +28,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -42,10 +45,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -65,6 +70,8 @@ import java.nio.charset.StandardCharsets
 import se2.hanabi.app.Handler.CameraPermissionHandler
 import se2.hanabi.app.components.QRScanner
 import se2.hanabi.app.utils.ServerAddressManager
+
+val customFont = FontFamily(Font(R.font.cancandb_free))
 
 class StartMenue {
     @Composable
@@ -203,7 +210,6 @@ class StartMenue {
                 ) {
                     showFireworksCounter.intValue += 1
                 }
-            Title(modifier = titleModifier)
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -223,8 +229,7 @@ class StartMenue {
                 }
                 androidx.compose.material3.TextField(
                     value = username,
-                    onValueChange = {
-                            newValue ->
+                    onValueChange = { newValue ->
                         val maxLength = 6
                         val allowedChars = "a-zA-Z0-9,.!_;:?"
                         val regex = Regex("^[$allowedChars]*$")
@@ -256,44 +261,77 @@ class StartMenue {
                     },
                     shape = RoundedCornerShape(50),
                     modifier = Modifier
-                        .width(elementWidth)
+                        .width(elementWidth),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent,
+                        errorIndicatorColor = Color.Transparent
+                    ),
+                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
                 )
 
-                Button(
-                    onClick = { showJoinDialog = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2ecc71),
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(2.dp, Color.White),
+                Spacer(modifier = Modifier.height(8.dp))
+                val wiggleAnim2 = rememberInfiniteTransition(label = "wiggle2").animateFloat(
+                    initialValue = 2f,
+                    targetValue = -2f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 600, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ), label = "wiggle2"
+                )
+                Text(
+                    text = "CREATE LOBBY",
                     modifier = Modifier
-                        .size(elementWidth, elementHeight)
-                ) {
-                    Text(
-                        text = "Join Lobby",
-                        textAlign = TextAlign.Center,
-                        fontSize = 20.sp
+                        .clickable { createLobbyAndJoin() }
+                        .padding(vertical = 35.dp)
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            rotationZ = wiggleAnim2.value
+                        },
+                    textAlign = TextAlign.Center,
+                    fontSize = 26.sp,
+                    color = Color(0xFFFCAE21),
+                    fontFamily = customFont,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            offset = Offset(2f, 4f),
+                            blurRadius = 8f
+                        )
                     )
-                }
+                )
 
-                Button(
-                    onClick = {
-                        createLobbyAndJoin()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.DarkGray,
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(2.dp, Color.White),
+                val wiggleAnim = rememberInfiniteTransition(label = "wiggle").animateFloat(
+                    initialValue = -2f,
+                    targetValue = 2f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 600, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ), label = "wiggle"
+                )
+                Text(
+                    text = "JOIN LOBBY",
                     modifier = Modifier
-                        .size(elementWidth, elementHeight)
-                ) {
-                    Text(
-                        text = "Create Lobby",
-                        textAlign = TextAlign.Center,
-                        fontSize = 20.sp
+                        .clickable { showJoinDialog = true }
+                        .padding(vertical = 50.dp)
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            rotationZ = wiggleAnim.value
+                        },
+                    textAlign = TextAlign.Center,
+                    fontSize = 26.sp,
+                    color = Color(0xFFFCAE21),
+                    fontFamily = customFont,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            offset = Offset(2f, 4f),
+                            blurRadius = 8f
+                        )
                     )
-                }
+                )
+
             }
             Surface(
                 modifier = Modifier
@@ -498,24 +536,5 @@ class StartMenue {
             }
         )
     }
-}
-
-@Composable
-fun Title(modifier: Modifier = Modifier) {
-    Text(
-        text = "Hanabi!",
-        fontFamily = FontFamily.Cursive,
-        color = Color(0xFFF2FF90),
-        fontSize = 100.sp,
-        fontWeight = FontWeight.Bold,
-        style = TextStyle(
-            shadow = Shadow(
-                color = Color.Black.copy(alpha = 100f),
-                offset = Offset(-0f, 0f),
-                blurRadius = 50f
-            )
-        ),
-        modifier = modifier
-    )
 }
 
