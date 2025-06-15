@@ -22,12 +22,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.model.Card
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 /**
@@ -37,21 +39,42 @@ import kotlin.math.roundToInt
  * - other players hands on the side of the screen with the card faces visible.
  */
 @Composable
-fun PlayersCardsUI() {
+fun PlayersCardsUI(
+    landscape: Boolean,
+    cardSizeDp: DpSize
+) {
     val viewModel: GamePlayViewModel = viewModel()
     PlayersHand(
+        cardSizeDp = cardSizeDp,
         hand = viewModel.thisPlayersHand.collectAsState().value,
         onCardClick = viewModel::onPlayersCardClick,
         selectedCard = viewModel.selectedCardId.collectAsState().value
     )
+
+    // ensure others players cards are display clockwise in terms of player order
+    val visibleHands = viewModel.otherPlayersHands.collectAsState().value
+    val handsDisplayOrder: MutableMap<Int, List<Card>> =  mutableMapOf()
+    val thisPlayerId = viewModel.thisPlayer.collectAsState().value
+    val playerIds = viewModel.players.collectAsState().value.map { player -> player.id }
+    val thisPlayerIndex = playerIds.indexOf(thisPlayerId)
+    val numPLayers = playerIds.size
+    for (i in 1..numPLayers-1) {
+        val nextPlayerIndex = modPositive(thisPlayerIndex+((-1f).pow(i)*((i+1)/2)).toInt(), numPLayers) // sequence -1, +1, -2, +2, ...
+        val nextPlayersID = playerIds[nextPlayerIndex]
+        val nextPlayersHand = visibleHands.get(key = nextPlayersID)
+        handsDisplayOrder.put(nextPlayersID, nextPlayersHand!!)
+    }
+
     OtherPlayersHands(
-        hands = viewModel.otherPlayersHands.collectAsState().value,
+        hands = handsDisplayOrder,
+        cardSizeDp = cardSizeDp,
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
         selectedHandIndex = viewModel.selectedPlayerId.collectAsState().value,
-//        thisPlayerIndex = viewModel.thisPlayerId.collectAsState().value
     )
     if (viewModel.selectedPlayerId.collectAsState().value != -1) {
         HintSelector(
+            landscape = landscape,
+            cardSizeDp = cardSizeDp,
             selectedHint = viewModel.selectedHint.collectAsState().value,
             onHintClick = viewModel::onHintClick,
         )
@@ -60,6 +83,7 @@ fun PlayersCardsUI() {
 
 @Composable
 fun PlayersHand(
+    cardSizeDp: DpSize,
     hand: List<Int>,
     onCardClick: (Int) -> Unit,
     selectedCard: Int?
@@ -103,12 +127,12 @@ fun PlayersHand(
         
         Row(
             modifier = Modifier
-                .padding(5.dp)
-                .fillMaxWidth(),
-            Arrangement.SpaceEvenly,
+                .padding(5.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             hand.forEach() { cardId ->
                 CardItem(
+                    cardSizeDp = cardSizeDp,
                     card = Card(color=Card.Color.RED, value=1, id = -1), // dummy card: red|1 id = -1
                     isFlipped = true,
                     isSelected = cardId == selectedCard,
@@ -123,6 +147,7 @@ fun PlayersHand(
 
 @Composable
 fun OtherPlayersHands(
+    cardSizeDp: DpSize,
     hands: Map<Int, List<Card>>,
     onOtherPlayersHandClick: (Int) -> Unit,
     selectedHandIndex: Int,
@@ -130,7 +155,7 @@ fun OtherPlayersHands(
     val viewModel: GamePlayViewModel = viewModel()
     val players by viewModel.players.collectAsState()
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
-    
+
     // Create a map of player IDs to player names
     val playerMap = players.associateBy { it.id }
 
@@ -165,6 +190,7 @@ fun OtherPlayersHands(
             val playerName = playerMap[playerId]?.name ?: "Spieler $playerId"
             
             OtherPlayersHand(
+                cardSizeDp = cardSizeDp,
                 offset = handOffset,
                 hand = hand,
                 playerId = playerId,
@@ -179,6 +205,7 @@ fun OtherPlayersHands(
 
 @Composable
 fun OtherPlayersHand(
+    cardSizeDp: DpSize,
     offset: Offset,
     hand: Map.Entry<Int, List<Card>>,
     playerId: Int,
@@ -240,6 +267,7 @@ fun OtherPlayersHand(
         ) {
             hand.value.forEachIndexed() { index, card ->
                 CardItem(
+                    cardSizeDp = cardSizeDp,
                     card = card,
                     isFlipped = false,
                     rotationAmountZ = -30f + index * (60 / hand.value.size), //60 degree arc
@@ -255,4 +283,8 @@ fun OtherPlayersHand(
             }
         }
     }
+}
+
+fun modPositive(x: Int, y: Int): Int {
+    return ((x%y) + y ) % y
 }

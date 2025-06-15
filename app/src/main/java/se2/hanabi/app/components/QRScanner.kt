@@ -38,7 +38,6 @@ fun QRScanner(
     val TAG = "QRScanner"
     
     Box(modifier = Modifier.fillMaxSize()) {
-        // Camera preview
         AndroidView(
             factory = { context ->
                 Log.d(TAG, "Creating QR Scanner view")
@@ -71,11 +70,14 @@ fun QRScanner(
                                         barcodeScanner.process(inputImage)
                                             .addOnSuccessListener { barcodes ->
                                                 Log.d(TAG, "Barcode scan successful, found ${barcodes.size} barcodes")
-                                                for (barcode in barcodes) {
+                                                if (barcodes.isNotEmpty()) {
+                                                    val barcode = barcodes.first()
                                                     val rawValue = barcode.rawValue
                                                     Log.d(TAG, "Barcode value: $rawValue")
                                                     if (rawValue != null && rawValue.length == 6) {
                                                         Log.d(TAG, "Valid barcode found: $rawValue")
+                                                        // QR-Code erkannt, Scanner deaktivieren und Callback ausführen
+                                                        cameraProvider.unbindAll()
                                                         onScanned(rawValue.uppercase())
                                                     }
                                                 }
@@ -113,15 +115,13 @@ fun QRScanner(
             },
             modifier = Modifier.fillMaxSize()
         )
-
-        // Scanner overlay (optional)
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(32.dp),
             contentAlignment = Alignment.Center
         ) {
-            // QR Scanner frame could be shown here
+
         }
         
         // Close button
