@@ -1,5 +1,6 @@
 package se2.hanabi.app.gamePlayUI
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,6 +28,7 @@ import se2.hanabi.app.Services.WebSocketService
 
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
+const val maxGameBoardHeightProportion = 0.5f
 
 /**
  * GamePlayUI displays screen that will be active in gameplay.
@@ -34,6 +39,41 @@ val colors = listOf("red","green","yellow","blue","white")
  */
 @Composable
 fun GamePlayUI() {
+    val configuration = LocalConfiguration.current
+    var screeWidthDp = configuration.screenWidthDp.dp
+    var screenHeightDP = configuration.screenHeightDp.dp
+
+
+    val landscape = when (configuration.orientation) { Configuration.ORIENTATION_LANDSCAPE -> true else -> false }
+
+    var shrinkRatio = 1f
+    var defaultCardWidth = screeWidthDp.times(cardProportionOfWidth)
+    var cardWidth: Dp
+
+    if (landscape) {
+        val gameBoardVertPaddingElementsSum = boardElementPadding.times(4)
+        val availableVertSpace = screenHeightDP.times(maxGameBoardHeightProportion)-gameBoardVertPaddingElementsSum
+        val cardHeight = availableVertSpace.div(2)
+        cardWidth = cardHeight.div(aspectRatio)
+
+    } else { // portrait
+        cardWidth = screeWidthDp.times(cardProportionOfWidth)
+        val gameBoardVertPaddingElementsSum = cardSpacing.times(4) + boardElementPadding.times(2)
+        val gameBoardHeight = cardWidth.times(5) + gameBoardVertPaddingElementsSum
+        if (gameBoardHeight.div(screenHeightDP) > maxGameBoardHeightProportion) {
+            val availableVertSpace =
+                screenHeightDP.times(maxGameBoardHeightProportion) - gameBoardVertPaddingElementsSum
+            cardWidth = availableVertSpace.div(5)
+        }
+    }
+
+    shrinkRatio = cardWidth.div(defaultCardWidth)
+
+    val cardSizeDp = DpSize(
+        width = cardWidth,
+        height = cardWidth.times(aspectRatio)
+    )
+
     Box(modifier = Modifier
         .fillMaxSize()
         .background(
@@ -75,8 +115,8 @@ fun GamePlayUI() {
             }
         } else {
             // Show game board and player cards
-            GameBoardUI()
-            PlayersCardsUI()
+            GameBoardUI(cardSizeDp, shrinkRatio)
+            PlayersCardsUI(landscape, cardSizeDp)
             
             // Show game status overlay at the top
             Column(

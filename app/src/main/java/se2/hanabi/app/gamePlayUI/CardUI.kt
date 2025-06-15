@@ -23,13 +23,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import se2.hanabi.app.model.Card
 
 const val aspectRatio = 1.51f
-val cardWidth = 66.dp
-val cardHeight = cardWidth.times(aspectRatio)
+const val cardProportionOfWidth = 0.17f
 
 // Returns name of the corresponding card image, following the schema "color_number"
 fun getCardImageName(card: Card): String {
@@ -49,6 +49,7 @@ fun getCardImageName(card: Card): String {
 @Composable
 fun CardItem(
     modifier: Modifier = Modifier,
+    cardSizeDp: DpSize,
     card: Card,
     isFlipped: Boolean = false,
     isPortrait: Boolean = true,
@@ -60,8 +61,8 @@ fun CardItem(
     colorHint: Card.Color? = null,
     valueHint: Int? = null,
 ) {
-    var actualCardWidth = if (isPortrait) cardWidth else cardHeight
-    var actualCardHeight = if (isPortrait) cardHeight else cardWidth
+    var actualCardWidth = if (isPortrait) cardSizeDp.width else cardSizeDp.height
+    var actualCardHeight = if (isPortrait) cardSizeDp.height else cardSizeDp.width
 
     Box(
         modifier = modifier
@@ -92,11 +93,11 @@ fun CardItem(
         Image(
             modifier =
                 Modifier
-                    .requiredSize(cardWidth, cardHeight)
+                    .requiredSize(cardSizeDp.width, cardSizeDp.height)
                     .graphicsLayer {
-                        rotationZ = if (isPortrait) 0f else 90f
+                        rotationZ = if (isPortrait) 0f else -90f
                     }
-                    .offset(x = 0.dp, y = if (!isPortrait) (-(cardHeight - cardWidth)/2) else 0.dp),
+                    .offset(x = 0.dp, y = if (!isPortrait) ((cardSizeDp.height - cardSizeDp.width)/2) else 0.dp),
             painter = painterResource(id = imageID),
             contentDescription = "Front side: $imageName image",
             contentScale = ContentScale.Fit
