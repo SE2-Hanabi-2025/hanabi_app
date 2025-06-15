@@ -100,22 +100,7 @@ class StartMenue {
                 showStatusDialog = true
                 isLoading = false            }
         }
-        
-        fun startGame() {
-            coroutineScope.launch {
-                isLoading = true
-                try {
-                    val response: HttpResponse = client.get(ServerAddressManager.getStartGameUrl(lobbyCode))
-                    statusMessage = response.body()
-                    val intent = Intent(context, GameActivity::class.java)
-                    context.startActivity(intent)
-                } catch (e: Exception) {
-                    statusMessage = "Failed to start the game: ${e.localizedMessage}"
-                    showStatusDialog = true
-                }
-                isLoading = false
-            }
-        }
+
         fun joinLobby(code: String) {
             if (code.length != 6) {
                 statusMessage = "Invalid lobby code. Code must be 6 characters."
@@ -307,24 +292,6 @@ class StartMenue {
                         textAlign = TextAlign.Center,
                         fontSize = 20.sp
                     )
-                }
-
-
-                Button(
-                    onClick = { startGame() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.DarkGray,
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier
-                        .padding(top = 10.dp)
-                        .width(200.dp)
-                        .height(60.dp)
-                ) {
-                    Text(text = "Start game",
-                        textAlign = TextAlign.Center,
-                        fontSize = 20.sp)
                 }
             }
             Surface(
