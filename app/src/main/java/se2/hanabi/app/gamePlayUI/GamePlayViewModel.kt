@@ -128,6 +128,9 @@ class GamePlayViewModel(
     private val _draggedCardId = MutableStateFlow<Int?>(null)
     val draggedCardId: StateFlow<Int?> = _draggedCardId
 
+    private val _cheatHand = MutableStateFlow<List<Card>>(emptyList())
+    val cheatHand: StateFlow<List<Card>> = _cheatHand.asStateFlow()
+
     init {
         Log.d(TAG, "Initialisiere GamePlayViewModel - LobbyId: $lobbyId, PlayerId: $playerId")
 
@@ -242,6 +245,7 @@ class GamePlayViewModel(
         Log.v(TAG, "Aktueller Spieler: ${newStatus.currentPlayerId}, Ich bin dran: ${_isMyTurn.value}")
 
         _thisPlayersHand.value = newStatus.playerCardIds
+        _cheatHand.value = newStatus.ownHand ?: emptyList()
         Log.v(TAG, "Eigene Hand: ${newStatus.playerCardIds.size} Karten, IDs: ${newStatus.playerCardIds}")
 
         _otherPlayersHands.value = newStatus.visibleHands

@@ -43,30 +43,26 @@ import kotlin.math.roundToInt
 @Composable
 fun PlayersCardsUI(
     landscape: Boolean,
-    cardSizeDp: DpSize
+    cardSizeDp: DpSize,
+    isCheatMode: Boolean = false // pass this from parent or ViewModel if needed
 ) {
     val viewModel: GamePlayViewModel = viewModel()
+    val cheatHand = viewModel.cheatHand.collectAsState().value
+    val isTilted = isCheatMode // Replace with actual tilt/cheat state if available
     PlayersHand(
         cardSizeDp = cardSizeDp,
-        hand = viewModel.thisPlayersHand.collectAsState().value,
+        hand = if (isTilted && cheatHand.isNotEmpty()) cheatHand.map { it.getID() } else viewModel.thisPlayersHand.collectAsState().value,
         onCardClick = viewModel::onPlayersCardClick,
-        selectedCard = viewModel.selectedCardId.collectAsState().value
+        selectedCard = viewModel.selectedCardId.collectAsState().value,
+        showRealCards = isTilted && cheatHand.isNotEmpty(),
+        realCards = cheatHand
     )
     OtherPlayersHands(
         cardSizeDp = cardSizeDp,
         hands = viewModel.otherPlayersHands.collectAsState().value,
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
         selectedHandIndex = viewModel.selectedPlayerId.collectAsState().value,
-//        thisPlayerIndex = viewModel.thisPlayerId.collectAsState().value
     )
-    if (viewModel.selectedPlayerId.collectAsState().value != -1) {
-        HintSelector(
-            landscape = landscape,
-            cardSizeDp = cardSizeDp,
-            selectedHint = viewModel.selectedHint.collectAsState().value,
-            onHintClick = viewModel::onHintClick,
-        )
-    }
 }
 
 @Composable
@@ -74,7 +70,9 @@ fun PlayersHand(
     cardSizeDp: DpSize,
     hand: List<Int>,
     onCardClick: (Int) -> Unit,
-    selectedCard: Int?
+    selectedCard: Int?,
+    showRealCards: Boolean = false,
+    realCards: List<Card> = emptyList()
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     val playerId by viewModel.thisPlayer.collectAsState()
@@ -117,12 +115,13 @@ fun PlayersHand(
                 .padding(5.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            hand.forEach() { cardId ->
+            hand.forEachIndexed { idx, cardId ->
                 val offset = cardOffsets[cardId] ?: Offset.Zero
+                val card = if (showRealCards && idx < realCards.size) realCards[idx] else Card(color=Card.Color.RED, value=1, id = -1)
                 CardItem(
                     cardSizeDp = cardSizeDp,
-                    card = Card(color=Card.Color.RED, value=1, id = -1), // dummy card: red|1 id = -1
-                    isFlipped = true,
+                    card = card,
+                    isFlipped = !showRealCards,
                     isSelected = cardId == selectedCard,
                     onClick = { onCardClick(cardId) },
                     colorHint = viewModel.cardsShowingColorHints.collectAsState().value[cardId],
