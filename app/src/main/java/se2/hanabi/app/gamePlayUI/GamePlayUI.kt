@@ -39,11 +39,6 @@ import se2.hanabi.app.Services.WebSocketService
 import se2.hanabi.app.model.Player
 import se2.hanabi.app.R
 
-private const val cardProportionOfWidth = 0.15f
-private const val aspectRatio = 1.5f
-private val boardElementPadding = 8.dp
-private val cardSpacing = 4.dp
-
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
 const val maxGameBoardHeightProportion = 0.5f
@@ -133,6 +128,10 @@ fun GamePlayUI() {
                 }
             }
         } else {
+            // Show game board and player cards
+            GameBoardUI(cardSizeDp, shrinkRatio)
+            PlayersCardsUI(landscape, cardSizeDp)
+
             Column (modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally){
             // Show game status overlay at the top
@@ -171,15 +170,11 @@ fun GamePlayUI() {
                     )
                 }
             }
-
-            // Show game board and player cards
-
                 Spacer(modifier = Modifier.height(12.dp))
 
                 InGamePlayerList(players = players)
             }
-            GameBoardUI()
-            PlayersCardsUI()
+
 
 
             // Action buttons at the bottom
