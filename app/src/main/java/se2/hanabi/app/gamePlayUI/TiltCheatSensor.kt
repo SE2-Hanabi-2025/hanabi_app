@@ -16,6 +16,9 @@ class TiltCheatSensor(context: Context) : SensorEventListener {
     private val accelerometer: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     val isTilted: MutableState<Boolean> = mutableStateOf(false)
 
+    // Set this to true for emulator testing, false for real device
+    private val isEmulator = true // Change to false for real device
+
     fun start() {
         accelerometer?.let {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
@@ -26,16 +29,23 @@ class TiltCheatSensor(context: Context) : SensorEventListener {
         sensorManager.unregisterListener(this)
     }
 
-    override fun onSensorChanged(event: SensorEvent?) {
-        event?.let {
-            val x = it.values[0]
-            val z = it.values[2]
-            // Calculate pitch (sideways tilt) in degrees
-            val pitch = Math.toDegrees(Math.atan2(-x.toDouble(), z.toDouble())).toFloat()
-            // Cheat active if pitch exceeds 40 degrees (either direction)
-            isTilted.value = kotlin.math.abs(pitch) > 40f
+override fun onSensorChanged(event: SensorEvent?) {
+    event?.let {
+        val x = it.values[0]
+        val z = it.values[2]
+        val pitch = Math.toDegrees(Math.atan2(-x.toDouble(), z.toDouble())).toFloat()
+
+        android.util.Log.d("TiltCheatSensor", "Pitch: $pitch")
+
+        if (isEmulator) {
+            // Trigger only when face down, not on both tilt directions
+            isTilted.value = pitch > 40f
+        } else {
+            // For real device, allow strong tilt in either direction
+            isTilted.value = kotlin.math.abs(pitch) > 70f
         }
     }
+}
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 }
