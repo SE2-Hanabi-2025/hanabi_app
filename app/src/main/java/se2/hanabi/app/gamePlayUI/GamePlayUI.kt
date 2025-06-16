@@ -15,7 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -27,6 +29,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 import se2.hanabi.app.Services.WebSocketService
 
 // eventually to be linked to Color Enum in backend
@@ -121,9 +124,21 @@ fun GamePlayUI() {
             GameBoardUI(cardSizeDp, shrinkRatio)
             val context = LocalContext.current
             val tiltSensor = remember { TiltCheatSensor(context) }
-            val isTilted = tiltSensor.isTilted.value
+            val isTilted by tiltSensor.isTilted
+            val cheatActive = remember { mutableStateOf(false) }
+            val latestIsTilted = rememberUpdatedState(isTilted)
+            LaunchedEffect(isTilted) {
+                if (isTilted) {
+                    cheatActive.value = true
+                    delay(3000)
+                    // Only hide if still tilted after 3s
+                    if (latestIsTilted.value) cheatActive.value = false
+                } else {
+                    cheatActive.value = false
+                }
+            }
             LaunchedEffect(Unit) { tiltSensor.start() }
-            PlayersCardsUI(landscape, cardSizeDp, isCheatMode = isTilted)
+            PlayersCardsUI(landscape, cardSizeDp, isCheatMode = cheatActive.value)
             
             // Show game status overlay at the top
             Column(
