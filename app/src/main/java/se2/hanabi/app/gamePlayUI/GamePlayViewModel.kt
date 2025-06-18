@@ -582,4 +582,27 @@ class GamePlayViewModel(
             }
         }
     }
+
+    fun onDiscardCardDrop(cardId: Int?) {
+        if (cardId == null) return
+        if (!_isMyTurn.value) {
+            _statusMessage.value = "Du bist nicht an der Reihe"
+            return
+        }
+        if (_numRemainingHintTokens.value >= 8) {
+            _statusMessage.value = "Du kannst keine Karte abwerfen, wenn alle Hint-Token verfügbar sind"
+            return
+        }
+        viewModelScope.launch {
+            val cardIndex = _thisPlayersHand.value.indexOf(cardId)
+            if (cardIndex >= 0) {
+                _statusMessage.value = "Werfe Karte ab..."
+                Log.d(TAG, "Werfe Karte an Index $cardIndex ab (Drag-and-drop)")
+                webSocketService.discardCard(lobbyId, playerId, cardIndex)
+            } else {
+                _statusMessage.value = "Fehler: Karte nicht gefunden"
+                Log.e(TAG, "Karte $cardId nicht in der Hand gefunden")
+            }
+        }
+    }
 }

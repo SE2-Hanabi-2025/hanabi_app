@@ -219,9 +219,24 @@ fun DiscardedCardsStack(
     lastDiscardedCard: Card?,
     onClick: () -> Unit
 ) {
+    val viewModel: GamePlayViewModel = viewModel()
+    val draggedCardId by viewModel.draggedCardId.collectAsState()
+    val stackModifier = Modifier.pointerInput(draggedCardId) {
+        detectDragGestures(
+            onDragStart = {},
+            onDragEnd = {
+                if (draggedCardId != null) {
+                    viewModel.onDiscardCardDrop(draggedCardId)
+                }
+            },
+            onDragCancel = {},
+            onDrag = { _, _ -> }
+        )
+    }
     if (lastDiscardedCard == null) {
         EmptyStack(
-            cardSizeDp = cardSizeDp
+            cardSizeDp = cardSizeDp,
+            modifier = stackModifier
         )
     } else {
         CardItem(
@@ -229,7 +244,8 @@ fun DiscardedCardsStack(
             card = Card(lastDiscardedCard.color,lastDiscardedCard.value),
             isFlipped = false,
             isPortrait = false,
-            onClick = onClick
+            onClick = onClick,
+            modifier = stackModifier
         )
     }
 }
