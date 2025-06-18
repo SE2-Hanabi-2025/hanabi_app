@@ -63,6 +63,14 @@ fun PlayersCardsUI(
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
         selectedHandIndex = viewModel.selectedPlayerId.collectAsState().value,
     )
+
+    // Restore HintSelector when a player is selected
+    if (viewModel.selectedPlayerId.collectAsState().value != -1) {
+        HintSelector(
+            selectedHint = viewModel.selectedHint.collectAsState().value,
+            onHintClick = viewModel::onHintClick,
+        )
+    }
 }
 
 @Composable
