@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import se2.hanabi.app.Services.WebSocketService
 
@@ -44,7 +43,7 @@ const val maxGameBoardHeightProportion = 0.5f
  *
  */
 @Composable
-fun GamePlayUI() {
+fun GamePlayUI(viewModel: GamePlayViewModel) {
     val configuration = LocalConfiguration.current
     var screeWidthDp = configuration.screenWidthDp.dp
     var screenHeightDP = configuration.screenHeightDp.dp
@@ -89,7 +88,6 @@ fun GamePlayUI() {
         ),
         contentAlignment = Alignment.Center
     ) {
-        val viewModel: GamePlayViewModel = viewModel()
 
         val players by viewModel.players.collectAsState()
         val statusMessage by viewModel.statusMessage.collectAsState()

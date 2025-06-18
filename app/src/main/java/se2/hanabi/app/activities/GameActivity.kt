@@ -25,7 +25,7 @@ class GameActivity : ComponentActivity() {
                 factory = GamePlayViewModelFactory(lobbyId, playerId)
             )
 
-            GamePlayUI()
+            GamePlayUI(viewModel)
             if (viewModel.gameOver.collectAsState().value) {
                 EndScreen( onBackToMenu = {
                     //Navigate back to MainActiviy and clear the back stack
