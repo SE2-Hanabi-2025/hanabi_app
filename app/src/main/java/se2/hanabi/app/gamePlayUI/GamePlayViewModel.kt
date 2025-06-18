@@ -15,6 +15,8 @@ import se2.hanabi.app.Services.WebSocketService
 import se2.hanabi.app.model.Card
 import se2.hanabi.app.model.Hint
 import se2.hanabi.app.model.websocket.ResultType
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 
 /**
  * GamePlayViewModel displays a gameStatus object.
@@ -138,6 +140,12 @@ class GamePlayViewModel(
     private var lastCheatRound: Int? = null
 
     private var cheatSentThisTurn = false
+
+    // Drag-and-drop pointer and drop zone state
+    private val _pointerPosition = MutableStateFlow<Offset?>(null)
+    val pointerPosition: StateFlow<Offset?> = _pointerPosition
+    private val colorStackBounds = mutableMapOf<Card.Color, Rect>()
+    private var discardZoneBounds: Rect? = null
 
     init {
         Log.d(TAG, "GamePlayViewModel initialized for player $playerId, lobby $lobbyId")
@@ -603,6 +611,34 @@ class GamePlayViewModel(
                 _statusMessage.value = "Fehler: Karte nicht gefunden"
                 Log.e(TAG, "Karte $cardId nicht in der Hand gefunden")
             }
+        }
+    }
+
+    // Drag-and-drop pointer and drop zone bounds
+    fun updatePointerPosition(position: Offset) {
+        _pointerPosition.value = position
+    }
+    fun updateColorStackBounds(color: Card.Color, bounds: Rect) {
+        colorStackBounds[color] = bounds
+    }
+    fun updateDiscardZoneBounds(bounds: Rect) {
+        discardZoneBounds = bounds
+    }
+
+    // Override drag-and-drop drop logic for color stacks
+    fun tryDropOnColorStack(cardId: Int?, color: Card.Color) {
+        val pointer = _pointerPosition.value ?: return
+        val bounds = colorStackBounds[color] ?: return
+        if (bounds.contains(pointer)) {
+            onPlayCardDrop(cardId, color)
+        }
+    }
+    // Override drag-and-drop drop logic for discard
+    fun tryDropOnDiscard(cardId: Int?) {
+        val pointer = _pointerPosition.value ?: return
+        val bounds = discardZoneBounds ?: return
+        if (bounds.contains(pointer)) {
+            onDiscardCardDrop(cardId)
         }
     }
 }

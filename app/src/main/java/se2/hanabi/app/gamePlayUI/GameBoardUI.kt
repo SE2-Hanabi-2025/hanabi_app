@@ -230,7 +230,7 @@ fun DiscardedCardsStack(
                 onDragStart = {},
                 onDragEnd = {
                     if (draggedCardId != null) {
-                        viewModel.onDiscardCardDrop(draggedCardId)
+                        viewModel.tryDropOnDiscard(draggedCardId)
                     }
                 },
                 onDragCancel = {},
@@ -299,7 +299,7 @@ fun ColorStacks(
                         onDragStart = {},
                         onDragEnd = {
                             if (draggedCardId != null) {
-                                viewModel.onPlayCardDrop(draggedCardId, color)
+                                viewModel.tryDropOnColorStack(draggedCardId, color)
                             }
                         },
                         onDragCancel = {},
