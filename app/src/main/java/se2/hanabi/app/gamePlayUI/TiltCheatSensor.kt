@@ -29,23 +29,28 @@ class TiltCheatSensor(context: Context) : SensorEventListener {
         sensorManager.unregisterListener(this)
     }
 
-override fun onSensorChanged(event: SensorEvent?) {
-    event?.let {
-        val x = it.values[0]
-        val z = it.values[2]
-        val pitch = Math.toDegrees(Math.atan2(-x.toDouble(), z.toDouble())).toFloat()
+    override fun onSensorChanged(event: SensorEvent?) {
+        event?.let {
+            val x = it.values[0]
+            val z = it.values[2]
+            val pitch = Math.toDegrees(Math.atan2(-x.toDouble(), z.toDouble())).toFloat()
 
-        android.util.Log.d("TiltCheatSensor", "Pitch: $pitch")
+            android.util.Log.d("TiltCheatSensor", "Pitch: $pitch | X: $x | Z: $z")
 
-        if (isEmulator) {
-            // Trigger only when face down, not on both tilt directions
-            isTilted.value = pitch > 40f
-        } else {
-            // For real device, allow strong tilt in either direction
-            isTilted.value = kotlin.math.abs(pitch) > 70f
+            if (isEmulator) {
+                // Only trigger if clearly face-down
+                val isFaceDown = z < -6f // z close to -9.8 when face down
+                val isPitchedEnough = pitch > 40f
+
+                isTilted.value = isFaceDown && isPitchedEnough
+            } else {
+                // Only trigger if clearly face-down and pitched more than 50 degrees
+                val isFaceDown = z < -6f
+                val isPitchedEnough = pitch > 50f
+                isTilted.value = isFaceDown && isPitchedEnough
+            }
         }
     }
-}
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 }
