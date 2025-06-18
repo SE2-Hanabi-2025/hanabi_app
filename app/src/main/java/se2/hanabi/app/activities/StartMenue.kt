@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -74,8 +75,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import se2.hanabi.app.Handler.CameraPermissionHandler
 import se2.hanabi.app.components.QRScanner
-
-
+import dev.jeziellago.compose.markdowntext.MarkdownText
 
 
 class StartMenue {
@@ -627,16 +627,6 @@ fun Title(modifier: Modifier = Modifier) {
     )
 }
 
-@Composable
-fun loadRawResourceAsString(@RawRes resId: Int): String {
-    val context = LocalContext.current
-    val inputStream = remember { context.resources.openRawResource(resId) }
-    return remember {
-        inputStream.bufferedReader().use { it.readText() }
-    }
-}
-
-
 fun loadMarkdownFromRaw(@RawRes resId: Int, context: Context): String {
     return context.resources.openRawResource(resId)
         .bufferedReader()
@@ -661,8 +651,9 @@ fun FullScreenRulesDialog(onDismiss: () -> Unit) {
         else -> extrasRulesText
     }
 
-    val lightGray = Color(0xFFBB86FC)
-    val darkGray = Color(0xFF6200EE)
+    val selectedTabColor = colorResource(id = R.color.selected_tab_color)
+    val indicatorColor = colorResource(id=R.color.indicator_violet)
+    val backgroundColor = colorResource(id = R.color.light_background)
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -702,42 +693,55 @@ fun FullScreenRulesDialog(onDismiss: () -> Unit) {
                         containerColor = Color.Transparent,
                         indicator = {},
                     ) {
-                        listOf("Standard Rules", "Extras").forEachIndexed { index, title ->
+                        listOf("Standard", "Extras").forEachIndexed { index, title ->
                             val isSelected = selectedTabIndex == index
-                            Tab(
-                                selected = isSelected,
-                                onClick = { selectedTabIndex = index },
+                            Column(
                                 modifier = Modifier
-                                    .background(if (isSelected) darkGray else lightGray, RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                                text = {
-                                    Text(
-                                        title,
-                                        color = if (isSelected) Color.Black else Color.DarkGray,
+                                    .weight(1f)
+                                    .clickable { selectedTabIndex = index }
+                                    .background(if (isSelected) selectedTabColor else Color.Transparent)
+                                    .padding(vertical = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    title,
+                                    color = if (isSelected) Color.Black else Color.DarkGray
+                                )
+                                if (isSelected) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .height(3.dp)
+                                            .width(40.dp)
+                                            .background(indicatorColor, RoundedCornerShape(2.dp))
                                     )
-                                },
-                                selectedContentColor = Color.Black,
-                                unselectedContentColor = Color.DarkGray
-                            )
+                                } else {
+                                    Spacer(modifier = Modifier.height(7.dp)) // Match height with selected
+                                }
+                            }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .verticalScroll(rememberScrollState())
-                            .background(Color(0xFFF0F0F0), shape = RoundedCornerShape(12.dp))
+                            .fillMaxWidth()
+                            .background(backgroundColor, shape = RoundedCornerShape(12.dp))
                             .padding(16.dp)
                     ) {
                         if (currentMarkdown.isNotEmpty()) {
-                            Text(
-                                text = currentMarkdown,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.Black
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                            ) {
+                                MarkdownText(
+                                    markdown = currentMarkdown,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                         } else {
                             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                         }
@@ -745,19 +749,19 @@ fun FullScreenRulesDialog(onDismiss: () -> Unit) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
-                        Button(onClick = onDismiss) {
-                            Text("Close")
-                        }
+                        Text("Close")
                     }
                 }
             }
         }
     }
 }
+
+
 
 
 
