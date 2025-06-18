@@ -134,7 +134,13 @@ class GamePlayViewModel(
 
     private var cheatSent = false
 
+    // Track the last round a cheat was sent
+    private var lastCheatRound: Int? = null
+
+    private var cheatSentThisTurn = false
+
     init {
+        Log.d(TAG, "GamePlayViewModel initialized for player $playerId, lobby $lobbyId")
         Log.d(TAG, "Initialisiere GamePlayViewModel - LobbyId: $lobbyId, PlayerId: $playerId")
 
         // Set up WebSocket listeners
@@ -243,6 +249,9 @@ class GamePlayViewModel(
         _players.value = newStatus.players
         Log.v(TAG, "Spieler: ${newStatus.players.joinToString { it.name }}")
 
+        if (_currentPlayer.value != newStatus.currentPlayerId) {
+            cheatSentThisTurn = false
+        }
         _currentPlayer.value = newStatus.currentPlayerId
         _isMyTurn.value = newStatus.currentPlayerId == playerId
         Log.v(TAG, "Aktueller Spieler: ${newStatus.currentPlayerId}, Ich bin dran: ${_isMyTurn.value}")
@@ -563,17 +572,14 @@ class GamePlayViewModel(
 
     fun observeTiltCheat(isTilted: StateFlow<Boolean>) {
         viewModelScope.launch {
-            isTilted
-                .debounce(200) // Only react if 200ms have passed since the last event
-                .collect { tilted ->
-                    if (tilted && !cheatSent) {
-                        webSocketService.sendCheatAction(lobbyId, playerId)
-                        cheatSent = true
-                    }
-                    if (!tilted) {
-                        cheatSent = false
-                    }
+            var lastTilted = false
+            isTilted.collect { tilted ->
+                if (tilted && !lastTilted && !cheatSentThisTurn && _isMyTurn.value) {
+                    webSocketService.sendCheatAction(lobbyId, playerId)
+                    cheatSentThisTurn = true
                 }
+                lastTilted = tilted
+            }
         }
     }
 }
