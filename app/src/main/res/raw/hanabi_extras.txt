@@ -1,6 +1,24 @@
-Bonusplättchen
-• Legt die 6 Bonusplättchen beim Spielaufbau verdeckt in
-die Mitte und mischt sie.
-• Immer wenn du eine Feuerwerksreihe vervollständigst, ziehst
-du ein Bonusplättchen, statt ein Hinweisplättchen zurückzugewinnen. Wende den Effekt sofort an. Dann legst du das
-Plättchen ab und ziehst wie gewohnt 1 neue Handkarte.
+## Bonus Tiles (Optional Rule)
+You can add an extra layer of excitement and variability to the game by including **Bonus Tiles**.
+Here's how to use them:
+
+### Setup
+- Take the **6 Bonus Tiles** and shuffle them **face-down**.
+- Place them **in the center of the table**, forming a stack.
+
+### How to Use Bonus Tiles
+- Whenever you **complete a firework stack** (i.e., play a **5** on top of a color pile), **do not regain a clue token** as in the base game.
+- Instead, **draw one Bonus Tile** from the stack.
+- **Immediately apply its effect**, then **discard the tile**.
+- Afterwards, **draw a new hand card** as usual to refill your hand.
+
+### Possible Bonus Tile Effects
+Here are some example effects your Bonus Tiles might include (depending on your version or house rules):
+
+1. **Regain 1 clue token.**
+2. **Regain 2 clue tokens.**
+3. **Discard any one card from your hand, then draw two new cards.**
+4. **Look at your own hand (once).**
+5. **Give a second clue this turn without using another clue token.**
+6. **Prevent the next fuse loss.**
+

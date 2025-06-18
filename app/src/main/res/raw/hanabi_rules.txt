@@ -1,10 +1,77 @@
-Hanabi – Rules
+## Objective
+- **Hanabi** is a cooperative card game where players work together to create five color-coded stacks of cards in ascending order (1 to 5).
+- The twist: **you cannot see your own cards**—only your teammates' cards are visible to you.
 
-• Each player holds their cards facing outwards. You can see everyone’s cards except your own.
-• The goal is to create stacks of cards in each color, in order from 1 to 5.
-• You take turns giving clues, playing cards, or discarding them.
-• Clues cost clue tokens. You can only give information about color or number.
-• Wrong plays cost a life. Lose 3 lives and the game ends.
-• Complete all stacks to win the game.
+## Card Deck
+- The deck contains cards in **5 colors**: Red, Green, Blue, Yellow, and White (sometimes also Rainbow in variants).
+- Each color has cards numbered **1 to 5**.
+- The quantity of each number in a color:
+  - **Three 1s**
+  - **Two 2s, 3s, and 4s**
+  - **One 5**
 
-Have fun playing Hanabi!
+## Setup
+- Shuffle all cards and deal:
+  - **4 cards per player** (for 3–5 players)
+  - **5 cards per player** (for 2 players)
+- Place in the center:
+  - **8 clue tokens** (blue)
+  - **3 fuse tokens** (red) for mistakes
+  - A **discard pile**
+  - Space for **5 color stacks**
+
+## Gameplay Overview
+Players take turns in **clockwise order**. On your turn, you must perform one of three actions:
+
+### 1. Give a Clue
+- Spend **1 clue token** to tell another player something about their hand.
+- You may only indicate **cards of one color** _or_ **cards of one number**.
+- You must point out **all** cards matching the clue.
+- You **cannot** say both color and number at once or suggest what to do with the card.
+
+**Example**: “These two cards are red.” (You point to them.)
+
+### 2. Play a Card
+- Attempt to play one of your cards onto the corresponding color stack.
+- You **cannot see your own card** but must choose based on clues or intuition.
+
+**If successful**:
+- Add the card to the stack.
+- If a **5** is played, **regain 1 clue token** (unless already full).
+
+**If invalid**:
+- Discard the card.
+- **Lose 1 fuse token**.
+
+### 3. Discard a Card
+- Discard one card from your hand.
+- **Regain 1 clue token** (unless already full).
+- The card is placed in the **discard pile** (visible to all).
+- Draw a new card afterward.
+
+## Important Rules
+- You may **not** communicate about your own hand outside of given clues.
+- You may **not** give hints through **tone, gestures, or timing**—only through clues.
+- Players must **immediately draw** a new card after discarding or playing (if cards remain).
+
+## Winning and Losing
+
+The game ends immediately when:
+- **All 3 fuse tokens are used** → You lose.
+- **The last card is drawn** → Each player gets **one final turn**.
+- **All five color stacks reach 5** → Perfect game! You win!
+
+## Scoring (optional for casual play)
+- If the game ends before completion, your score is the **sum of the top cards** in each color stack.
+- **Maximum score: 25**.
+- Use this score to measure your teamwork and communication efficiency.
+
+## Strategy Tips
+- Give **meaningful clues** that help teammates make informed decisions.
+- Manage **clue tokens** carefully.
+- Discard only when you’re reasonably sure a card isn’t important.
+- Track which cards have been **played** or **discarded** to improve coordination.
+
+---
+
+**Have fun playing Hanabi – and remember: it’s all about trust, memory, and clever communication!**
