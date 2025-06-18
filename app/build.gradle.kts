@@ -154,4 +154,7 @@ dependencies {
 
     implementation(libs.guava)
     implementation(libs.core)
+
+    implementation("com.github.jeziellago:compose-markdown:b7736f36f1e1fa07701320d0177b5413ddc89584")
+
 }
