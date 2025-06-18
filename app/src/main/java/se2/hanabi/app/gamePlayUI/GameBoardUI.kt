@@ -23,10 +23,8 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -221,18 +219,24 @@ fun DiscardedCardsStack(
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     val draggedCardId by viewModel.draggedCardId.collectAsState()
-    val stackModifier = Modifier.pointerInput(draggedCardId) {
-        detectDragGestures(
-            onDragStart = {},
-            onDragEnd = {
-                if (draggedCardId != null) {
-                    viewModel.onDiscardCardDrop(draggedCardId)
-                }
-            },
-            onDragCancel = {},
-            onDrag = { _, _ -> }
-        )
-    }
+    val stackModifier = Modifier
+        .onGloballyPositioned { coordinates ->
+            val position = coordinates.localToWindow(Offset.Zero)
+            val size = coordinates.size.toSize()
+            viewModel.updateDiscardZoneBounds(Rect(position, size))
+        }
+        .pointerInput(draggedCardId) {
+            detectDragGestures(
+                onDragStart = {},
+                onDragEnd = {
+                    if (draggedCardId != null) {
+                        viewModel.onDiscardCardDrop(draggedCardId)
+                    }
+                },
+                onDragCancel = {},
+                onDrag = { _, _ -> }
+            )
+        }
     if (lastDiscardedCard == null) {
         EmptyStack(
             cardSizeDp = cardSizeDp,
@@ -285,11 +289,15 @@ fun ColorStacks(
     ) {
         Card.Color.entries.forEach() { color ->
             val stackModifier = Modifier
+                .onGloballyPositioned { coordinates ->
+                    val position = coordinates.localToWindow(Offset.Zero)
+                    val size = coordinates.size.toSize()
+                    viewModel.updateColorStackBounds(color, Rect(position, size))
+                }
                 .pointerInput(draggedCardId) {
                     detectDragGestures(
                         onDragStart = {},
                         onDragEnd = {
-                            // If a card is being dragged, treat this as a drop
                             if (draggedCardId != null) {
                                 viewModel.onPlayCardDrop(draggedCardId, color)
                             }
