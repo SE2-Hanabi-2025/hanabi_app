@@ -131,6 +131,8 @@ class GamePlayViewModel(
     private val _cheatHand = MutableStateFlow<List<Card>>(emptyList())
     val cheatHand: StateFlow<List<Card>> = _cheatHand.asStateFlow()
 
+    private var cheatSent = false
+
     init {
         Log.d(TAG, "Initialisiere GamePlayViewModel - LobbyId: $lobbyId, PlayerId: $playerId")
 
@@ -555,6 +557,20 @@ class GamePlayViewModel(
             _statusMessage.value = "Falsche Karte! Strike erhalten."
             Log.d(TAG, "Falsche Karte an Index $cardIndex (Drag-and-drop), Strike und Ablage")
             webSocketService.discardCard(lobbyId, playerId, cardIndex)
+        }
+    }
+
+    fun observeTiltCheat(isTilted: StateFlow<Boolean>) {
+        viewModelScope.launch {
+            isTilted.collect { tilted ->
+                if (tilted && !cheatSent) {
+                    webSocketService.sendCheatAction(lobbyId, playerId)
+                    cheatSent = true
+                }
+                if (!tilted) {
+                    cheatSent = false
+                }
+            }
         }
     }
 }
