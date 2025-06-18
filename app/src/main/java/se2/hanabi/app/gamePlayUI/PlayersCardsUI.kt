@@ -67,6 +67,8 @@ fun PlayersCardsUI(
     // Restore HintSelector when a player is selected
     if (viewModel.selectedPlayerId.collectAsState().value != -1) {
         HintSelector(
+            landscape = landscape,
+            cardSizeDp = cardSizeDp,
             selectedHint = viewModel.selectedHint.collectAsState().value,
             onHintClick = viewModel::onHintClick,
         )
