@@ -13,6 +13,7 @@ import kotlinx.serialization.json.Json
 import se2.hanabi.app.model.GameStatus
 import se2.hanabi.app.model.Hint
 import se2.hanabi.app.model.HintType
+import se2.hanabi.app.utils.ServerAddressManager
 
 /**
  * Vereinfachte Version des GamePlayService, die nur den initialen Spielstatus lädt
@@ -25,8 +26,7 @@ class GamePlayService(
     companion object {
         private const val TAG = "HanabiGamePlayService"
     }
-
-    private val baseURL = "http://10.0.2.2:8080/api/game"
+    private val baseURL = ServerAddressManager.GAME_API_URL
     private val client = HttpClient(CIO)
     private val jsonParser = Json {
         ignoreUnknownKeys = true
