@@ -34,20 +34,10 @@ class TiltCheatSensor(context: Context) : SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
-            val x = it.values[0]
             val z = it.values[2]
-            val pitch = Math.toDegrees(Math.atan2(-x.toDouble(), z.toDouble())).toFloat()
-
             val wasTilted = isTilted.value
-            if (isEmulator) {
-                val isFaceDown = z < -6f
-                val isPitchedEnough = pitch > 40f
-                isTilted.value = isFaceDown && isPitchedEnough
-            } else {
-                val isFaceDown = z < -6f
-                val isPitchedEnough = pitch > 50f
-                isTilted.value = isFaceDown && isPitchedEnough
-            }
+            val isFaceDown = z < -6f
+            isTilted.value = isFaceDown
             if (!wasTilted && isTilted.value) {
                 android.util.Log.d("TiltCheatSensor", "Tilt detected! (isEmulator=$isEmulator)")
             }
