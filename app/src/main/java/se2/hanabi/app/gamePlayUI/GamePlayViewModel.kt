@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import se2.hanabi.app.model.GameStatus
 import se2.hanabi.app.model.Player
@@ -562,15 +563,17 @@ class GamePlayViewModel(
 
     fun observeTiltCheat(isTilted: StateFlow<Boolean>) {
         viewModelScope.launch {
-            isTilted.collect { tilted ->
-                if (tilted && !cheatSent) {
-                    webSocketService.sendCheatAction(lobbyId, playerId)
-                    cheatSent = true
+            isTilted
+                .debounce(200) // Only react if 200ms have passed since the last event
+                .collect { tilted ->
+                    if (tilted && !cheatSent) {
+                        webSocketService.sendCheatAction(lobbyId, playerId)
+                        cheatSent = true
+                    }
+                    if (!tilted) {
+                        cheatSent = false
+                    }
                 }
-                if (!tilted) {
-                    cheatSent = false
-                }
-            }
         }
     }
 }
