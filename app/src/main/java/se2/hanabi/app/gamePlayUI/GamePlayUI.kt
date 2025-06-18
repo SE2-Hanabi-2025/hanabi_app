@@ -128,8 +128,12 @@ fun GamePlayUI() {
             val cheatActive = remember { mutableStateOf(false) }
             val latestIsTilted = rememberUpdatedState(isTilted)
             // Observe tilt cheat and send cheat action
+            val isTiltedFlow = kotlinx.coroutines.flow.MutableStateFlow(isTilted)
+            LaunchedEffect(isTilted) {
+                isTiltedFlow.value = isTilted
+            }
             LaunchedEffect(Unit) {
-                viewModel.observeTiltCheat(tiltSensor.isTilted)
+                viewModel.observeTiltCheat(isTiltedFlow)
             }
             LaunchedEffect(isTilted) {
                 if (isTilted) {
