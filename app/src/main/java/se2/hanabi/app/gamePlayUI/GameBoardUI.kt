@@ -264,7 +264,6 @@ fun ColorStacks(
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     val draggedCardId by viewModel.draggedCardId.collectAsState()
-    // NOTE: highlightedColor logic removed since onDragEnter/onDragExit are not supported in detectDragGestures
     Column(
         verticalArrangement = Arrangement.spacedBy(cardSpacing),
     ) {
@@ -273,11 +272,14 @@ fun ColorStacks(
                 .pointerInput(draggedCardId) {
                     detectDragGestures(
                         onDragStart = {},
-                        onDragEnd = {},
+                        onDragEnd = {
+                            // If a card is being dragged, treat this as a drop
+                            if (draggedCardId != null) {
+                                viewModel.onPlayCardDrop(draggedCardId, color)
+                            }
+                        },
                         onDragCancel = {},
                         onDrag = { _, _ -> }
-                        // onDragEnter, onDragExit, onDrop are NOT supported in detectDragGestures
-                        // If you want drag-over highlighting and drop, use the experimental drag-and-drop API
                     )
                 }
             if (stackValues[color]==0) {
@@ -286,7 +288,7 @@ fun ColorStacks(
                     isPortrait = false,
                     onClick = { onColorStackClick(color) },
                     color = color,
-                    modifier = stackModifier // .background(...) removed since highlight logic is gone
+                    modifier = stackModifier
                 )
             } else {
                 CardItem(
@@ -295,7 +297,7 @@ fun ColorStacks(
                     isPortrait = false,
                     highlightColor = colorFromColorEnum(color),
                     onClick = { onColorStackClick(color) },
-                    modifier = stackModifier // .background(...) removed
+                    modifier = stackModifier
                 )
             }
         }
