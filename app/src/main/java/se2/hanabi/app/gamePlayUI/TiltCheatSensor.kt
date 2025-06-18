@@ -16,8 +16,11 @@ class TiltCheatSensor(context: Context) : SensorEventListener {
     private val accelerometer: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     val isTilted: MutableState<Boolean> = mutableStateOf(false)
 
-    // Set this to true for emulator testing, false for real device
-    private val isEmulator = true // Change to false for real device
+    // Automatically detect if running on emulator or device
+    private val isEmulator: Boolean =
+        android.os.Build.FINGERPRINT.contains("generic") ||
+        android.os.Build.MODEL.contains("Emulator") ||
+        android.os.Build.MODEL.contains("Android SDK built for x86")
 
     fun start() {
         accelerometer?.let {
@@ -35,19 +38,18 @@ class TiltCheatSensor(context: Context) : SensorEventListener {
             val z = it.values[2]
             val pitch = Math.toDegrees(Math.atan2(-x.toDouble(), z.toDouble())).toFloat()
 
-            android.util.Log.d("TiltCheatSensor", "Pitch: $pitch | X: $x | Z: $z")
-
+            val wasTilted = isTilted.value
             if (isEmulator) {
-                // Only trigger if clearly face-down
-                val isFaceDown = z < -6f // z close to -9.8 when face down
+                val isFaceDown = z < -6f
                 val isPitchedEnough = pitch > 40f
-
                 isTilted.value = isFaceDown && isPitchedEnough
             } else {
-                // Only trigger if clearly face-down and pitched more than 50 degrees
                 val isFaceDown = z < -6f
                 val isPitchedEnough = pitch > 50f
                 isTilted.value = isFaceDown && isPitchedEnough
+            }
+            if (!wasTilted && isTilted.value) {
+                android.util.Log.d("TiltCheatSensor", "Tilt detected! (isEmulator=$isEmulator)")
             }
         }
     }

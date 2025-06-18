@@ -181,6 +181,7 @@ class WebSocketService(
      * @param playerId The ID of the player
      */
     suspend fun sendCheatAction(lobbyId: String, playerId: Int) {
+        Log.d(TAG, "sendCheatAction called with lobbyId=$lobbyId, playerId=$playerId")
         val action = CheatAction(
             lobbyId = lobbyId,
             playerId = playerId
