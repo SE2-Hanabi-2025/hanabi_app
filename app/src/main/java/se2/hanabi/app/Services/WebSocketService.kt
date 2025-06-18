@@ -175,6 +175,20 @@ class WebSocketService(
     }
     
     /**
+     * Send a cheat action
+     *
+     * @param lobbyId The ID of the game lobby
+     * @param playerId The ID of the player
+     */
+    suspend fun sendCheatAction(lobbyId: String, playerId: Int) {
+        val action = CheatAction(
+            lobbyId = lobbyId,
+            playerId = playerId
+        )
+        sendAction(action)
+    }
+
+    /**
      * Send an action to the server
      *
      * @param action The action to send
