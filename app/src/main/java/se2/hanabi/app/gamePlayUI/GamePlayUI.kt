@@ -127,6 +127,10 @@ fun GamePlayUI() {
             val isTilted by tiltSensor.isTilted
             val cheatActive = remember { mutableStateOf(false) }
             val latestIsTilted = rememberUpdatedState(isTilted)
+            // Observe tilt cheat and send cheat action
+            LaunchedEffect(Unit) {
+                viewModel.observeTiltCheat(tiltSensor.isTilted)
+            }
             LaunchedEffect(isTilted) {
                 if (isTilted) {
                     cheatActive.value = true
