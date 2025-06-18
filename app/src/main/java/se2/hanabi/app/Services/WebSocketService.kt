@@ -210,6 +210,9 @@ class WebSocketService(
                 is GiveHintAction -> {
                     Log.d(TAG, "Preparing HINT action: lobbyId=${action.lobbyId}, playerId=${action.playerId}, toPlayerId=${action.toPlayerId}, hintType=${action.hintType}, hintValue=${action.hintValue}")
                 }
+                is CheatAction -> {
+                    Log.d(TAG, "Preparing CHEAT action: lobbyId=${action.lobbyId}, playerId=${action.playerId}")
+                }
             }
             
             val message = when (action) {
@@ -239,6 +242,14 @@ class WebSocketService(
                         "toPlayerId": ${action.toPlayerId},
                         "hintType": "${action.hintType}",
                         "hintValue": "${action.hintValue}"
+                    }
+                """.trimIndent()
+                
+                is CheatAction -> """
+                    {
+                        "action": "${action.action}",
+                        "lobbyId": "${action.lobbyId}",
+                        "playerId": ${action.playerId}
                     }
                 """.trimIndent()
             }
