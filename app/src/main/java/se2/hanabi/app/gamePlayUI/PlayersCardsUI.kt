@@ -126,6 +126,9 @@ fun PlayersHand(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             if (showRealCards && realCards.isNotEmpty()) {
+                val density = LocalDensity.current
+                val cardWidthPx = with(density) { cardSizeDp.width.toPx() }
+                val cardHeightPx = with(density) { cardSizeDp.height.toPx() }
                 realCards.forEachIndexed { idx, card ->
                     val cardId = card.getID()
                     val offset = cardOffsets[cardId] ?: Offset.Zero
@@ -138,18 +141,28 @@ fun PlayersHand(
                         colorHint = viewModel.cardsShowingColorHints.collectAsState().value[cardId],
                         valueHint = viewModel.cardsShowingValueHints.collectAsState().value[cardId],
                         modifier = Modifier
-                            .offset { IntOffset(offset.x.roundToInt(), offset.y.roundToInt()) }
+                            .offset {
+                                IntOffset(offset.x.roundToInt(), offset.y.roundToInt())
+                            }
                             .pointerInput(cardId) {
                                 detectDragGestures(
                                     onDragStart = { viewModel.startDraggingCard(cardId) },
                                     onDragEnd = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
                                     onDragCancel = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
-                                    onDrag = { change, dragAmount -> change.consume(); cardOffsets[cardId] = cardOffsets[cardId]?.plus(dragAmount) ?: dragAmount }
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        cardOffsets[cardId] = cardOffsets[cardId]?.plus(dragAmount) ?: dragAmount
+                                        // Track pointer position in ViewModel for drop zone hit testing
+                                        viewModel.updatePointerPosition(change.position)
+                                    }
                                 )
                             }
                     )
                 }
             } else {
+                val density = LocalDensity.current
+                val cardWidthPx = with(density) { cardSizeDp.width.toPx() }
+                val cardHeightPx = with(density) { cardSizeDp.height.toPx() }
                 hand.forEach { cardId ->
                     val offset = cardOffsets[cardId] ?: Offset.Zero
                     CardItem(
@@ -161,13 +174,20 @@ fun PlayersHand(
                         colorHint = viewModel.cardsShowingColorHints.collectAsState().value[cardId],
                         valueHint = viewModel.cardsShowingValueHints.collectAsState().value[cardId],
                         modifier = Modifier
-                            .offset { IntOffset(offset.x.roundToInt(), offset.y.roundToInt()) }
+                            .offset {
+                                IntOffset(offset.x.roundToInt(), offset.y.roundToInt())
+                            }
                             .pointerInput(cardId) {
                                 detectDragGestures(
                                     onDragStart = { viewModel.startDraggingCard(cardId) },
                                     onDragEnd = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
                                     onDragCancel = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
-                                    onDrag = { change, dragAmount -> change.consume(); cardOffsets[cardId] = cardOffsets[cardId]?.plus(dragAmount) ?: dragAmount }
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        cardOffsets[cardId] = cardOffsets[cardId]?.plus(dragAmount) ?: dragAmount
+                                        // Track pointer position in ViewModel for drop zone hit testing
+                                        viewModel.updatePointerPosition(change.position)
+                                    }
                                 )
                             }
                     )
