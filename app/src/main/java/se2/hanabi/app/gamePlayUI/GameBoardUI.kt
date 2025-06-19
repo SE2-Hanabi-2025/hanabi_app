@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,7 +54,8 @@ fun GameBoardUI(
 ) {
     val viewModel: GamePlayViewModel = viewModel()
 
-    val tokenAreaHeight = ( cardSizeDp.width.times(3) + cardSpacing.times(3) - boardElementPadding.times(2) ).div(2)
+    // Restore original tokenAreaHeight calculation (based on width, not height)
+    val tokenAreaHeight = (cardSizeDp.width * 3 + cardSpacing * 3 - boardElementPadding * 2) / 2
     val landscape = when (LocalConfiguration.current.orientation) { Configuration.ORIENTATION_LANDSCAPE -> true else -> false }
 
     Row(
@@ -72,9 +74,11 @@ fun GameBoardUI(
             verticalArrangement = Arrangement.spacedBy(boardElementPadding)
         ) {
             FuseTokens(
+                cardHeight = cardSizeDp.height,
                 cardSizeDp = cardSizeDp,
                 tokenAreaHeight = tokenAreaHeight,
-                numRemaining = viewModel.numRemainingFuseTokens.collectAsState().value)
+                numRemaining = viewModel.numRemainingFuseTokens.collectAsState().value
+            )
             Column(
                 verticalArrangement = Arrangement.spacedBy(cardSpacing)
             ) {
@@ -82,17 +86,38 @@ fun GameBoardUI(
                     cardSizeDp = cardSizeDp,
                     shrinkRatio = shrinkRatio,
                     landscape = landscape,
-                    numRemainingCards = viewModel.numRemainingCard.collectAsState().value)
+                    numRemainingCards = viewModel.numRemainingCard.collectAsState().value,
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                        val position = coordinates.localToWindow(androidx.compose.ui.geometry.Offset.Zero)
+                        val size = coordinates.size.toSize()
+                        android.util.Log.d("HanabiGameBoardUI", "RemainingCardsStack onGloballyPositioned: position=$position, size=$size")
+                    }
+                )
                 DiscardedCardsStack(
                     cardSizeDp = cardSizeDp,
                     lastDiscardedCard = viewModel.lastDiscardedCard.collectAsState().value,
-                    onClick = viewModel::onDiscardCardClick
+                    onClick = viewModel::onDiscardCardClick,
+                    // Drag-and-drop: update discard zone bounds
+                    onGloballyPositioned = { coordinates ->
+                        val position = coordinates.localToWindow(androidx.compose.ui.geometry.Offset.Zero)
+                        val size = coordinates.size.toSize()
+                        android.util.Log.d("HanabiGameBoardUI", "DiscardedCardsStack onGloballyPositioned: position=$position, size=$size")
+                        viewModel.updateDiscardZoneBounds(androidx.compose.ui.geometry.Rect(position, size))
+                    },
+                    onDragEnd = { draggedCardId ->
+                        android.util.Log.d("HanabiGameBoardUI", "DiscardedCardsStack onDragEnd: draggedCardId=$draggedCardId")
+                        if (draggedCardId != null) {
+                            viewModel.tryDropOnDiscard(draggedCardId)
+                        }
+                    }
                 )
             }
             HintTokens(
+                cardHeight = cardSizeDp.height,
                 cardSizeDp = cardSizeDp,
                 tokenAreaHeight = tokenAreaHeight,
-                numRemaining = viewModel.numRemainingHintTokens.collectAsState().value)
+                numRemaining = viewModel.numRemainingHintTokens.collectAsState().value
+            )
         }
         // right column
         ColorStacks(
@@ -100,19 +125,33 @@ fun GameBoardUI(
             cardSpacing = cardSpacing,
             stackValues = viewModel.stackValues.collectAsState().value,
             onColorStackClick = viewModel::onColorStackClick,
+            // Drag-and-drop: update color stack bounds and handle drop
+            onStackPositioned = { color, coordinates ->
+                val position = coordinates.localToWindow(androidx.compose.ui.geometry.Offset.Zero)
+                val size = coordinates.size.toSize()
+                android.util.Log.d("HanabiGameBoardUI", "ColorStacks onStackPositioned: color=$color, position=$position, size=$size")
+                viewModel.updateColorStackBounds(color, androidx.compose.ui.geometry.Rect(position, size))
+            },
+            onDragEnd = { draggedCardId, color ->
+                android.util.Log.d("HanabiGameBoardUI", "ColorStacks onDragEnd: draggedCardId=$draggedCardId, color=$color")
+                if (draggedCardId != null) {
+                    viewModel.tryDropOnColorStack(draggedCardId, color)
+                }
+            }
         )
     }
 }
 
 @Composable
 fun HintTokens(
-    cardSizeDp: DpSize,
+    cardHeight: Dp,
+    tokenAreaHeight: Dp,
     numRemaining: Int,
-    tokenAreaHeight: Dp
+    cardSizeDp: DpSize
 ) {
     val totalNumTokens = 8
     Column(modifier = Modifier
-        .size(cardSizeDp.height, tokenAreaHeight),
+        .size(cardHeight, tokenAreaHeight),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -148,13 +187,14 @@ fun HintTokens(
 
 @Composable
 fun FuseTokens(
-    cardSizeDp: DpSize,
+    cardHeight: Dp,
+    tokenAreaHeight: Dp,
     numRemaining: Int,
-    tokenAreaHeight: Dp
+    cardSizeDp: DpSize
 ) {
     val totalNumTokens = 3
     Column(modifier = Modifier
-        .size(cardSizeDp.height, tokenAreaHeight),
+        .size(cardHeight, tokenAreaHeight),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -221,28 +261,30 @@ fun RemainingCardsStack(
 fun DiscardedCardsStack(
     cardSizeDp: DpSize,
     lastDiscardedCard: Card?,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onGloballyPositioned: ((androidx.compose.ui.layout.LayoutCoordinates) -> Unit)? = null,
+    onDragEnd: ((Int?) -> Unit)? = null
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     val draggedCardId by viewModel.draggedCardId.collectAsState()
     val stackModifier = Modifier
-        .onGloballyPositioned { coordinates ->
-            val position = coordinates.localToWindow(Offset.Zero)
-            val size = coordinates.size.toSize()
-            viewModel.updateDiscardZoneBounds(Rect(position, size))
-        }
-        .pointerInput(draggedCardId) {
-            detectDragGestures(
-                onDragStart = {},
-                onDragEnd = {
-                    if (draggedCardId != null) {
-                        viewModel.tryDropOnDiscard(draggedCardId)
-                    }
-                },
-                onDragCancel = {},
-                onDrag = { _, _ -> }
-            )
-        }
+        .size(cardSizeDp.width, cardSizeDp.height)
+        .then(
+            if (onGloballyPositioned != null) Modifier.onGloballyPositioned {
+                android.util.Log.d("HanabiGameBoardUI", "DiscardedCardsStack onGloballyPositioned callback called!")
+                onGloballyPositioned(it)
+            } else Modifier
+        )
+        .then(
+            if (onDragEnd != null) Modifier.pointerInput(draggedCardId) {
+                detectDragGestures(
+                    onDragStart = {},
+                    onDragEnd = { onDragEnd(draggedCardId) },
+                    onDragCancel = {},
+                    onDrag = { _, _ -> }
+                )
+            } else Modifier
+        )
     if (lastDiscardedCard == null) {
         EmptyStack(
             cardSizeDp = cardSizeDp,
@@ -269,9 +311,10 @@ fun EmptyStack(
     onClick: () -> Unit = {},
     color: Card.Color = Card.Color.WHITE
 ) {
+    android.util.Log.d("HanabiGamePlayVM", "EmptyStack recomposed: color=$color, modifier=$modifier")
     CardItem(
         cardSizeDp = cardSizeDp,
-        modifier = Modifier.alpha(0.3f),
+        modifier = modifier.then(Modifier.alpha(0.3f)),
         card = Card(color,1),
         isFlipped = true,
         isPortrait = isPortrait,
@@ -287,6 +330,8 @@ fun ColorStacks(
     modifier: Modifier = Modifier,
     stackValues: Map<Card.Color, Int>,
     onColorStackClick: (Card.Color) -> Unit,
+    onStackPositioned: ((Card.Color, androidx.compose.ui.layout.LayoutCoordinates) -> Unit)? = null,
+    onDragEnd: ((Int?, Card.Color) -> Unit)? = null
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     val draggedCardId by viewModel.draggedCardId.collectAsState()
@@ -295,23 +340,23 @@ fun ColorStacks(
     ) {
         Card.Color.entries.forEach() { color ->
             val stackModifier = Modifier
-                .onGloballyPositioned { coordinates ->
-                    val position = coordinates.localToWindow(Offset.Zero)
-                    val size = coordinates.size.toSize()
-                    viewModel.updateColorStackBounds(color, Rect(position, size))
-                }
-                .pointerInput(draggedCardId) {
-                    detectDragGestures(
-                        onDragStart = {},
-                        onDragEnd = {
-                            if (draggedCardId != null) {
-                                viewModel.tryDropOnColorStack(draggedCardId, color)
-                            }
-                        },
-                        onDragCancel = {},
-                        onDrag = { _, _ -> }
-                    )
-                }
+                .size(cardSizeDp.width, cardSizeDp.height)
+                .then(
+                    if (onStackPositioned != null) Modifier.onGloballyPositioned { coordinates ->
+                        android.util.Log.d("HanabiGameBoardUI", "ColorStacks onGloballyPositioned callback called for color=$color!")
+                        onStackPositioned(color, coordinates)
+                    } else Modifier
+                )
+                .then(
+                    if (onDragEnd != null) Modifier.pointerInput(draggedCardId) {
+                        detectDragGestures(
+                            onDragStart = {},
+                            onDragEnd = { onDragEnd(draggedCardId, color) },
+                            onDragCancel = {},
+                            onDrag = { _, _ -> }
+                        )
+                    } else Modifier
+                )
             if (stackValues[color]==0) {
                 EmptyStack(
                     cardSizeDp = cardSizeDp,

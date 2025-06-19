@@ -518,6 +518,10 @@ class GamePlayViewModel(
      * Updated: Dropping a 1 on any empty stack auto-places it on the correct color stack.
      */
     fun onPlayCardDrop(cardId: Int?, targetColor: Card.Color) {
+        val chand = thisPlayersHand.value
+        if (cardId == null || chand.none { it == cardId }) {
+            Log.d(TAG, "Drop error: cardId=$cardId not found in hand: $chand")
+        }
         if (cardId == null) return
         if (!_isMyTurn.value) {
             _statusMessage.value = "Du bist nicht an der Reihe"
@@ -529,11 +533,12 @@ class GamePlayViewModel(
             _statusMessage.value = "Karte nicht gefunden"
             return
         }
-        // Get the card details from visible hands (since hand only has IDs)
-        val myVisibleHand = otherPlayersHands.value[playerId] ?: emptyList()
+        // Get the card details from own hand (cheatHand) instead of visible hands
+        val myVisibleHand = cheatHand.value
         val card = myVisibleHand.find { it.getID() == cardId }
         if (card == null) {
             _statusMessage.value = "Karte nicht gefunden (Details fehlen)"
+            Log.d(TAG, "Drop error: cardId=$cardId not found in own hand: ${myVisibleHand.map { it.getID() }}")
             return
         }
         // Hanabi rules: auto-place 1s, validate others
@@ -592,6 +597,10 @@ class GamePlayViewModel(
     }
 
     fun onDiscardCardDrop(cardId: Int?) {
+        val hand = thisPlayersHand.value
+        if (cardId == null || hand.none { it == cardId }) {
+            Log.d(TAG, "Drop error: cardId=$cardId not found in hand: $hand")
+        }
         if (cardId == null) return
         if (!_isMyTurn.value) {
             _statusMessage.value = "Du bist nicht an der Reihe"
@@ -616,29 +625,38 @@ class GamePlayViewModel(
 
     // Drag-and-drop pointer and drop zone bounds
     fun updatePointerPosition(position: Offset) {
+        Log.d(TAG, "Pointer position updated: $position")
         _pointerPosition.value = position
     }
     fun updateColorStackBounds(color: Card.Color, bounds: Rect) {
+        Log.d(TAG, "Color stack bounds updated for $color: $bounds")
         colorStackBounds[color] = bounds
     }
     fun updateDiscardZoneBounds(bounds: Rect) {
+        Log.d(TAG, "Discard zone bounds updated: $bounds")
         discardZoneBounds = bounds
     }
 
-    // Override drag-and-drop drop logic for color stacks
     fun tryDropOnColorStack(cardId: Int?, color: Card.Color) {
-        val pointer = _pointerPosition.value ?: return
-        val bounds = colorStackBounds[color] ?: return
-        if (bounds.contains(pointer)) {
+        val pointer = _pointerPosition.value
+        val bounds = colorStackBounds[color]
+        Log.d(TAG, "Try drop on color stack $color: pointer=$pointer, bounds=$bounds")
+        if (pointer != null && bounds != null && bounds.contains(pointer)) {
+            Log.d(TAG, "Pointer is inside color stack $color bounds. Dropping card.")
             onPlayCardDrop(cardId, color)
+        } else {
+            Log.d(TAG, "Pointer is NOT inside color stack $color bounds. Drop ignored.")
         }
     }
-    // Override drag-and-drop drop logic for discard
     fun tryDropOnDiscard(cardId: Int?) {
-        val pointer = _pointerPosition.value ?: return
-        val bounds = discardZoneBounds ?: return
-        if (bounds.contains(pointer)) {
+        val pointer = _pointerPosition.value
+        val bounds = discardZoneBounds
+        Log.d(TAG, "Try drop on discard: pointer=$pointer, bounds=$bounds")
+        if (pointer != null && bounds != null && bounds.contains(pointer)) {
+            Log.d(TAG, "Pointer is inside discard bounds. Dropping card.")
             onDiscardCardDrop(cardId)
+        } else {
+            Log.d(TAG, "Pointer is NOT inside discard bounds. Drop ignored.")
         }
     }
 }

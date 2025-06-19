@@ -54,11 +54,12 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
     var shrinkRatio = 1f
     var defaultCardWidth = screeWidthDp.times(cardProportionOfWidth)
     var cardWidth: Dp
+    var cardHeight: Dp
 
     if (landscape) {
         val gameBoardVertPaddingElementsSum = boardElementPadding.times(4)
         val availableVertSpace = screenHeightDP.times(maxGameBoardHeightProportion)-gameBoardVertPaddingElementsSum
-        val cardHeight = availableVertSpace.div(2)
+        cardHeight = availableVertSpace.div(2)
         cardWidth = cardHeight.div(aspectRatio)
 
     } else { // portrait
@@ -70,13 +71,14 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
                 screenHeightDP.times(maxGameBoardHeightProportion) - gameBoardVertPaddingElementsSum
             cardWidth = availableVertSpace.div(5)
         }
+        cardHeight = cardWidth.times(aspectRatio)
     }
 
     shrinkRatio = cardWidth.div(defaultCardWidth)
 
     val cardSizeDp = DpSize(
         width = cardWidth,
-        height = cardWidth.times(aspectRatio)
+        height = cardHeight
     )
 
     Box(modifier = Modifier
@@ -119,7 +121,7 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
             }
         } else {
             // Show game board and player cards
-            GameBoardUI(cardSizeDp, shrinkRatio)
+            GameBoardUI(cardSizeDp = cardSizeDp, shrinkRatio = shrinkRatio)
             val context = LocalContext.current
             val tiltSensor = remember { TiltCheatSensor(context) }
             val isTilted by tiltSensor.isTilted

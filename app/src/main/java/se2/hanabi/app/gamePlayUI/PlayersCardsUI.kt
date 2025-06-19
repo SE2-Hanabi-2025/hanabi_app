@@ -22,7 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
@@ -132,6 +134,7 @@ fun PlayersHand(
                 realCards.forEachIndexed { idx, card ->
                     val cardId = card.getID()
                     val offset = cardOffsets[cardId] ?: Offset.Zero
+                    var cardCoordinates: androidx.compose.ui.layout.LayoutCoordinates? = null
                     CardItem(
                         cardSizeDp = cardSizeDp,
                         card = card,
@@ -144,20 +147,33 @@ fun PlayersHand(
                             .offset {
                                 IntOffset(offset.x.roundToInt(), offset.y.roundToInt())
                             }
+                            .onGloballyPositioned { coordinates ->
+                                cardCoordinates = coordinates
+                            }
                             .pointerInput(cardId) {
                                 detectDragGestures(
                                     onDragStart = { viewModel.startDraggingCard(cardId) },
-                                    onDragEnd = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
+                                    onDragEnd = {
+                                        viewModel.stopDraggingCard()
+                                        cardOffsets[cardId] = Offset.Zero
+                                        // Try drop on all color stacks
+                                        Card.Color.entries.forEach { color ->
+                                            viewModel.tryDropOnColorStack(cardId, color)
+                                        }
+                                        // Try drop on discard
+                                        viewModel.tryDropOnDiscard(cardId)
+                                    },
                                     onDragCancel = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
                                     onDrag = { change, dragAmount ->
                                         change.consume()
                                         cardOffsets[cardId] = cardOffsets[cardId]?.plus(dragAmount) ?: dragAmount
-                                        // Track pointer position in ViewModel for drop zone hit testing
-                                        viewModel.updatePointerPosition(change.position)
+                                        // Convert pointer position to window coordinates for drop zone hit testing
+                                        val windowOffset = cardCoordinates?.localToWindow(change.position) ?: change.position
+                                        android.util.Log.d("HanabiPlayersCardsUI", "onDrag: cardId=$cardId, dragAmount=$dragAmount, pointer=${change.position}, windowOffset=$windowOffset, cardOffset=${cardOffsets[cardId]}")
+                                        viewModel.updatePointerPosition(windowOffset)
                                     }
                                 )
-                            }
-                    )
+                            })
                 }
             } else {
                 val density = LocalDensity.current
@@ -165,6 +181,7 @@ fun PlayersHand(
                 val cardHeightPx = with(density) { cardSizeDp.height.toPx() }
                 hand.forEach { cardId ->
                     val offset = cardOffsets[cardId] ?: Offset.Zero
+                    var cardCoordinates: androidx.compose.ui.layout.LayoutCoordinates? = null
                     CardItem(
                         cardSizeDp = cardSizeDp,
                         card = Card(color=Card.Color.RED, value=1, id = -1), // dummy card for back
@@ -177,16 +194,29 @@ fun PlayersHand(
                             .offset {
                                 IntOffset(offset.x.roundToInt(), offset.y.roundToInt())
                             }
+                            .onGloballyPositioned { coordinates ->
+                                cardCoordinates = coordinates
+                            }
                             .pointerInput(cardId) {
                                 detectDragGestures(
                                     onDragStart = { viewModel.startDraggingCard(cardId) },
-                                    onDragEnd = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
+                                    onDragEnd = {
+                                        viewModel.stopDraggingCard()
+                                        cardOffsets[cardId] = Offset.Zero
+                                        // Try drop on all color stacks
+                                        Card.Color.entries.forEach { color ->
+                                            viewModel.tryDropOnColorStack(cardId, color)
+                                        }
+                                        // Try drop on discard
+                                        viewModel.tryDropOnDiscard(cardId)
+                                    },
                                     onDragCancel = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
                                     onDrag = { change, dragAmount ->
                                         change.consume()
                                         cardOffsets[cardId] = cardOffsets[cardId]?.plus(dragAmount) ?: dragAmount
-                                        // Track pointer position in ViewModel for drop zone hit testing
-                                        viewModel.updatePointerPosition(change.position)
+                                        // Convert pointer position to window coordinates for drop zone hit testing
+                                        val windowOffset = cardCoordinates?.localToWindow(change.position) ?: change.position
+                                        viewModel.updatePointerPosition(windowOffset)
                                     }
                                 )
                             }

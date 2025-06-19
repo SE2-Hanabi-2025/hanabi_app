@@ -61,6 +61,7 @@ fun CardItem(
     colorHint: Card.Color? = null,
     valueHint: Int? = null,
 ) {
+    android.util.Log.d("HanabiGamePlayVM", "CardItem recomposed: card=$card, modifier=$modifier")
     var actualCardWidth = if (isPortrait) cardSizeDp.width else cardSizeDp.height
     var actualCardHeight = if (isPortrait) cardSizeDp.height else cardSizeDp.width
 
