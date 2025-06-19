@@ -579,7 +579,8 @@ class GamePlayViewModel(
         viewModelScope.launch {
             _statusMessage.value = "Falsche Karte! Strike erhalten."
             Log.d(TAG, "Falsche Karte an Index $cardIndex (Drag-and-drop), Strike und Ablage")
-            webSocketService.discardCard(lobbyId, playerId, cardIndex)
+            // Use playCard, not discardCard, so backend handles strike/fuse logic
+            webSocketService.playCard(lobbyId, playerId, cardIndex)
         }
     }
 
@@ -657,6 +658,38 @@ class GamePlayViewModel(
             onDiscardCardDrop(cardId)
         } else {
             Log.d(TAG, "Pointer is NOT inside discard bounds. Drop ignored.")
+        }
+    }
+
+    fun tryDropOnAnyZone(cardId: Int?) {
+        val pointer = _pointerPosition.value
+        var dropped = false
+        // Try all color stacks
+        for ((color, bounds) in colorStackBounds) {
+            if (pointer != null && bounds != null && bounds.contains(pointer)) {
+                Log.d(TAG, "Pointer is inside color stack $color bounds. Dropping card.")
+                onPlayCardDrop(cardId, color)
+                dropped = true
+                break
+            }
+        }
+        // Try discard
+        val discardBounds = discardZoneBounds
+        if (!dropped && pointer != null && discardBounds != null && discardBounds.contains(pointer)) {
+            Log.d(TAG, "Pointer is inside discard bounds. Dropping card.")
+            onDiscardCardDrop(cardId)
+            dropped = true
+        }
+        // If not dropped anywhere, give a strike and discard
+        if (!dropped) {
+            Log.d(TAG, "Pointer is not inside any drop zone. Giving strike and discarding card.")
+            val hand = _thisPlayersHand.value
+            val cardIndex = hand.indexOf(cardId)
+            if (cardIndex >= 0) {
+                giveStrikeAndDiscard(cardIndex)
+            } else {
+                Log.d(TAG, "CardId $cardId not found in hand for strike/discard fallback.")
+            }
         }
     }
 }

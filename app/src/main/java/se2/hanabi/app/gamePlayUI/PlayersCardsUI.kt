@@ -156,12 +156,8 @@ fun PlayersHand(
                                     onDragEnd = {
                                         viewModel.stopDraggingCard()
                                         cardOffsets[cardId] = Offset.Zero
-                                        // Try drop on all color stacks
-                                        Card.Color.entries.forEach { color ->
-                                            viewModel.tryDropOnColorStack(cardId, color)
-                                        }
-                                        // Try drop on discard
-                                        viewModel.tryDropOnDiscard(cardId)
+                                        // Try drop on any zone (color stacks, discard, or strike)
+                                        viewModel.tryDropOnAnyZone(cardId)
                                     },
                                     onDragCancel = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
                                     onDrag = { change, dragAmount ->
@@ -203,12 +199,8 @@ fun PlayersHand(
                                     onDragEnd = {
                                         viewModel.stopDraggingCard()
                                         cardOffsets[cardId] = Offset.Zero
-                                        // Try drop on all color stacks
-                                        Card.Color.entries.forEach { color ->
-                                            viewModel.tryDropOnColorStack(cardId, color)
-                                        }
-                                        // Try drop on discard
-                                        viewModel.tryDropOnDiscard(cardId)
+                                        // Try drop on any zone (color stacks, discard, or strike)
+                                        viewModel.tryDropOnAnyZone(cardId)
                                     },
                                     onDragCancel = { viewModel.stopDraggingCard(); cardOffsets[cardId] = Offset.Zero },
                                     onDrag = { change, dragAmount ->
