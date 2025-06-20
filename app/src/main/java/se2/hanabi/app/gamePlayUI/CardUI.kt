@@ -124,7 +124,7 @@ fun CardItem(
                         text = "$valueHint",
                         fontFamily = customFont,
                         color = cardHintValueColor,
-                        fontSize = 30.sp,
+                        fontSize = cardSizeDp.width.div(3).value.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 }
