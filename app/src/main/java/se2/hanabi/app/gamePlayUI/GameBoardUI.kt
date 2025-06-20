@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -29,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.model.Card
+import se2.hanabi.app.ui.theme.customFont
 
 val cardSpacing = 5.dp
 val boardElementPadding = 10.dp
@@ -195,7 +195,7 @@ fun RemainingCardsStack(
                     rotationZ = if (landscape) -90f else 0f
                 },
             text = "$numRemainingCards",
-            fontFamily = FontFamily.Cursive,
+            fontFamily = customFont,
             color = Color(0xFFF2FF90),
             fontSize = (40f*shrinkRatio).sp,
             fontWeight = FontWeight.Bold,

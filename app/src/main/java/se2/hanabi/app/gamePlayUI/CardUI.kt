@@ -21,12 +21,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import se2.hanabi.app.model.Card
+import se2.hanabi.app.ui.theme.customFont
 
 const val CARD_ASPECT_RATIO = 1.51f
 const val CARD_PROPORTION_OF_WIDTH = 0.17f
@@ -122,7 +122,7 @@ fun CardItem(
                     Text(
                         modifier = Modifier.padding(3.dp),
                         text = "$valueHint",
-                        fontFamily = FontFamily.Cursive,
+                        fontFamily = customFont,
                         color = cardHintValueColor,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
