@@ -273,7 +273,7 @@ fun OtherPlayersHand(
         }
         
         Row(
-            horizontalArrangement = Arrangement.spacedBy((-45.dp)),
+            horizontalArrangement = Arrangement.spacedBy((-cardSizeDp.width.times(0.75f).value.dp)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             hand.value.forEachIndexed() { index, card ->
