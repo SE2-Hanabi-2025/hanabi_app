@@ -12,6 +12,15 @@ class MusicService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d("MusicService", "onStartCommand called")
+        if (intent?.action == "MUTE") {
+            mediaPlayer?.pause()
+            return START_STICKY
+        } else if (intent?.action == "UNMUTE") {
+            if (mediaPlayer != null && !mediaPlayer!!.isPlaying) {
+                mediaPlayer?.start()
+            }
+            return START_STICKY
+        }
         if (mediaPlayer == null) {
             Log.d("MusicService", "Creating MediaPlayer")
             mediaPlayer = MediaPlayer.create(this, R.raw.theme)

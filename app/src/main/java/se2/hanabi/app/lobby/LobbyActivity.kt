@@ -1,6 +1,7 @@
 package se2.hanabi.app.lobby
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -50,6 +51,7 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -75,6 +77,8 @@ import se2.hanabi.app.ui.theme.ClientTheme
 import se2.hanabi.app.ui.theme.customFont
 import se2.hanabi.app.utils.ServerAddressManager
 import android.graphics.Color as AndroidColor
+import se2.hanabi.app.Services.MusicService
+import se2.hanabi.app.ui.components.MuteButton
 
 class LobbyActivity : ComponentActivity() {
 
@@ -239,12 +243,12 @@ class LobbyActivity : ComponentActivity() {
         onLeaveLobby: () -> Unit,
         onStartGame: () -> Unit,
         isHost: Boolean,
-        //avatarResID: Int,
-        //username: String
     ) {
         var showQRCodeDialog by remember { mutableStateOf(false) }
-        
         Box(modifier = Modifier.fillMaxSize()) {
+            val context = LocalContext.current
+            val prefs = context.getSharedPreferences("hanabi_prefs", MODE_PRIVATE)
+            val isMuted = remember { mutableStateOf(prefs.getBoolean("isMuted", false)) }
             Image(
                 painter = painterResource(id = R.drawable.lobbyscreen_bg),
                 contentDescription = null,
@@ -464,6 +468,27 @@ class LobbyActivity : ComponentActivity() {
                     }
                 }
             }
+
+            // Mute button: top right, white, large, shadow, zIndex
+            MuteButton(
+                isMuted = isMuted.value,
+                onToggle = {
+                    isMuted.value = !isMuted.value
+                    prefs.edit().putBoolean("isMuted", isMuted.value).apply()
+                    val intent = Intent(context, MusicService::class.java)
+                    if (isMuted.value) {
+                        intent.action = "MUTE"
+                    } else {
+                        intent.action = "UNMUTE"
+                    }
+                    context.startService(intent)
+                },
+                tint = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 24.dp, end = 24.dp)
+                    .size(56.dp)
+            )
         }
         
         // QR Code Dialog

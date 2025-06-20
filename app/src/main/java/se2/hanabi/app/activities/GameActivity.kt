@@ -1,18 +1,33 @@
 package se2.hanabi.app.activities
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.MainActivity
+import se2.hanabi.app.Services.MusicService
 import se2.hanabi.app.endScreen.EndScreen
 import se2.hanabi.app.gamePlayUI.GamePlayUI
 import se2.hanabi.app.gamePlayUI.GamePlayViewModel
 import se2.hanabi.app.gamePlayUI.GamePlayViewModelFactory
+import se2.hanabi.app.ui.components.MuteButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 class GameActivity : ComponentActivity() {
     private val inputBuffer = mutableListOf<Int>()
@@ -31,15 +46,38 @@ class GameActivity : ComponentActivity() {
             GamePlayViewModelFactory(lobbyId, playerId)
         )[GamePlayViewModel::class.java]
         setContent {
-            GamePlayUI()
-            if (viewModel.gameOver.collectAsState().value) {
-                EndScreen( onBackToMenu = {
-                    //Navigate back to MainActiviy and clear the back stack
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
-                    finish()
-                })
+            val context = LocalContext.current
+            val prefs = context.getSharedPreferences("hanabi_prefs", MODE_PRIVATE)
+            val isMuted = remember { mutableStateOf(prefs.getBoolean("isMuted", false)) }
+            Box(modifier = Modifier.fillMaxSize()) {
+                GamePlayUI()
+                if (viewModel.gameOver.collectAsState().value) {
+                    EndScreen( onBackToMenu = {
+                        val intent = Intent(applicationContext, MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                        startActivity(intent)
+                        finish()
+                    })
+                }
+                MuteButton(
+                    isMuted = isMuted.value,
+                    onToggle = {
+                        isMuted.value = !isMuted.value
+                        prefs.edit().putBoolean("isMuted", isMuted.value).apply()
+                        val intent = Intent(context, MusicService::class.java)
+                        if (isMuted.value) {
+                            intent.action = "MUTE"
+                        } else {
+                            intent.action = "UNMUTE"
+                        }
+                        context.startService(intent)
+                    },
+                    tint = Color.White,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 24.dp, end = 24.dp)
+                        .size(56.dp)
+                )
             }
         }
         proximityHelper = ProximityCheatHelper(
