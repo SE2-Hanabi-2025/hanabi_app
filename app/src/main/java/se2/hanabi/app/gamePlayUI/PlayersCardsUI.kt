@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -26,6 +25,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.model.Card
@@ -41,11 +41,11 @@ import kotlin.math.roundToInt
 @Composable
 fun PlayersCardsUI(
     landscape: Boolean,
-    cardSizeDp: DpSize
+    cardSizeDpIn: DpSize
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     PlayersHand(
-        cardSizeDp = cardSizeDp,
+        cardSizeDp = cardSizeDpIn,
         hand = viewModel.thisPlayersHand.collectAsState().value,
         onCardClick = viewModel::onPlayersCardClick,
         selectedCard = viewModel.selectedCardId.collectAsState().value
@@ -65,9 +65,19 @@ fun PlayersCardsUI(
         handsDisplayOrder.put(nextPlayersID, nextPlayersHand!!)
     }
 
+    //limit cards from being too small in landscape
+    val MIN_CARD_WIDTH_LS = 60.dp
+    var cardSizeDp = cardSizeDpIn
+    if (landscape) {
+        val cardWidth = max(cardSizeDpIn.width, MIN_CARD_WIDTH_LS)
+        val cardHeight = cardWidth.times(CARD_ASPECT_RATIO)
+        cardSizeDp = DpSize(cardWidth, cardHeight)
+    }
+
     OtherPlayersHands(
         hands = handsDisplayOrder,
         cardSizeDp = cardSizeDp,
+        landscape = landscape,
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
         selectedHandIndex = viewModel.selectedPlayerId.collectAsState().value,
     )
@@ -149,6 +159,7 @@ fun PlayersHand(
 fun OtherPlayersHands(
     cardSizeDp: DpSize,
     hands: Map<Int, List<Card>>,
+    landscape: Boolean,
     onOtherPlayersHandClick: (Int) -> Unit,
     selectedHandIndex: Int,
 ){
@@ -180,9 +191,9 @@ fun OtherPlayersHands(
 
             handOffsetY =
                 if (index > 1) {// offset top two hands to be at third of the screen down form top
-                    boxSize.height * 0.25f
+                    boxSize.height * ( if (landscape) 0.25f else 0.35f )
                 } else {
-                    boxSize.height * 0.6f
+                    boxSize.height * ( if (landscape) 0.75f else 0.65f )
                 }
             val handOffset = Offset(handOffsetX, handOffsetY)
               // Find the player details
@@ -219,7 +230,7 @@ fun OtherPlayersHand(
 
     Box(
         modifier = Modifier
-            .offset { IntOffset((offset.x-rowSize.width/2).roundToInt(), offset.y.roundToInt()) }
+            .offset { IntOffset((offset.x-rowSize.width/2).roundToInt(), (offset.y-rowSize.height/2).roundToInt()) }
             .graphicsLayer {
                 rotationZ = rotationAmountZ
             }

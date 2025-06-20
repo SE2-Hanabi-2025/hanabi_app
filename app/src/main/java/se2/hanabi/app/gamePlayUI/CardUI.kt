@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import se2.hanabi.app.model.Card
 
-const val aspectRatio = 1.51f
-const val cardProportionOfWidth = 0.17f
+const val CARD_ASPECT_RATIO = 1.51f
+const val CARD_PROPORTION_OF_WIDTH = 0.17f
 
 // Returns name of the corresponding card image, following the schema "color_number"
 fun getCardImageName(card: Card): String {
