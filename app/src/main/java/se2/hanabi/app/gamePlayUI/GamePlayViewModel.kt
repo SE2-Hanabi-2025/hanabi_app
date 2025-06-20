@@ -475,4 +475,14 @@ class GamePlayViewModel(
     fun getMaxScore(): Int {
         return max_score
     }
+
+    // Remove old cheat methods and use new defuseAttempt
+    // Example usage: call this from UI with the actual sequence and proximity
+    fun defuseAttemptCheat(sequence: List<String>, proximity: String) {
+        viewModelScope.launch {
+            webSocketService.defuseAttempt(lobbyId, playerId, sequence, proximity)
+            Log.i(TAG, "[CHEAT] Defuse attempt sent via WebSocket! Sequence: $sequence, Proximity: $proximity")
+        }
+    }
+    
 }

@@ -35,9 +35,12 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.App">
         </activity>
+        <service android:name=".Services.MusicService" />
         <activity android:name=".lobby.LobbyActivity"
             android:screenOrientation="portrait" >
+
         </activity>
+
     </application>
 
 </manifest>
