@@ -268,7 +268,7 @@ fun DiscardedCardsStack(
     val viewModel: GamePlayViewModel = viewModel()
     val draggedCardId by viewModel.draggedCardId.collectAsState()
     val stackModifier = Modifier
-        .size(cardSizeDp.width, cardSizeDp.height)
+        .size(cardSizeDp.height, cardSizeDp.width)
         .then(
             if (onGloballyPositioned != null) Modifier.onGloballyPositioned {
                 android.util.Log.d("HanabiGameBoardUI", "DiscardedCardsStack onGloballyPositioned callback called!")
@@ -340,7 +340,7 @@ fun ColorStacks(
     ) {
         Card.Color.entries.forEach() { color ->
             val stackModifier = Modifier
-                .size(cardSizeDp.width, cardSizeDp.height)
+                .size(cardSizeDp.height, cardSizeDp.width)
                 .then(
                     if (onStackPositioned != null) Modifier.onGloballyPositioned { coordinates ->
                         android.util.Log.d("HanabiGameBoardUI", "ColorStacks onGloballyPositioned callback called for color=$color!")
