@@ -15,14 +15,7 @@ import se2.hanabi.app.gamePlayUI.GamePlayViewModel
 import se2.hanabi.app.gamePlayUI.GamePlayViewModelFactory
 
 class GameActivity : ComponentActivity() {
-    private val cheatSequence = listOf(
-        KeyEvent.KEYCODE_VOLUME_DOWN,
-        KeyEvent.KEYCODE_VOLUME_DOWN,
-        KeyEvent.KEYCODE_VOLUME_UP,
-        KeyEvent.KEYCODE_VOLUME_DOWN
-    )
     private val inputBuffer = mutableListOf<Int>()
-    private var isDefuseSequenceStarted = false
     private var isProximityDark = false
     private lateinit var proximityHelper: ProximityCheatHelper
     private lateinit var viewModel: GamePlayViewModel
@@ -70,7 +63,6 @@ class GameActivity : ComponentActivity() {
         // Only allow cheat if proximity is dark
         if (!isProximityDark) {
             inputBuffer.clear()
-            isDefuseSequenceStarted = false
             return super.onKeyDown(keyCode, event)
         }
         inputBuffer.add(keyCode)
@@ -86,7 +78,6 @@ class GameActivity : ComponentActivity() {
             val proximity = if (isProximityDark) "DARK" else "LIGHT"
             viewModel.defuseAttemptCheat(sequence, proximity)
             inputBuffer.clear()
-            isDefuseSequenceStarted = false
             return true
         }
         return super.onKeyDown(keyCode, event)
