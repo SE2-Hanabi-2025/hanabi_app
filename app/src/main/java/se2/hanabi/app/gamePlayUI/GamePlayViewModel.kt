@@ -484,13 +484,5 @@ class GamePlayViewModel(
             Log.i(TAG, "[CHEAT] Defuse attempt sent via WebSocket! Sequence: $sequence, Proximity: $proximity")
         }
     }
-
-    // Make this function public so it can be called from GameActivity
-    fun fetchAndUpdateGameStatus() {
-        viewModelScope.launch {
-            gamePlayService.getGameStatus()?.let { status ->
-                updateGameStatus(status)
-            }
-        }
-    }
+    
 }
