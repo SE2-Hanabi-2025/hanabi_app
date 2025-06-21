@@ -358,8 +358,7 @@ class GamePlayViewModel(
     }
 
     fun onColorStackClick(color: Card.Color) {
-        // Handle the color stack click event here
-        // For example, log the click or update some state
+        onPlayCardClick()
         Log.d("GamePlayViewModel", "Color stack clicked: $color")
     }
 
