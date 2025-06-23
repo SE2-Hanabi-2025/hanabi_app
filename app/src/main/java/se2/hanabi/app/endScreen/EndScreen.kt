@@ -39,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.endScreen.endAnimations.BombLauncher
 import se2.hanabi.app.endScreen.endAnimations.FireworkLauncher
 import se2.hanabi.app.gamePlayUI.GamePlayViewModel
+import se2.hanabi.app.ui.theme.customFont
 
 @Composable
 fun EndScreen(onBackToMenu: () -> Unit) {
@@ -47,8 +48,8 @@ fun EndScreen(onBackToMenu: () -> Unit) {
     val gameLost = viewModel.gameLost.collectAsState().value
     val finalScore = viewModel.currentScore.collectAsState().value
 
-    val winMessage = "Congratulations!"
-    val loseMessage = "Game Over!"
+    val winMessage = "CONGRATULATIONS!"
+    val loseMessage = "GAME OVER!"
 
     val alpha = remember { Animatable(0f) }
     val fadeInDelay = 2000
@@ -77,7 +78,8 @@ fun EndScreen(onBackToMenu: () -> Unit) {
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-                onClick = { fadeInOver.value = true },
+                enabled = true,
+                onClick = { fadeInOver.value = true }
             )
 
     ) {
@@ -105,15 +107,15 @@ fun EndScreen(onBackToMenu: () -> Unit) {
                     targetFontSize = 60.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (gameLost) Color.Red else Color(0xFFF2FF90),
-                    fontFamily = FontFamily.Cursive,
+                    fontFamily = customFont,
                     textAlign = TextAlign.Center
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Final score: $finalScore/${viewModel.getMaxScore()}",
-                    fontFamily = FontFamily.Cursive,
+                    text = "FINAL SCORE: $finalScore/${viewModel.getMaxScore()}",
+                    fontFamily = customFont,
                     fontSize = 30.sp,
                     color = Color(0xFFF2FF90),
                 )
@@ -137,9 +139,9 @@ fun EndScreen(onBackToMenu: () -> Unit) {
                 ) {
                     Text(
                         modifier = Modifier.padding(horizontal = 15.dp),
-                        text = "Back to main menu",
+                        text = "BACK TO MAIN MENU",
                         color = Color(0xFFF2FF90),
-                        fontFamily = FontFamily.Cursive,
+                        fontFamily = customFont,
                         fontSize = 25.sp,
                     )
                 }

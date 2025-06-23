@@ -3,6 +3,7 @@ package se2.hanabi.app.activities
 import android.content.Context
 import android.content.Intent
 import androidx.annotation.RawRes
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -32,10 +33,12 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,11 +53,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -76,7 +81,9 @@ import java.nio.charset.StandardCharsets
 import se2.hanabi.app.Handler.CameraPermissionHandler
 import se2.hanabi.app.components.QRScanner
 import dev.jeziellago.compose.markdowntext.MarkdownText
+import se2.hanabi.app.ui.theme.customFont
 import se2.hanabi.app.utils.ServerAddressManager
+import androidx.compose.foundation.layout.BoxWithConstraints
 
 
 class StartMenue {
@@ -191,56 +198,78 @@ class StartMenue {
             }
         }
 
-        Box(
+        BoxWithConstraints(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
+            val screenHeight = maxHeight
+            val titleHeight = screenHeight * 0.27f
+            val showFireworksCounter = remember { mutableIntStateOf(0) }
+            val fireworkOn = showFireworksCounter.intValue >= 3
+
             Image(
                 painter = painterResource(id = R.drawable.backgroundimage),
                 contentDescription = "Background Image",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
-            // EasterEgg, click three times on title and watch firework display
-            val showFireworksCounter = remember { mutableIntStateOf(0) }
-            if (showFireworksCounter.intValue >= 3) {
+
+            if (fireworkOn) {
                 FireworkLauncher(onAnimationEnd = {
                     showFireworksCounter.intValue = 0
                 })
             }
-            val titleModifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 50.dp)
-                .clickable(
-//                        interactionSource = remember { MutableInteractionSource() },
-//                        indication = null
-                ) {
-                    showFireworksCounter.intValue += 1
-                }
-            Title(modifier = titleModifier)
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(elementSpacing)
+                verticalArrangement = Arrangement.spacedBy(elementSpacing),
+                modifier = Modifier.fillMaxSize()
             ) {
+                // Title area (reserves space, clickable for fireworks)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(titleHeight)
+                        .background(Color.Transparent)
+                        .clickable { showFireworksCounter.intValue += 1 },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "",
+                        fontSize = 40.sp,
+                        color = Color.White,
+                        fontFamily = customFont,
+                        style = TextStyle(
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.5f),
+                                offset = Offset(2f, 4f),
+                                blurRadius = 8f
+                            )
+                        )
+                    )
+                }
                 //Avatar Placeholder
-                Box(modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(Color.DarkGray)
-                    .clickable { showAvatarDialog = true },
-                    contentAlignment = Alignment.Center){
-                    Image(painter = painterResource(id = selectedAvatarResId),
+                Box(
+                    modifier = Modifier
+                        .size(elementHeight)
+                        .clip(CircleShape)
+                        .background(Color.DarkGray)
+                        .clickable { showAvatarDialog = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = selectedAvatarResId),
                         contentDescription = "Select Avatar",
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop)
+                        contentScale = ContentScale.Crop
+                    )
                 }
                 androidx.compose.material3.TextField(
                     value = username,
-                    onValueChange = {
-                            newValue ->
+                    onValueChange = { newValue ->
                         val maxLength = 6
                         val allowedChars = "a-zA-Z0-9,.!_;:?"
+
                         val regex = Regex("^[$allowedChars]*$")
                         if (newValue.length <= maxLength){
                             if (newValue.matches(regex)){
@@ -270,44 +299,74 @@ class StartMenue {
                     },
                     shape = RoundedCornerShape(50),
                     modifier = Modifier
-                        .width(elementWidth)
+                        .width(elementWidth),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent,
+                        errorIndicatorColor = Color.Transparent
+                    ),
+                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
                 )
-
-                Button(
-                    onClick = { showJoinDialog = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2ecc71),
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(2.dp, Color.White),
+                val wiggleAnim2 = rememberInfiniteTransition(label = "wiggle2").animateFloat(
+                    initialValue = 2f,
+                    targetValue = -2f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 600, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ), label = "wiggle2"
+                )
+                Text(
+                    text = "CREATE A LOBBY",
                     modifier = Modifier
-                        .size(elementWidth, elementHeight)
-                ) {
-                    Text(
-                        text = "Join Lobby",
-                        textAlign = TextAlign.Center,
-                        fontSize = 20.sp
-                    )
-                }
+                        .clickable { createLobbyAndJoin() }
+                        .padding(screenHeight * 0.05f)
+                        .fillMaxWidth()
 
-                Button(
-                    onClick = {
-                        createLobbyAndJoin()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.DarkGray,
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier
-                        .size(elementWidth, elementHeight)
-                ) {
-                    Text(
-                        text = "Create Lobby",
-                        textAlign = TextAlign.Center,
-                        fontSize = 20.sp
+                        .graphicsLayer {
+                            rotationZ = wiggleAnim2.value
+                        },
+                    textAlign = TextAlign.Center,
+                    fontSize = 26.sp,
+                    color = Color(0xFFFCAE21),
+                    fontFamily = customFont,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            offset = Offset(2f, 4f),
+                            blurRadius = 8f
+                        )
                     )
-                }
+                )
+                val wiggleAnim = rememberInfiniteTransition(label = "wiggle").animateFloat(
+                    initialValue = -2f,
+                    targetValue = 2f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 600, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ), label = "wiggle"
+                )
+                Text(
+                    text = "JOIN A LOBBY",
+                    modifier = Modifier
+                        .clickable { showJoinDialog = true }
+                        .padding(screenHeight * 0.05f)
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            rotationZ = wiggleAnim.value
+                        },
+                    textAlign = TextAlign.Center,
+                    fontSize = 26.sp,
+                    color = Color(0xFFFCAE21),
+                    fontFamily = customFont,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            offset = Offset(2f, 4f),
+                            blurRadius = 8f
+                        )
+                    )
+                )
             }
             Surface(
                 modifier = Modifier
@@ -517,25 +576,6 @@ class StartMenue {
     }
 }
 
-@Composable
-fun Title(modifier: Modifier = Modifier) {
-    Text(
-        text = "Hanabi!",
-        fontFamily = FontFamily.Cursive,
-        color = Color(0xFFF2FF90),
-        fontSize = 100.sp,
-        fontWeight = FontWeight.Bold,
-        style = TextStyle(
-            shadow = Shadow(
-                color = Color.Black.copy(alpha = 100f),
-                offset = Offset(-0f, 0f),
-                blurRadius = 50f
-            )
-        ),
-        modifier = modifier
-    )
-}
-
 fun loadMarkdownFromRaw(@RawRes resId: Int, context: Context): String {
     return context.resources.openRawResource(resId)
         .bufferedReader()
@@ -669,9 +709,3 @@ fun FullScreenRulesDialog(onDismiss: () -> Unit) {
         }
     }
 }
-
-
-
-
-
-
