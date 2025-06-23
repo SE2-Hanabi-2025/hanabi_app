@@ -684,16 +684,20 @@ class GamePlayViewModel(
             onDiscardCardDrop(cardId)
             dropped = true
         }
-        // If not dropped anywhere, give a strike and discard
+        // If not dropped anywhere, do nothing (no strike, no discard)
         if (!dropped) {
-            Log.d(TAG, "Pointer is not inside any drop zone. Giving strike and discarding card.")
-            val hand = _thisPlayersHand.value
-            val cardIndex = hand.indexOf(cardId)
-            if (cardIndex >= 0) {
-                giveStrikeAndDiscard(cardIndex)
-            } else {
-                Log.d(TAG, "CardId $cardId not found in hand for strike/discard fallback.")
+            Log.d(TAG, "Pointer is not inside any drop zone. Card will return to hand. No strike or discard.")
+            // No action needed; UI should reset card position
+        }
+    }
+
+    fun onCheatRequested() {
+        // Only send cheat if not already shown this turn
+        if (!cheatHandShownThisTurn) {
+            viewModelScope.launch {
+                webSocketService.sendCheatAction(lobbyId, playerId)
             }
+            cheatHandShownThisTurn = true
         }
     }
 }
