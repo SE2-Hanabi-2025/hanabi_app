@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -33,9 +32,11 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.model.Card
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 /**
@@ -47,8 +48,7 @@ import kotlin.math.roundToInt
 @Composable
 fun PlayersCardsUI(
     landscape: Boolean,
-    cardSizeDp: DpSize,
-    isCheatMode: Boolean = false
+    cardSizeDpIn: DpSize
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     val cheatHand = viewModel.cheatHand.collectAsState().value
@@ -74,7 +74,7 @@ fun PlayersCardsUI(
     // Always use the normal hand for selection, hinting, and logic
     val handForLogic = viewModel.thisPlayersHand.collectAsState().value
     PlayersHand(
-        cardSizeDp = cardSizeDp,
+        cardSizeDp = cardSizeDpIn,
         hand = if (showRealCards) cheatHand.map { it.getID() } else handForLogic,
         onCardClick = viewModel::onPlayersCardClick,
         selectedCard = viewModel.selectedCardId.collectAsState().value,
@@ -88,9 +88,34 @@ fun PlayersCardsUI(
             }
         }
     )
+
+    // ensure others players cards are display clockwise in terms of player order
+    val visibleHands = viewModel.otherPlayersHands.collectAsState().value
+    val handsDisplayOrder: MutableMap<Int, List<Card>> =  mutableMapOf()
+    val thisPlayerId = viewModel.thisPlayer.collectAsState().value
+    val playerIds = viewModel.players.collectAsState().value.map { player -> player.id }
+    val thisPlayerIndex = playerIds.indexOf(thisPlayerId)
+    val numPLayers = playerIds.size
+    for (i in 1..numPLayers-1) {
+        val nextPlayerIndex = modPositive(thisPlayerIndex+((-1f).pow(i)*((i+1)/2)).toInt(), numPLayers) // sequence -1, +1, -2, +2, ...
+        val nextPlayersID = playerIds[nextPlayerIndex]
+        val nextPlayersHand = visibleHands.get(key = nextPlayersID)
+        handsDisplayOrder.put(nextPlayersID, nextPlayersHand!!)
+    }
+
+    //limit cards from being too small in landscape
+    val MIN_CARD_WIDTH_LS = 60.dp
+    var cardSizeDp = cardSizeDpIn
+    if (landscape) {
+        val cardWidth = max(cardSizeDpIn.width, MIN_CARD_WIDTH_LS)
+        val cardHeight = cardWidth.times(CARD_ASPECT_RATIO)
+        cardSizeDp = DpSize(cardWidth, cardHeight)
+    }
+
     OtherPlayersHands(
+        hands = handsDisplayOrder,
         cardSizeDp = cardSizeDp,
-        hands = viewModel.otherPlayersHands.collectAsState().value,
+        landscape = landscape,
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
         selectedHandIndex = viewModel.selectedPlayerId.collectAsState().value,
     )
@@ -265,13 +290,14 @@ fun PlayersHand(
 fun OtherPlayersHands(
     cardSizeDp: DpSize,
     hands: Map<Int, List<Card>>,
+    landscape: Boolean,
     onOtherPlayersHandClick: (Int) -> Unit,
     selectedHandIndex: Int,
 ){
     val viewModel: GamePlayViewModel = viewModel()
     val players by viewModel.players.collectAsState()
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
-    
+
     // Create a map of player IDs to player names
     val playerMap = players.associateBy { it.id }
 
@@ -296,9 +322,9 @@ fun OtherPlayersHands(
 
             handOffsetY =
                 if (index > 1) {// offset top two hands to be at third of the screen down form top
-                    boxSize.height * 0.25f
+                    boxSize.height * ( if (landscape) 0.25f else 0.35f )
                 } else {
-                    boxSize.height * 0.6f
+                    boxSize.height * ( if (landscape) 0.75f else 0.65f )
                 }
             val handOffset = Offset(handOffsetX, handOffsetY)
               // Find the player details
@@ -335,7 +361,7 @@ fun OtherPlayersHand(
 
     Box(
         modifier = Modifier
-            .offset { IntOffset((offset.x-rowSize.width/2).roundToInt(), offset.y.roundToInt()) }
+            .offset { IntOffset((offset.x-rowSize.width/2).roundToInt(), (offset.y-rowSize.height/2).roundToInt()) }
             .graphicsLayer {
                 rotationZ = rotationAmountZ
             }
@@ -378,7 +404,7 @@ fun OtherPlayersHand(
         }
         
         Row(
-            horizontalArrangement = Arrangement.spacedBy((-45.dp)),
+            horizontalArrangement = Arrangement.spacedBy((-cardSizeDp.width.times(0.75f).value.dp)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             hand.value.forEachIndexed() { index, card ->
@@ -399,4 +425,8 @@ fun OtherPlayersHand(
             }
         }
     }
+}
+
+fun modPositive(x: Int, y: Int): Int {
+    return ((x%y) + y ) % y
 }

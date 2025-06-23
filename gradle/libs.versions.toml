@@ -1,4 +1,5 @@
 [versions]
+accompanistMarkdown = "0.34.0"
 agp = "8.9.3"
 core = "3.5.2"
 guava = "32.1.3-android"
@@ -24,9 +25,11 @@ firebaseCrashlyticsBuildtools = "3.0.3"
 firebaseFirestoreKtx = "25.1.4"
 camerarx = "1.4.2"
 lifecycleViewmodelCompose = "2.9.0"
+markdownCompose = "0.3.4"
 mlkit_barcode = "17.2.0"
 
 [libraries]
+accompanist-markdown = { module = "com.google.accompanist:accompanist-markdown", version.ref = "accompanistMarkdown" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
@@ -61,6 +64,7 @@ camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = 
 camera-view = { module = "androidx.camera:camera-view", version.ref = "camerarx" }
 ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktorClientWebsockets" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorSerializationKotlinxJson" }
+markdown-compose = { module = "com.github.jeziellago:markdown-compose", version.ref = "markdownCompose" }
 mlkit-barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkit_barcode" }
 
 

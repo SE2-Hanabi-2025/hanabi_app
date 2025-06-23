@@ -1,14 +1,22 @@
 package se2.hanabi.app.gamePlayUI
 
 import android.content.res.Configuration
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,16 +28,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import se2.hanabi.app.Services.WebSocketService
+import se2.hanabi.app.model.Player
 
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
@@ -42,6 +53,7 @@ const val maxGameBoardHeightProportion = 0.5f
  * - fuse/hint tokens, discard/draw pile, color stacks
  *
  */
+
 @Composable
 fun GamePlayUI(viewModel: GamePlayViewModel) {
     val configuration = LocalConfiguration.current
@@ -52,18 +64,16 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
     val landscape = when (configuration.orientation) { Configuration.ORIENTATION_LANDSCAPE -> true else -> false }
 
     var shrinkRatio = 1f
-    var defaultCardWidth = screeWidthDp.times(cardProportionOfWidth)
+    var defaultCardWidth = screeWidthDp.times(CARD_PROPORTION_OF_WIDTH)
     var cardWidth: Dp
     var cardHeight: Dp
-
     if (landscape) {
         val gameBoardVertPaddingElementsSum = boardElementPadding.times(4)
         val availableVertSpace = screenHeightDP.times(maxGameBoardHeightProportion)-gameBoardVertPaddingElementsSum
         cardHeight = availableVertSpace.div(2)
-        cardWidth = cardHeight.div(aspectRatio)
-
+        cardWidth = cardHeight.div(CARD_ASPECT_RATIO)
     } else { // portrait
-        cardWidth = screeWidthDp.times(cardProportionOfWidth)
+        cardWidth = screeWidthDp.times(CARD_PROPORTION_OF_WIDTH)
         val gameBoardVertPaddingElementsSum = cardSpacing.times(4) + boardElementPadding.times(2)
         val gameBoardHeight = cardWidth.times(5) + gameBoardVertPaddingElementsSum
         if (gameBoardHeight.div(screenHeightDP) > maxGameBoardHeightProportion) {
@@ -71,14 +81,14 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
                 screenHeightDP.times(maxGameBoardHeightProportion) - gameBoardVertPaddingElementsSum
             cardWidth = availableVertSpace.div(5)
         }
-        cardHeight = cardWidth.times(aspectRatio)
+        cardHeight = cardWidth.times(CARD_ASPECT_RATIO)
     }
 
     shrinkRatio = cardWidth.div(defaultCardWidth)
 
     val cardSizeDp = DpSize(
         width = cardWidth,
-        height = cardHeight
+        height = cardWidth.times(CARD_ASPECT_RATIO)
     )
 
     Box(modifier = Modifier
@@ -123,12 +133,12 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
             // Show game board and player cards
             GameBoardUI(cardSizeDp = cardSizeDp, shrinkRatio = shrinkRatio)
             PlayersCardsUI(landscape, cardSizeDp)
-            
+
+            Column (modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally){
             // Show game status overlay at the top
             Column(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 8.dp)
                     .background(Color.Black.copy(alpha = 0.5f))
                     .padding(8.dp)
             ) {
@@ -162,7 +172,13 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
                     )
                 }
             }
-            
+                Spacer(modifier = Modifier.height(12.dp))
+
+                InGamePlayerList(players = players)
+            }
+
+
+
             // Action buttons at the bottom
             if (isMyTurn && !gameOver) {
                 Row(
@@ -191,3 +207,49 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
         }
     }
 }
+
+@Composable
+fun InGamePlayerList(players: List<Player>, modifier: Modifier = Modifier){
+
+    val rows = players.chunked(2)
+
+    Column (
+        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
+            .fillMaxWidth(0.5f)
+            .heightIn()
+            .background(Color.DarkGray.copy(alpha = 0.20f), RoundedCornerShape(40.dp))
+            .padding(2.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ){
+        rows.forEach{rowPlayers ->
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically)
+
+            {
+        rowPlayers.forEach{player ->
+        Row (
+            modifier = Modifier
+                .weight(1f).padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+
+            Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(Color.DarkGray)){
+                Image(painter = painterResource(id = player.avatarResID),
+                    contentDescription = "${player.name} avatar",
+                    modifier = Modifier.fillMaxSize())
+            }
+
+            Spacer(modifier = Modifier.width(5.dp))
+
+            Text(text = player.name,
+                color = Color.White,
+                fontSize = 12.sp,
+                maxLines = 1)
+        }}
+                if (rowPlayers.size == 1){
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+    }
+}
+    }}

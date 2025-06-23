@@ -390,8 +390,7 @@ class GamePlayViewModel(
     }
 
     fun onColorStackClick(color: Card.Color) {
-        // Handle the color stack click event here
-        // For example, log the click or update some state
+        onPlayCardClick()
         Log.d("GamePlayViewModel", "Color stack clicked: $color")
     }
 
@@ -685,6 +684,15 @@ class GamePlayViewModel(
                 webSocketService.sendCheatAction(lobbyId, playerId)
             }
             cheatHandShownThisTurn = true
+        }
+    }
+
+    // Additional cheat function from development branch
+    // Example usage: call this from UI with the actual sequence and proximity
+    fun defuseAttemptCheat(sequence: List<String>, proximity: String) {
+        viewModelScope.launch {
+            webSocketService.defuseAttempt(lobbyId, playerId, sequence, proximity)
+            Log.i(TAG, "[CHEAT] Defuse attempt sent via WebSocket! Sequence: $sequence, Proximity: $proximity")
         }
     }
 }
