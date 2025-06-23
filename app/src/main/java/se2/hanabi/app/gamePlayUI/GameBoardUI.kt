@@ -1,11 +1,13 @@
 package se2.hanabi.app.gamePlayUI
 
 import android.content.res.Configuration
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,7 +21,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -27,6 +31,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import se2.hanabi.app.R
 import se2.hanabi.app.model.Card
 import se2.hanabi.app.ui.theme.customFont
 
@@ -47,6 +52,13 @@ fun GameBoardUI(
 
     val tokenAreaHeight = ( cardSizeDp.width.times(3) + cardSpacing.times(3) - boardElementPadding.times(2) ).div(2)
     val landscape = when (LocalConfiguration.current.orientation) { Configuration.ORIENTATION_LANDSCAPE -> true else -> false }
+
+    Image(
+        painter = painterResource(id = R.drawable.lobbyscreen_bg),
+        contentDescription = "Background Image",
+        modifier = Modifier.fillMaxSize().alpha(0.8f),
+        contentScale = ContentScale.Crop
+    )
 
     Row(
         modifier = Modifier
