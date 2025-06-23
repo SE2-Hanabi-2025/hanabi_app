@@ -1,6 +1,7 @@
 package se2.hanabi.app.gamePlayUI
 
 import android.content.res.Configuration
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,7 +29,9 @@ import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -36,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.viewmodel.compose.viewModel
+import se2.hanabi.app.R
 import se2.hanabi.app.model.Card
 import se2.hanabi.app.ui.theme.customFont
 
@@ -57,6 +62,13 @@ fun GameBoardUI(
     // Restore original tokenAreaHeight calculation (based on width, not height)
     val tokenAreaHeight = (cardSizeDp.width * 3 + cardSpacing * 3 - boardElementPadding * 2) / 2
     val landscape = when (LocalConfiguration.current.orientation) { Configuration.ORIENTATION_LANDSCAPE -> true else -> false }
+
+    Image(
+        painter = painterResource(id = R.drawable.lobbyscreen_bg),
+        contentDescription = "Background Image",
+        modifier = Modifier.fillMaxSize().alpha(0.8f),
+        contentScale = ContentScale.Crop
+    )
 
     Row(
         modifier = Modifier

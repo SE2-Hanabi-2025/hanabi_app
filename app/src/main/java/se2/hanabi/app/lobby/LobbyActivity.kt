@@ -205,11 +205,7 @@ class LobbyActivity : ComponentActivity() {
                         parameter("isCasualMode", viewModel.isCasualMode.value)
                     }
                 if (response.status == HttpStatusCode.OK) {
-                    // Assuming viewModel.getPlayerId() returns the current player's ID
-                    val currentPlayerId = viewModel.getPlayerId() // Placeholder for actual player ID retrieval
-                    if (currentPlayerId != null) {
-                        navigateToGame(lobbyCode, currentPlayerId)
-                    }
+                    viewModel.setIsGameStarted(true)
                 }
             } catch (e: Exception) {
             }
