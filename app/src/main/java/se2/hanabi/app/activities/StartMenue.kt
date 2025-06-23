@@ -308,25 +308,6 @@ class StartMenue {
                         fontSize = 20.sp
                     )
                 }
-                
-                Button(
-                    onClick = { showRules = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.DarkGray,
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier
-                        .padding(top = 10.dp)
-                        .width(200.dp)
-                        .height(60.dp)
-                ) {
-                    Text(
-                        text = "Rules",
-                        textAlign = TextAlign.Center,
-                        fontSize = 20.sp
-                    )
-                }    
             }
             Surface(
                 modifier = Modifier
@@ -338,11 +319,11 @@ class StartMenue {
                 tonalElevation = 4.dp
             ) {
                 IconButton(
-                    onClick = { fetchStatus() }
+                    onClick = { showRules = true }
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = "Status",
+                        contentDescription = "Game Rules",
                         tint = Color.DarkGray,
                         modifier = Modifier.size(50.dp)
                     )
