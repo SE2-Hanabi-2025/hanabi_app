@@ -1,6 +1,8 @@
 package se2.hanabi.app.activities
 
+import android.content.Context
 import android.content.Intent
+import androidx.annotation.RawRes
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -17,8 +19,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Info
@@ -28,11 +32,15 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +56,7 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -56,6 +65,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -69,9 +80,11 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import se2.hanabi.app.Handler.CameraPermissionHandler
 import se2.hanabi.app.components.QRScanner
+import dev.jeziellago.compose.markdowntext.MarkdownText
 import se2.hanabi.app.ui.theme.customFont
 import se2.hanabi.app.utils.ServerAddressManager
 import androidx.compose.foundation.layout.BoxWithConstraints
+
 
 class StartMenue {
     @Composable
@@ -94,6 +107,7 @@ class StartMenue {
         var showQRScanner by remember { mutableStateOf(false) }
         var hasCameraPermission by remember { mutableStateOf(false) }
         var permissionDenied by remember { mutableStateOf(false) }
+        var showRules by remember { mutableStateOf(false) }
         val elementSpacing = 10.dp
         val elementWidth = 200.dp
         val elementHeight = 60.dp
@@ -364,11 +378,11 @@ class StartMenue {
                 tonalElevation = 4.dp
             ) {
                 IconButton(
-                    onClick = { fetchStatus() }
+                    onClick = { showRules = true }
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = "Status",
+                        contentDescription = "Game Rules",
                         tint = Color.DarkGray,
                         modifier = Modifier.size(50.dp)
                     )
@@ -501,6 +515,9 @@ class StartMenue {
                 showQRScanner = false
             }
         }
+        if (showRules){
+            FullScreenRulesDialog (onDismiss = { showRules = false })
+        }
     }
 
     @Composable
@@ -559,3 +576,136 @@ class StartMenue {
     }
 }
 
+fun loadMarkdownFromRaw(@RawRes resId: Int, context: Context): String {
+    return context.resources.openRawResource(resId)
+        .bufferedReader()
+        .use { it.readText() }
+}
+
+@Composable
+fun FullScreenRulesDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+
+    var standardRulesText by remember { mutableStateOf("") }
+    var extrasRulesText by remember { mutableStateOf("") }
+    var selectedTabIndex by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        standardRulesText = loadMarkdownFromRaw(R.raw.hanabi_rules, context)
+        extrasRulesText = loadMarkdownFromRaw(R.raw.hanabi_extras, context)
+    }
+
+    val currentMarkdown = when (selectedTabIndex) {
+        0 -> standardRulesText
+        else -> extrasRulesText
+    }
+
+    val selectedTabColor = colorResource(id = R.color.selected_tab_color)
+    val indicatorColor = colorResource(id=R.color.indicator_violet)
+    val backgroundColor = colorResource(id = R.color.light_background)
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Gray.copy(alpha = 0.5f))
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(0.95f),
+                color = MaterialTheme.colorScheme.background,
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Hanabi Rules",
+                            style = MaterialTheme.typography.headlineMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    TabRow(
+                        selectedTabIndex = selectedTabIndex,
+                        containerColor = Color.Transparent,
+                        indicator = {},
+                    ) {
+                        listOf("Standard", "Extras").forEachIndexed { index, title ->
+                            val isSelected = selectedTabIndex == index
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { selectedTabIndex = index }
+                                    .background(if (isSelected) selectedTabColor else Color.Transparent)
+                                    .padding(vertical = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    title,
+                                    color = if (isSelected) Color.Black else Color.DarkGray
+                                )
+                                if (isSelected) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .height(3.dp)
+                                            .width(40.dp)
+                                            .background(indicatorColor, RoundedCornerShape(2.dp))
+                                    )
+                                } else {
+                                    Spacer(modifier = Modifier.height(7.dp)) // Match height with selected
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .background(backgroundColor, shape = RoundedCornerShape(12.dp))
+                            .padding(16.dp)
+                    ) {
+                        if (currentMarkdown.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                            ) {
+                                MarkdownText(
+                                    markdown = currentMarkdown,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        } else {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Text("Close")
+                    }
+                }
+            }
+        }
+    }
+}
