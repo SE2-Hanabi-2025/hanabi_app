@@ -25,7 +25,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -33,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.model.Card
 import se2.hanabi.app.model.Hint
+import se2.hanabi.app.ui.theme.customFont
 
 const val hintSelecterToCardWidthProportion = 0.9f
 const val hintPaddingToHintSelectorProportion = 0.25f
@@ -162,9 +162,9 @@ fun GiveHintButton(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Give hint",
+            text = "GIVE HINT",
             fontSize = (width.value/5).sp,
-            fontFamily = FontFamily.Cursive,
+            fontFamily = customFont,
             color = if (!isTrulyAvailable) Color(0x566290FF) else Color(0xFFF2FF90),
         )
     }
@@ -230,7 +230,7 @@ fun HintItem(
             if (value in 1..5) {
                 Text(
                     text = value.toString(),
-                    fontFamily = FontFamily.Cursive,
+                    fontFamily = customFont,
                     color = Color(0xFFF2FF90),
                     fontSize = (size.value * 0.75).sp
                 )
