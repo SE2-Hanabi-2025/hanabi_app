@@ -11,7 +11,7 @@ object ServerAddressManager {
 
 
  //einfach hier ip-Adresse und Port ändern, um die Verbindung zu einem anderen Server herzustellen
-    private val CURRENT_ENVIRONMENT = ServerEnvironment.LOCAL_NETWORK
+    private val CURRENT_ENVIRONMENT = ServerEnvironment.UNI_SERVER
    
     private const val EMULATOR_HOST = "10.0.2.2"
     private const val LOCAL_NETWORK_HOST = "192.168.0.77" 
@@ -20,7 +20,7 @@ object ServerAddressManager {
    
     private const val EMULATOR_PORT = 8080
     private const val LOCAL_NETWORK_PORT = 8080
-    private const val UNI_SERVER_PORT = 8080
+    private const val UNI_SERVER_PORT = 53218
     
     
     private const val EMULATOR_USES_HTTPS = false
