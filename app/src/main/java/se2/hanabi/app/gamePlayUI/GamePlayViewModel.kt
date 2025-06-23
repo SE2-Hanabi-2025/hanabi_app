@@ -588,19 +588,6 @@ class GamePlayViewModel(
         }
     }
 
-    fun observeTiltCheat(isTilted: StateFlow<Boolean>) {
-        viewModelScope.launch {
-            var lastTilted = false
-            isTilted.collect { tilted ->
-                if (tilted && !lastTilted && !cheatSentThisTurn && _isMyTurn.value) {
-                    webSocketService.sendCheatAction(lobbyId, playerId)
-                    cheatSentThisTurn = true
-                }
-                lastTilted = tilted
-            }
-        }
-    }
-
     fun onDiscardCardDrop(cardId: Int?) {
         val hand = thisPlayersHand.value
         if (cardId == null || hand.none { it == cardId }) {

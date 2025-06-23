@@ -2,6 +2,7 @@ package se2.hanabi.app.gamePlayUI
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -10,13 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -46,15 +48,28 @@ import kotlin.math.roundToInt
 fun PlayersCardsUI(
     landscape: Boolean,
     cardSizeDp: DpSize,
-    isCheatMode: Boolean = false // pass this from parent or ViewModel if needed
+    isCheatMode: Boolean = false
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     val cheatHand = viewModel.cheatHand.collectAsState().value
-    val isTilted = isCheatMode // Replace with actual tilt/cheat state if available
-    // Only use cheatHandShownThisTurn for display, not for selection or hint logic
-    val showRealCards = isTilted && cheatHand.isNotEmpty() && !viewModel.cheatHandShownThisTurn
-    if (showRealCards) {
-        viewModel.cheatHandShownThisTurn = true
+    val currentPlayer = viewModel.currentPlayer.collectAsState().value
+    var showCheat by remember { mutableStateOf(false) }
+    var cheatUsedThisRound by remember { mutableStateOf(false) }
+    var lastPlayer by remember { mutableStateOf(currentPlayer ?: -1) }
+
+    // Reset cheat usage when the round changes
+    if (lastPlayer != currentPlayer) {
+        cheatUsedThisRound = false
+        lastPlayer = currentPlayer ?: -1
+    }
+
+    val showRealCards = showCheat && cheatHand.isNotEmpty()
+    // Hide cards after 3 seconds
+    LaunchedEffect(showCheat) {
+        if (showCheat) {
+            kotlinx.coroutines.delay(3000)
+            showCheat = false
+        }
     }
     // Always use the normal hand for selection, hinting, and logic
     val handForLogic = viewModel.thisPlayersHand.collectAsState().value
@@ -64,7 +79,14 @@ fun PlayersCardsUI(
         onCardClick = viewModel::onPlayersCardClick,
         selectedCard = viewModel.selectedCardId.collectAsState().value,
         showRealCards = showRealCards,
-        realCards = cheatHand
+        realCards = cheatHand,
+        onCheatActivated = {
+            if (!cheatUsedThisRound) {
+                showCheat = true
+                cheatUsedThisRound = true
+                viewModel.onCheatRequested()
+            }
+        }
     )
     OtherPlayersHands(
         cardSizeDp = cardSizeDp,
@@ -91,7 +113,8 @@ fun PlayersHand(
     onCardClick: (Int) -> Unit,
     selectedCard: Int?,
     showRealCards: Boolean = false,
-    realCards: List<Card> = emptyList()
+    realCards: List<Card> = emptyList(),
+    onCheatActivated: (() -> Unit)? = null
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     val playerId by viewModel.thisPlayer.collectAsState()
@@ -126,7 +149,19 @@ fun PlayersHand(
                 color = Color.White.copy(alpha = 0.7f),
                 style = androidx.compose.ui.text.TextStyle(
                     fontSize = 12.sp
-                )
+                ),
+                modifier = Modifier.pointerInput(Unit) {
+                    detectTapGestures(
+                        onPress = {
+                            try {
+                                kotlinx.coroutines.delay(6000)
+                                onCheatActivated?.invoke()
+                            } finally {
+                                awaitRelease()
+                            }
+                        }
+                    )
+                }
             )
         }
         Row(

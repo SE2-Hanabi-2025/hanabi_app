@@ -122,31 +122,7 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
         } else {
             // Show game board and player cards
             GameBoardUI(cardSizeDp = cardSizeDp, shrinkRatio = shrinkRatio)
-            val context = LocalContext.current
-            val tiltSensor = remember { TiltCheatSensor(context) }
-            val isTilted by tiltSensor.isTilted
-            val cheatActive = remember { mutableStateOf(false) }
-            val latestIsTilted = rememberUpdatedState(isTilted)
-            // Observe tilt cheat and send cheat action
-            val isTiltedFlow = remember { kotlinx.coroutines.flow.MutableStateFlow(false) }
-            LaunchedEffect(isTilted) {
-                isTiltedFlow.value = isTilted
-            }
-            LaunchedEffect(Unit) {
-                viewModel.observeTiltCheat(isTiltedFlow)
-            }
-            LaunchedEffect(isTilted) {
-                if (isTilted) {
-                    cheatActive.value = true
-                    delay(3000)
-                    // Only hide if still tilted after 3s
-                    if (latestIsTilted.value) cheatActive.value = false
-                } else {
-                    cheatActive.value = false
-                }
-            }
-            LaunchedEffect(Unit) { tiltSensor.start() }
-            PlayersCardsUI(landscape, cardSizeDp, isCheatMode = cheatActive.value)
+            PlayersCardsUI(landscape, cardSizeDp)
             
             // Show game status overlay at the top
             Column(
