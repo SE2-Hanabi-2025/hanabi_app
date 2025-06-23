@@ -141,6 +141,9 @@ class GamePlayViewModel(
 
     private var cheatSentThisTurn = false
 
+    // Track if cheat hand has been shown this turn (for UI logic)
+    var cheatHandShownThisTurn = false
+
     // Drag-and-drop pointer and drop zone state
     private val _pointerPosition = MutableStateFlow<Offset?>(null)
     val pointerPosition: StateFlow<Offset?> = _pointerPosition
@@ -259,6 +262,7 @@ class GamePlayViewModel(
 
         if (_currentPlayer.value != newStatus.currentPlayerId) {
             cheatSentThisTurn = false
+            cheatHandShownThisTurn = false // Reset when turn changes
         }
         _currentPlayer.value = newStatus.currentPlayerId
         _isMyTurn.value = newStatus.currentPlayerId == playerId

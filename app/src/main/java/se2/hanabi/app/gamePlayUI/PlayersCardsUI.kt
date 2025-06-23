@@ -51,12 +51,19 @@ fun PlayersCardsUI(
     val viewModel: GamePlayViewModel = viewModel()
     val cheatHand = viewModel.cheatHand.collectAsState().value
     val isTilted = isCheatMode // Replace with actual tilt/cheat state if available
+    // Only use cheatHandShownThisTurn for display, not for selection or hint logic
+    val showRealCards = isTilted && cheatHand.isNotEmpty() && !viewModel.cheatHandShownThisTurn
+    if (showRealCards) {
+        viewModel.cheatHandShownThisTurn = true
+    }
+    // Always use the normal hand for selection, hinting, and logic
+    val handForLogic = viewModel.thisPlayersHand.collectAsState().value
     PlayersHand(
         cardSizeDp = cardSizeDp,
-        hand = if (isTilted && cheatHand.isNotEmpty()) cheatHand.map { it.getID() } else viewModel.thisPlayersHand.collectAsState().value,
+        hand = if (showRealCards) cheatHand.map { it.getID() } else handForLogic,
         onCardClick = viewModel::onPlayersCardClick,
         selectedCard = viewModel.selectedCardId.collectAsState().value,
-        showRealCards = isTilted && cheatHand.isNotEmpty(),
+        showRealCards = showRealCards,
         realCards = cheatHand
     )
     OtherPlayersHands(
