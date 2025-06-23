@@ -106,7 +106,7 @@ class LobbyActivity : ComponentActivity() {
                 val isGameStarted by viewModel.isGameStarted.collectAsState()
 
                 LaunchedEffect(isGameStarted) {
-                    if (isGameStarted) {
+                    if (isGameStarted && !isHost) {
                         lobbyCode?.let { lc ->
                             val currentPlayerId = viewModel.getPlayerId()
                             if (currentPlayerId != null) {
