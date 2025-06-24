@@ -1,15 +1,21 @@
 package se2.hanabi.app.activities
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import androidx.annotation.RawRes
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,14 +34,12 @@ import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
@@ -59,34 +63,32 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import dev.jeziellago.compose.markdowntext.MarkdownText
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.launch
+import se2.hanabi.app.Handler.CameraPermissionHandler
+import se2.hanabi.app.R
+import se2.hanabi.app.components.QRScanner
 import se2.hanabi.app.endScreen.endAnimations.FireworkLauncher
 import se2.hanabi.app.lobby.LobbyActivity
-import se2.hanabi.app.R
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
-import se2.hanabi.app.Handler.CameraPermissionHandler
-import se2.hanabi.app.components.QRScanner
-import dev.jeziellago.compose.markdowntext.MarkdownText
 import se2.hanabi.app.ui.theme.customFont
 import se2.hanabi.app.utils.ServerAddressManager
-import androidx.compose.foundation.layout.BoxWithConstraints
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 
 class StartMenue {
+    @SuppressLint("UnusedBoxWithConstraintsScope")
     @Composable
     fun StartMenuScreen() {
         var showConnectDialog by remember { mutableStateOf(false) }
