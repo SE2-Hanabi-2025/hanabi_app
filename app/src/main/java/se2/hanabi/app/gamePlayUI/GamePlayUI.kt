@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import se2.hanabi.app.Services.WebSocketService
 import se2.hanabi.app.model.Player
@@ -136,42 +137,7 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
 
             Column (modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally){
-            // Show game status overlay at the top
-            Column(
-                modifier = Modifier
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .padding(8.dp)
-            ) {
-                Text(
-                    text = when (connectionState) {
-                        WebSocketService.ConnectionState.CONNECTED -> "Connected"
-                        WebSocketService.ConnectionState.CONNECTING -> "Connecting..."
-                        WebSocketService.ConnectionState.DISCONNECTED -> "Disconnected"
-                    },
-                    color = when (connectionState) {
-                        WebSocketService.ConnectionState.CONNECTED -> Color.Green
-                        WebSocketService.ConnectionState.CONNECTING -> Color.Yellow
-                        WebSocketService.ConnectionState.DISCONNECTED -> Color.Red
-                    }
-                )
-                
-                Text(
-                    text = if (isMyTurn) "Your turn" else "Waiting for other player",
-                    color = if (isMyTurn) Color.Green else Color.White
-                )
-                
-                statusMessage?.let {
-                    Text(text = it, color = Color.White)
-                }
-                
-                if (gameOver) {
-                    Text(
-                        text = "Game Over!",
-                        color = Color.Red,
-                        fontSize = 20.sp
-                    )
-                }
-            }
+
                 Spacer(modifier = Modifier.height(12.dp))
 
                 InGamePlayerList(players = players)
@@ -212,6 +178,8 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
 fun InGamePlayerList(players: List<Player>, modifier: Modifier = Modifier){
 
     val rows = players.chunked(2)
+    val viewModel: GamePlayViewModel = viewModel()
+    val currentPlayerID = viewModel.currentPlayer.collectAsState().value
 
     Column (
         modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
@@ -242,8 +210,10 @@ fun InGamePlayerList(players: List<Player>, modifier: Modifier = Modifier){
 
             Spacer(modifier = Modifier.width(5.dp))
 
+
+
             Text(text = player.name,
-                color = Color.White,
+                color = if (player.id==currentPlayerID) Color.Green else Color.White,
                 fontSize = 12.sp,
                 maxLines = 1)
         }}
