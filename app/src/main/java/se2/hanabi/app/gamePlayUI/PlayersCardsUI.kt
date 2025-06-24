@@ -9,21 +9,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -33,7 +34,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import se2.hanabi.app.model.Card
 import kotlin.math.pow
@@ -147,7 +147,6 @@ fun PlayersHand(
     val viewModel: GamePlayViewModel = viewModel()
     val playerId by viewModel.thisPlayer.collectAsState()
     val players by viewModel.players.collectAsState()
-    // Find current player's name
     val playerName = players.find { it.id == playerId }?.name ?: "Spieler $playerId"
     var rowSize by remember { mutableStateOf(IntSize.Zero) }
     // Track offset for each card by cardId
@@ -158,41 +157,27 @@ fun PlayersHand(
         contentAlignment = Alignment.BottomCenter
     ) {
         // Display player's name and ID
-        androidx.compose.foundation.layout.Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 130.dp)
-                .background(Color.Black.copy(alpha = 0.6f))
-                .padding(horizontal = 12.dp, vertical = 4.dp)
-        ) {
-            androidx.compose.material3.Text(
-                text = playerName,
-                color = Color.White,
-                style = androidx.compose.ui.text.TextStyle(
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                )
-            )
-            androidx.compose.material3.Text(
-                text = "ID: $playerId",
-                color = Color.White.copy(alpha = 0.7f),
-                style = androidx.compose.ui.text.TextStyle(
-                    fontSize = 12.sp
-                ),
-                modifier = Modifier.pointerInput(Unit) {
-                    detectTapGestures(
-                        onPress = {
-                            try {
-                                kotlinx.coroutines.delay(6000)
-                                onCheatActivated?.invoke()
-                            } finally {
-                                awaitRelease()
-                            }
+        val nameTagModifier = Modifier
+            .align(Alignment.BottomCenter)
+            .padding(bottom = cardSizeDp.height.times(1.1f))
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        try {
+                            kotlinx.coroutines.delay(6000)
+                            onCheatActivated?.invoke()
+                        } finally {
+                            awaitRelease()
                         }
-                    )
-                }
-            )
-        }
+                    }
+                )
+            }
+        NameTag(
+            modifier = nameTagModifier,
+            playerName =playerName,
+            isPlayersTurn = viewModel.currentPlayer.collectAsState().value == playerId
+        )
+
         if (isHighlighted) {
             BackGlow(
                 width = with (LocalDensity.current) {rowSize.width.toDp() - 20.dp},
@@ -349,7 +334,7 @@ fun OtherPlayersHands(
                 cardSizeDp = cardSizeDp,
                 offset = handOffset,
                 hand = hand,
-                playerId = playerId,
+                isPlayersTurn = viewModel.currentPlayer.collectAsState().value == playerId,
                 playerName = playerName,
                 rotationAmountZ = rotationAmountZ.floatValue,
                 isSelected = playerId == selectedHandIndex,
@@ -365,7 +350,7 @@ fun OtherPlayersHand(
     cardSizeDp: DpSize,
     offset: Offset,
     hand: Map.Entry<Int, List<Card>>,
-    playerId: Int,
+    isPlayersTurn: Boolean,
     playerName: String,
     rotationAmountZ: Float,
     isSelected: Boolean = false,
@@ -384,32 +369,14 @@ fun OtherPlayersHand(
             .onSizeChanged { newSize -> rowSize = newSize },
         contentAlignment = Alignment.Center
         ) {
-        // Player name and ID display
-        androidx.compose.foundation.layout.Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .offset(y = (-120).dp)
-                .graphicsLayer {
-                    rotationZ = -rotationAmountZ // Counter-rotate so text is always upright
-                }
-                .background(Color.Black.copy(alpha = 0.6f))
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            androidx.compose.material3.Text(
-                text = playerName,
-                color = Color.White,
-                style = androidx.compose.ui.text.TextStyle(
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                )
-            )
-            androidx.compose.material3.Text(
-                text = "ID: $playerId",
-                color = Color.White.copy(alpha = 0.7f),
-                style = androidx.compose.ui.text.TextStyle(
-                    fontSize = 12.sp
-                )
-            )
-        }
+        // Player name and ID displayž
+        val nameTagModifier = Modifier
+            .offset(y = -cardSizeDp.height.times(0.75f))
+        NameTag(
+            modifier = nameTagModifier,
+            playerName = playerName,
+            isPlayersTurn = isPlayersTurn,
+        )
         
         if (isSelected || isHighlighted) {
             BackGlow(
@@ -441,6 +408,24 @@ fun OtherPlayersHand(
             }
         }
     }
+}
+
+@Composable
+fun NameTag(
+    modifier: Modifier = Modifier,
+    playerName: String,
+    isPlayersTurn: Boolean,
+) {
+    Text(
+        modifier = modifier
+            .background(Color.DarkGray.copy(alpha = 0.20f), RoundedCornerShape(40.dp))
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        text = playerName,
+        color = if (isPlayersTurn) Color.Green else Color.White,
+        style = androidx.compose.ui.text.TextStyle(
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+        )
+    )
 }
 
 fun modPositive(x: Int, y: Int): Int {
