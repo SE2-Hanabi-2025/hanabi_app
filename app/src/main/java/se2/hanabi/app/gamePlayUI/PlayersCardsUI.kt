@@ -44,11 +44,13 @@ fun PlayersCardsUI(
     cardSizeDp: DpSize
 ) {
     val viewModel: GamePlayViewModel = viewModel()
+    val highlightedPlayer = viewModel.highlightedPlayer.collectAsState().value
     PlayersHand(
         cardSizeDp = cardSizeDp,
         hand = viewModel.thisPlayersHand.collectAsState().value,
         onCardClick = viewModel::onPlayersCardClick,
-        selectedCard = viewModel.selectedCardId.collectAsState().value
+        selectedCard = viewModel.selectedCardId.collectAsState().value,
+        isHighlighted = viewModel.isMyTurn.collectAsState().value
     )
 
     // ensure others players cards are display clockwise in terms of player order
@@ -70,6 +72,7 @@ fun PlayersCardsUI(
         cardSizeDp = cardSizeDp,
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
         selectedHandIndex = viewModel.selectedPlayerId.collectAsState().value,
+        highlightedPlayer = highlightedPlayer,
     )
     if (viewModel.selectedPlayerId.collectAsState().value != -1) {
         HintSelector(
@@ -86,7 +89,8 @@ fun PlayersHand(
     cardSizeDp: DpSize,
     hand: List<Int>,
     onCardClick: (Int) -> Unit,
-    selectedCard: Int?
+    selectedCard: Int?,
+    isHighlighted: Boolean
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     val playerId by viewModel.thisPlayer.collectAsState()
@@ -94,7 +98,7 @@ fun PlayersHand(
     
     // Find current player's name
     val playerName = players.find { it.id == playerId }?.name ?: "Spieler $playerId"
-    
+    var rowSize by remember { mutableStateOf(IntSize.Zero) }
     Box(
         modifier = Modifier
             .fillMaxSize(),
@@ -124,10 +128,18 @@ fun PlayersHand(
                 )
             )
         }
+        if (isHighlighted) {
+            BackGlow(
+                width = with (LocalDensity.current) {rowSize.width.toDp() - 20.dp},
+                height = with (LocalDensity.current) {rowSize.height.toDp() - 20.dp },
+                glowSize = 30.dp,
+            )
+        }
         
         Row(
             modifier = Modifier
-                .padding(5.dp),
+                .padding(5.dp)
+                .onSizeChanged { newSize -> rowSize= newSize },
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             hand.forEach() { cardId ->
@@ -151,6 +163,7 @@ fun OtherPlayersHands(
     hands: Map<Int, List<Card>>,
     onOtherPlayersHandClick: (Int) -> Unit,
     selectedHandIndex: Int,
+    highlightedPlayer: Int
 ){
     val viewModel: GamePlayViewModel = viewModel()
     val players by viewModel.players.collectAsState()
@@ -197,7 +210,8 @@ fun OtherPlayersHands(
                 playerName = playerName,
                 rotationAmountZ = rotationAmountZ.floatValue,
                 isSelected = playerId == selectedHandIndex,
-                onClick = { onOtherPlayersHandClick(playerId) }
+                onClick = { onOtherPlayersHandClick(playerId) },
+                isHighlighted = playerId == highlightedPlayer
             )
         }
     }
@@ -213,6 +227,7 @@ fun OtherPlayersHand(
     rotationAmountZ: Float,
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
+    isHighlighted: Boolean,
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     var rowSize by remember { mutableStateOf(IntSize.Zero) }
@@ -253,7 +268,7 @@ fun OtherPlayersHand(
             )
         }
         
-        if (isSelected) {
+        if (isSelected || isHighlighted) {
             BackGlow(
                 width = with (LocalDensity.current) {rowSize.width.toDp() - 20.dp},
                 height = with (LocalDensity.current) {rowSize.height.toDp() - 20.dp },
