@@ -178,6 +178,21 @@ class WebSocketService(
     }
     
     /**
+     * Send a cheat action
+     *
+     * @param lobbyId The ID of the game lobby
+     * @param playerId The ID of the player
+     */
+    suspend fun sendCheatAction(lobbyId: String, playerId: Int) {
+        Log.d(TAG, "sendCheatAction called with lobbyId=$lobbyId, playerId=$playerId")
+        val action = CheatAction(
+            lobbyId = lobbyId,
+            playerId = playerId
+        )
+        sendAction(action)
+    }
+
+    /**
      * Send a defuse attempt (cheat) action
      *
      * @param lobbyId The ID of the game lobby
@@ -194,7 +209,7 @@ class WebSocketService(
         )
         sendAction(action)
     }
-    
+
     /**
      * Send an action to the server
      *
@@ -206,7 +221,8 @@ class WebSocketService(
             return
         }
         
-        try {            // Manually create JSON string in the expected format            // Log the action details for debugging
+        try {
+            // Log the action details for debugging
             when (action) {
                 is PlayCardAction -> {
                     Log.d(TAG, "Preparing PLAY action: lobbyId=${action.lobbyId}, playerId=${action.playerId}, cardIndex=${action.cardIndex}")
@@ -217,11 +233,13 @@ class WebSocketService(
                 is GiveHintAction -> {
                     Log.d(TAG, "Preparing HINT action: lobbyId=${action.lobbyId}, playerId=${action.playerId}, toPlayerId=${action.toPlayerId}, hintType=${action.hintType}, hintValue=${action.hintValue}")
                 }
+                is CheatAction -> {
+                    Log.d(TAG, "Preparing CHEAT action: lobbyId=${action.lobbyId}, playerId=${action.playerId}")
+                }
                 is DefuseAttemptAction -> {
                     Log.d(TAG, "Preparing DEFUSE_ATTEMPT action: lobbyId=${action.lobbyId}, playerId=${action.playerId}, sequence=${action.sequence}, proximity=${action.proximity}")
                 }
             }
-            
             val message = when (action) {
                 is PlayCardAction -> """
                     {
@@ -249,6 +267,14 @@ class WebSocketService(
                         "toPlayerId": ${action.toPlayerId},
                         "hintType": "${action.hintType}",
                         "hintValue": "${action.hintValue}"
+                    }
+                """.trimIndent()
+                
+                is CheatAction -> """
+                    {
+                        "action": "${action.action}",
+                        "lobbyId": "${action.lobbyId}",
+                        "playerId": ${action.playerId}
                     }
                 """.trimIndent()
                 

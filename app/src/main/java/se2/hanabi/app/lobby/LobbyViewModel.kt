@@ -144,7 +144,11 @@ class LobbyViewModel : ViewModel() {
             }
         }
     } 
-    
+
+    fun setIsGameStarted(isGameStarted: Boolean) {
+        _isGameStarted.value = isGameStarted
+    }
+
     // Set username when joining a lobby
     fun setUsername(username: String) {
         _username.value = username

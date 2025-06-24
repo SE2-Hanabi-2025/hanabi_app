@@ -1,14 +1,13 @@
 package se2.hanabi.app.gamePlayUI
 
-import androidx.compose.foundation.Image
 import android.content.res.Configuration
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,23 +20,27 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 import se2.hanabi.app.Services.WebSocketService
 import se2.hanabi.app.model.Player
-import se2.hanabi.app.R
 
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
@@ -52,7 +55,7 @@ const val maxGameBoardHeightProportion = 0.5f
  */
 
 @Composable
-fun GamePlayUI() {
+fun GamePlayUI(viewModel: GamePlayViewModel) {
     val configuration = LocalConfiguration.current
     var screeWidthDp = configuration.screenWidthDp.dp
     var screenHeightDP = configuration.screenHeightDp.dp
@@ -61,17 +64,16 @@ fun GamePlayUI() {
     val landscape = when (configuration.orientation) { Configuration.ORIENTATION_LANDSCAPE -> true else -> false }
 
     var shrinkRatio = 1f
-    var defaultCardWidth = screeWidthDp.times(cardProportionOfWidth)
+    var defaultCardWidth = screeWidthDp.times(CARD_PROPORTION_OF_WIDTH)
     var cardWidth: Dp
-
+    var cardHeight: Dp
     if (landscape) {
         val gameBoardVertPaddingElementsSum = boardElementPadding.times(4)
         val availableVertSpace = screenHeightDP.times(maxGameBoardHeightProportion)-gameBoardVertPaddingElementsSum
-        val cardHeight = availableVertSpace.div(2)
-        cardWidth = cardHeight.div(aspectRatio)
-
+        cardHeight = availableVertSpace.div(2)
+        cardWidth = cardHeight.div(CARD_ASPECT_RATIO)
     } else { // portrait
-        cardWidth = screeWidthDp.times(cardProportionOfWidth)
+        cardWidth = screeWidthDp.times(CARD_PROPORTION_OF_WIDTH)
         val gameBoardVertPaddingElementsSum = cardSpacing.times(4) + boardElementPadding.times(2)
         val gameBoardHeight = cardWidth.times(5) + gameBoardVertPaddingElementsSum
         if (gameBoardHeight.div(screenHeightDP) > maxGameBoardHeightProportion) {
@@ -79,13 +81,14 @@ fun GamePlayUI() {
                 screenHeightDP.times(maxGameBoardHeightProportion) - gameBoardVertPaddingElementsSum
             cardWidth = availableVertSpace.div(5)
         }
+        cardHeight = cardWidth.times(CARD_ASPECT_RATIO)
     }
 
     shrinkRatio = cardWidth.div(defaultCardWidth)
 
     val cardSizeDp = DpSize(
         width = cardWidth,
-        height = cardWidth.times(aspectRatio)
+        height = cardWidth.times(CARD_ASPECT_RATIO)
     )
 
     Box(modifier = Modifier
@@ -97,7 +100,6 @@ fun GamePlayUI() {
         ),
         contentAlignment = Alignment.Center
     ) {
-        val viewModel: GamePlayViewModel = viewModel()
 
         val players by viewModel.players.collectAsState()
         val statusMessage by viewModel.statusMessage.collectAsState()
@@ -129,7 +131,7 @@ fun GamePlayUI() {
             }
         } else {
             // Show game board and player cards
-            GameBoardUI(cardSizeDp, shrinkRatio)
+            GameBoardUI(cardSizeDp = cardSizeDp, shrinkRatio = shrinkRatio)
             PlayersCardsUI(landscape, cardSizeDp)
 
             Column (modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp),

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,7 +51,7 @@ class GameActivity : ComponentActivity() {
             val prefs = context.getSharedPreferences("hanabi_prefs", MODE_PRIVATE)
             val isMuted = remember { mutableStateOf(prefs.getBoolean("isMuted", false)) }
             Box(modifier = Modifier.fillMaxSize()) {
-                GamePlayUI()
+                GamePlayUI(viewModel)
                 if (viewModel.gameOver.collectAsState().value) {
                     EndScreen( onBackToMenu = {
                         val intent = Intent(applicationContext, MainActivity::class.java)
@@ -119,5 +120,19 @@ class GameActivity : ComponentActivity() {
             return true
         }
         return super.onKeyDown(keyCode, event)
+    }
+
+    @Composable
+    fun Content() {
+        GamePlayUI(viewModel)
+        if (viewModel.gameOver.collectAsState().value) {
+            EndScreen(onBackToMenu = {
+                //Navigate back to MainActivity and clear the back stack
+                val intent = Intent(this, MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+                finish()
+            })
+        }
     }
 }

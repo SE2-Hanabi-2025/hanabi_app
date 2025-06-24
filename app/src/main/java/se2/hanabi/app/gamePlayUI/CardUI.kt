@@ -21,15 +21,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import se2.hanabi.app.model.Card
+import se2.hanabi.app.ui.theme.customFont
 
-const val aspectRatio = 1.51f
-const val cardProportionOfWidth = 0.17f
+const val CARD_ASPECT_RATIO = 1.51f
+const val CARD_PROPORTION_OF_WIDTH = 0.17f
 
 // Returns name of the corresponding card image, following the schema "color_number"
 fun getCardImageName(card: Card): String {
@@ -61,6 +61,7 @@ fun CardItem(
     colorHint: Card.Color? = null,
     valueHint: Int? = null,
 ) {
+    android.util.Log.d("HanabiGamePlayVM", "CardItem recomposed: card=$card, modifier=$modifier")
     var actualCardWidth = if (isPortrait) cardSizeDp.width else cardSizeDp.height
     var actualCardHeight = if (isPortrait) cardSizeDp.height else cardSizeDp.width
 
@@ -122,9 +123,9 @@ fun CardItem(
                     Text(
                         modifier = Modifier.padding(3.dp),
                         text = "$valueHint",
-                        fontFamily = FontFamily.Cursive,
+                        fontFamily = customFont,
                         color = cardHintValueColor,
-                        fontSize = 30.sp,
+                        fontSize = cardSizeDp.width.div(3).value.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 }
