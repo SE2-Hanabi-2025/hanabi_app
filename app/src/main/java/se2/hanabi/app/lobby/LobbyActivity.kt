@@ -323,7 +323,7 @@ class LobbyActivity : ComponentActivity() {
                     .padding(bottom = 62.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                val buttonSpacing = 18.dp // Increased spacing between buttons
+                val buttonSpacing = 18.dp
 
                 //start game
                 if (isHost) {
