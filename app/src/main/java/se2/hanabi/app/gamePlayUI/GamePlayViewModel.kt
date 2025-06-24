@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -75,6 +77,9 @@ class GamePlayViewModel(
 
     private val _currentPlayer = MutableStateFlow(0)
     val currentPlayer: StateFlow<Int> = _currentPlayer
+
+    private val _highlightedPlayer = MutableStateFlow(0)
+    val highlightedPlayer: StateFlow<Int> = _highlightedPlayer
 
     private val _isMyTurn = MutableStateFlow(false)
     val isMyTurn: StateFlow<Boolean> = _isMyTurn
@@ -695,4 +700,15 @@ class GamePlayViewModel(
             Log.i(TAG, "[CHEAT] Defuse attempt sent via WebSocket! Sequence: $sequence, Proximity: $proximity")
         }
     }
+
+    init{
+        viewModelScope.launch {
+            _currentPlayer.collectLatest { newCurrentPlayerId ->
+                _highlightedPlayer.value = newCurrentPlayerId
+                delay(3000)
+                _highlightedPlayer.value = 0
+            }
+        }
+    }
+   
 }

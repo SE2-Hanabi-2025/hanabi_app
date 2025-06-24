@@ -51,6 +51,7 @@ fun PlayersCardsUI(
     cardSizeDpIn: DpSize
 ) {
     val viewModel: GamePlayViewModel = viewModel()
+    val highlightedPlayer = viewModel.highlightedPlayer.collectAsState().value
     val cheatHand = viewModel.cheatHand.collectAsState().value
     val currentPlayer = viewModel.currentPlayer.collectAsState().value
     var showCheat by remember { mutableStateOf(false) }
@@ -78,6 +79,7 @@ fun PlayersCardsUI(
         hand = if (showRealCards) cheatHand.map { it.getID() } else handForLogic,
         onCardClick = viewModel::onPlayersCardClick,
         selectedCard = viewModel.selectedCardId.collectAsState().value,
+        isHighlighted = viewModel.isMyTurn.collectAsState().value,
         showRealCards = showRealCards,
         realCards = cheatHand,
         onCheatActivated = {
@@ -88,7 +90,6 @@ fun PlayersCardsUI(
             }
         }
     )
-
     // ensure others players cards are display clockwise in terms of player order
     val visibleHands = viewModel.otherPlayersHands.collectAsState().value
     val handsDisplayOrder: MutableMap<Int, List<Card>> =  mutableMapOf()
@@ -118,6 +119,7 @@ fun PlayersCardsUI(
         landscape = landscape,
         onOtherPlayersHandClick = viewModel::onOtherPlayersHandClick,
         selectedHandIndex = viewModel.selectedPlayerId.collectAsState().value,
+        highlightedPlayer = highlightedPlayer,
     )
 
     // Restore HintSelector when a player is selected
@@ -137,6 +139,7 @@ fun PlayersHand(
     hand: List<Int>,
     onCardClick: (Int) -> Unit,
     selectedCard: Int?,
+    isHighlighted: Boolean,
     showRealCards: Boolean = false,
     realCards: List<Card> = emptyList(),
     onCheatActivated: (() -> Unit)? = null
@@ -146,6 +149,7 @@ fun PlayersHand(
     val players by viewModel.players.collectAsState()
     // Find current player's name
     val playerName = players.find { it.id == playerId }?.name ?: "Spieler $playerId"
+    var rowSize by remember { mutableStateOf(IntSize.Zero) }
     // Track offset for each card by cardId
     val cardOffsets = remember { mutableStateMapOf<Int, Offset>() }
     Box(
@@ -189,9 +193,18 @@ fun PlayersHand(
                 }
             )
         }
+        if (isHighlighted) {
+            BackGlow(
+                width = with (LocalDensity.current) {rowSize.width.toDp() - 20.dp},
+                height = with (LocalDensity.current) {rowSize.height.toDp() - 20.dp },
+                glowSize = 30.dp,
+            )
+        }
+        
         Row(
             modifier = Modifier
-                .padding(5.dp),
+                .padding(5.dp)
+                .onSizeChanged { newSize -> rowSize= newSize },
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             if (showRealCards && realCards.isNotEmpty()) {
@@ -293,6 +306,7 @@ fun OtherPlayersHands(
     landscape: Boolean,
     onOtherPlayersHandClick: (Int) -> Unit,
     selectedHandIndex: Int,
+    highlightedPlayer: Int
 ){
     val viewModel: GamePlayViewModel = viewModel()
     val players by viewModel.players.collectAsState()
@@ -339,7 +353,8 @@ fun OtherPlayersHands(
                 playerName = playerName,
                 rotationAmountZ = rotationAmountZ.floatValue,
                 isSelected = playerId == selectedHandIndex,
-                onClick = { onOtherPlayersHandClick(playerId) }
+                onClick = { onOtherPlayersHandClick(playerId) },
+                isHighlighted = playerId == highlightedPlayer
             )
         }
     }
@@ -355,6 +370,7 @@ fun OtherPlayersHand(
     rotationAmountZ: Float,
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
+    isHighlighted: Boolean,
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     var rowSize by remember { mutableStateOf(IntSize.Zero) }
@@ -395,7 +411,7 @@ fun OtherPlayersHand(
             )
         }
         
-        if (isSelected) {
+        if (isSelected || isHighlighted) {
             BackGlow(
                 width = with (LocalDensity.current) {rowSize.width.toDp() - 20.dp},
                 height = with (LocalDensity.current) {rowSize.height.toDp() - 20.dp },
