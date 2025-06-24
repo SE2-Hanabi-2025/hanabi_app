@@ -193,9 +193,6 @@ fun PlayersHand(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             if (showRealCards && realCards.isNotEmpty()) {
-                val density = LocalDensity.current
-                val cardWidthPx = with(density) { cardSizeDp.width.toPx() }
-                val cardHeightPx = with(density) { cardSizeDp.height.toPx() }
                 realCards.forEachIndexed { idx, card ->
                     val cardId = card.getID()
                     val offset = cardOffsets[cardId] ?: Offset.Zero
@@ -237,9 +234,6 @@ fun PlayersHand(
                             })
                 }
             } else {
-                val density = LocalDensity.current
-                val cardWidthPx = with(density) { cardSizeDp.width.toPx() }
-                val cardHeightPx = with(density) { cardSizeDp.height.toPx() }
                 hand.forEach { cardId ->
                     val offset = cardOffsets[cardId] ?: Offset.Zero
                     var cardCoordinates: androidx.compose.ui.layout.LayoutCoordinates? = null
