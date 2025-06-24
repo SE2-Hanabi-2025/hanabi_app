@@ -29,6 +29,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -52,28 +54,28 @@ const val maxGameBoardHeightProportion = 0.5f
 @Composable
 fun GamePlayUI(viewModel: GamePlayViewModel) {
     val configuration = LocalConfiguration.current
-    var screeWidthDp = configuration.screenWidthDp.dp
-    var screenHeightDP = configuration.screenHeightDp.dp
+    var windowWidthDp = with(LocalDensity.current) {LocalWindowInfo.current.containerSize.width.toDp()}
+    var windowHeightDP = with(LocalDensity.current) {LocalWindowInfo.current.containerSize.height.toDp()}
 
 
     val landscape = when (configuration.orientation) { Configuration.ORIENTATION_LANDSCAPE -> true else -> false }
 
     var shrinkRatio = 1f
-    var defaultCardWidth = screeWidthDp.times(CARD_PROPORTION_OF_WIDTH)
+    var defaultCardWidth = windowWidthDp.times(CARD_PROPORTION_OF_WIDTH)
     var cardWidth: Dp
     var cardHeight: Dp
     if (landscape) {
         val gameBoardVertPaddingElementsSum = boardElementPadding.times(4)
-        val availableVertSpace = screenHeightDP.times(maxGameBoardHeightProportion)-gameBoardVertPaddingElementsSum
+        val availableVertSpace = windowHeightDP.times(maxGameBoardHeightProportion)-gameBoardVertPaddingElementsSum
         cardHeight = availableVertSpace.div(2)
         cardWidth = cardHeight.div(CARD_ASPECT_RATIO)
     } else { // portrait
-        cardWidth = screeWidthDp.times(CARD_PROPORTION_OF_WIDTH)
+        cardWidth = windowWidthDp.times(CARD_PROPORTION_OF_WIDTH)
         val gameBoardVertPaddingElementsSum = cardSpacing.times(4) + boardElementPadding.times(2)
         val gameBoardHeight = cardWidth.times(5) + gameBoardVertPaddingElementsSum
-        if (gameBoardHeight.div(screenHeightDP) > maxGameBoardHeightProportion) {
+        if (gameBoardHeight.div(windowHeightDP) > maxGameBoardHeightProportion) {
             val availableVertSpace =
-                screenHeightDP.times(maxGameBoardHeightProportion) - gameBoardVertPaddingElementsSum
+                windowHeightDP.times(maxGameBoardHeightProportion) - gameBoardVertPaddingElementsSum
             cardWidth = availableVertSpace.div(5)
         }
         cardHeight = cardWidth.times(CARD_ASPECT_RATIO)
@@ -169,7 +171,7 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
 }
 
 @Composable
-fun InGamePlayerList(players: List<Player>, modifier: Modifier = Modifier){
+fun InGamePlayerList(players: List<Player>,){
 
     val rows = players.chunked(2)
     val viewModel: GamePlayViewModel = viewModel()
