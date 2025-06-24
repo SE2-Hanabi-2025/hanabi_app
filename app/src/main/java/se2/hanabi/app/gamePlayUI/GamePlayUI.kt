@@ -39,8 +39,6 @@ import se2.hanabi.app.Services.WebSocketService
 import se2.hanabi.app.model.Player
 import se2.hanabi.app.ui.theme.customFont
 
-// eventually to be linked to Color Enum in backend
-val colors = listOf("red","green","yellow","blue","white")
 const val maxGameBoardHeightProportion = 0.5f
 
 /**
