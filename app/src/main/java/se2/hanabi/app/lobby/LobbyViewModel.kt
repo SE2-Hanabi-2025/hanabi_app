@@ -46,8 +46,6 @@ class LobbyViewModel : ViewModel() {
         get() = _isHost.value
           // Username of the current player
     private val _username = mutableStateOf("")
-    val username: String
-        get() = _username.value
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
