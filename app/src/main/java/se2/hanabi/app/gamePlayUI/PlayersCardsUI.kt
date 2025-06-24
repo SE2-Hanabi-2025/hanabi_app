@@ -50,9 +50,8 @@ fun PlayersCardsUI(
         hand = viewModel.thisPlayersHand.collectAsState().value,
         onCardClick = viewModel::onPlayersCardClick,
         selectedCard = viewModel.selectedCardId.collectAsState().value,
-        isHighlighted = viewModel.isMyTurn.collectAsState().value
+        isHighlighted = viewModel.isMyTurn.collectAsState().value,
     )
-
     // ensure others players cards are display clockwise in terms of player order
     val visibleHands = viewModel.otherPlayersHands.collectAsState().value
     val handsDisplayOrder: MutableMap<Int, List<Card>> =  mutableMapOf()
@@ -90,7 +89,7 @@ fun PlayersHand(
     hand: List<Int>,
     onCardClick: (Int) -> Unit,
     selectedCard: Int?,
-    isHighlighted: Boolean
+    isHighlighted: Boolean,
 ) {
     val viewModel: GamePlayViewModel = viewModel()
     val playerId by viewModel.thisPlayer.collectAsState()
