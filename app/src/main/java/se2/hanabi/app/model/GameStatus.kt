@@ -18,7 +18,7 @@ data class GameStatus(
     val gameLost: Boolean,
     val currentScore: Int,
     val currentPlayerId: Int,
-    val ownHand: List<Card>? = null // <-- add this for cheat feature
+    val ownHand: List<Card>? = null
 ) {
 
 }
