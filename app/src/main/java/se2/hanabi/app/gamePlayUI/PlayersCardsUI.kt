@@ -79,7 +79,7 @@ fun PlayersCardsUI(
         hand = if (showRealCards) cheatHand.map { it.getID() } else handForLogic,
         onCardClick = viewModel::onPlayersCardClick,
         selectedCard = viewModel.selectedCardId.collectAsState().value,
-        isHighlighted = viewModel.isMyTurn.collectAsState().value
+        isHighlighted = viewModel.isMyTurn.collectAsState().value,
         showRealCards = showRealCards,
         realCards = cheatHand,
         onCheatActivated = {
@@ -140,7 +140,7 @@ fun PlayersHand(
     hand: List<Int>,
     onCardClick: (Int) -> Unit,
     selectedCard: Int?,
-    isHighlighted: Boolean
+    isHighlighted: Boolean,
     showRealCards: Boolean = false,
     realCards: List<Card> = emptyList(),
     onCheatActivated: (() -> Unit)? = null
