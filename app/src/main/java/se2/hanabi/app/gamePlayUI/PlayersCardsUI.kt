@@ -398,10 +398,10 @@ fun OtherPlayersHand(
                     rotationAmountZ = -30f + index * (60 / hand.value.size), //60 degree arc
                     onClick = onClick,
                     isHighlighted = isSelected && (
-                            card.color == viewModel.selectedHint.collectAsState().value?.getColor() ||
-                                    card.value == viewModel.selectedHint.collectAsState().value?.getValue()
+                            card.getColor() == viewModel.selectedHint.collectAsState().value?.getColor() ||
+                                    card.getValue() == viewModel.selectedHint.collectAsState().value?.getValue()
                             ),
-                    highlightColor = if (viewModel.selectedHint.collectAsState().value?.getColor()!=null) colorFromColorEnum(card.color) else Color.White,
+                    highlightColor = if (viewModel.selectedHint.collectAsState().value?.getColor()!=null) colorFromColorEnum(card.getColor()) else Color.White,
                     colorHint = viewModel.cardsShowingColorHints.collectAsState().value[card.getID()],
                     valueHint = viewModel.cardsShowingValueHints.collectAsState().value[card.getID()],
                 )

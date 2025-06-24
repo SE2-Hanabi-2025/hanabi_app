@@ -8,13 +8,17 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Card(
-    val color: Color,
-    val value: Int,
-    // ids will eventuelly come from back end.
-    private val id: Int = nextID++
+    private val color: Color,
+    private val value: Int,
+    private val id: Int = 0
 ) {
-    companion object {
-        private var nextID = 0
+
+    fun getColor(): Color {
+        return color
+    }
+
+    fun getValue(): Int {
+        return value
     }
 
     fun getID():Int {

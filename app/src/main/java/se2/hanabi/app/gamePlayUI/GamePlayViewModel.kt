@@ -280,7 +280,7 @@ class GamePlayViewModel(
         _otherPlayersHands.value = newStatus.visibleHands
         Log.v(TAG, "Hände anderer Spieler: ${newStatus.visibleHands.size} Spieler haben sichtbare Karten")
         newStatus.visibleHands.forEach { (playerId, cards) ->
-            Log.v(TAG, "  Spieler $playerId: ${cards.size} Karten - ${cards.joinToString { "${it.color}_${it.value}" }}")
+            Log.v(TAG, "  Spieler $playerId: ${cards.size} Karten - ${cards.joinToString { "${it.getColor()}_${it.getValue()}" }}")
         }
 
         _stackValues.value = newStatus.playedCards
@@ -374,11 +374,11 @@ class GamePlayViewModel(
 
             if (playerHand != null) {
                 playerHand.forEach { card ->
-                    val matchColor = card.color == _selectedHint.value?.getColor()
-                    val matchValue = card.value == _selectedHint.value?.getValue()
+                    val matchColor = card.getColor() == _selectedHint.value?.getColor()
+                    val matchValue = card.getValue() == _selectedHint.value?.getValue()
 
                     if (matchColor || matchValue) {
-                        Log.d(TAG, "Karte ${card.color}_${card.value} passt zum Hinweis - Hinweis ist gültig")
+                        Log.d(TAG, "Karte ${card.getColor()}_${card.getValue()} passt zum Hinweis - Hinweis ist gültig")
                         validHint = true
                     }
                 }
@@ -550,9 +550,9 @@ class GamePlayViewModel(
             return
         }
         // Hanabi rules: auto-place 1s, validate others
-        if (card.value == 1) {
+        if (card.getValue() == 1) {
             // Find the correct color stack for this 1
-            val correctStackValue = stackValues.value[card.color] ?: 0
+            val correctStackValue = stackValues.value[card.getColor()] ?: 0
             if (correctStackValue == 0) {
                 // Play the card regardless of drop target if its color stack is empty
                 playCardByIndex(cardIndex)
@@ -565,7 +565,7 @@ class GamePlayViewModel(
         } else {
             // For other values, must match stack color and be next in sequence
             val stackValue = stackValues.value[targetColor] ?: 0
-            if (card.color == targetColor && stackValue == card.value - 1) {
+            if (card.getColor() == targetColor && stackValue == card.getValue() - 1) {
                 playCardByIndex(cardIndex)
                 return
             } else {

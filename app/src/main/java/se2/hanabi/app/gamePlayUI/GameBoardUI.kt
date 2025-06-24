@@ -307,7 +307,7 @@ fun DiscardedCardsStack(
     } else {
         CardItem(
             cardSizeDp = cardSizeDp,
-            card = Card(lastDiscardedCard.color,lastDiscardedCard.value),
+            card = Card(lastDiscardedCard.getColor(),lastDiscardedCard.getValue()),
             isFlipped = false,
             isPortrait = false,
             onClick = onClick,
