@@ -97,24 +97,7 @@ class LobbyViewModel : ViewModel() {
                 }
                   // Use the complete list including duplicates
                 _players.value = allPlayers
-                try {
-                    println("Checking game status for lobby: $code")
-                    val gameStatusUrl = ServerAddressManager.getStartGameUrl(code) + "/status"
-                    println("URL: $gameStatusUrl")
 
-                    val gameStatusResponse = client.get(gameStatusUrl)
-                    println("Game status response: ${gameStatusResponse.status}")
-
-                    if (gameStatusResponse.status == HttpStatusCode.OK) {
-                        val gameStarted: Boolean = gameStatusResponse.body()
-                        println("Game started: $gameStarted")
-                        _isGameStarted.value = gameStarted
-                    } else {
-                        println("Game status check failed: ${gameStatusResponse.status}")
-                    }
-                } catch (e: Exception) {
-                    println("Error checking game status: ${e.message}")
-                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 println("Error fetching players: ${e.message}")
@@ -129,18 +112,45 @@ class LobbyViewModel : ViewModel() {
         }
     }
 
-    fun startPlayerSync(intervalMillis: Long = 2000L) {
+    fun fetchGameStartStatus() {
+        viewModelScope.launch {
+            try {
+                val code = _lobbyCode.value ?: return@launch
+
+                println("Checking game status for lobby: $code")
+                val gameStatusUrl = ServerAddressManager.getStartGameUrl(code) + "/status"
+                println("URL: $gameStatusUrl")
+
+                val gameStatusResponse = client.get(gameStatusUrl)
+                println("Game status response: ${gameStatusResponse.status}")
+
+                if (gameStatusResponse.status == HttpStatusCode.OK) {
+                    val gameStarted: Boolean = gameStatusResponse.body()
+                    println("Game started: $gameStarted")
+                    _isGameStarted.value = gameStarted
+                } else {
+                    println("Game status check failed: ${gameStatusResponse.status}")
+                }
+            } catch (e: Exception) {
+                println("Error checking game status: ${e.message}")
+            }
+        }
+    }
+
+    fun startFetchPlayersAndStartSync(intervalMillis: Long = 2000L) {
         viewModelScope.launch {
             // Initial delay to make sure any join operations are completed
             delay(500L)
             
             // Fetch players immediately once
             fetchPlayers()
+            fetchGameStartStatus()
             
             // Then start regular polling
             while (true) {
                 delay(intervalMillis)
                 fetchPlayers()
+                fetchGameStartStatus()
             }
         }
     } 

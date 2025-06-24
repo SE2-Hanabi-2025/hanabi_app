@@ -95,7 +95,7 @@ class LobbyActivity : ComponentActivity() {
         viewModel.setPlayerId(receivedPlayerId)
         viewModel.setIsHost(isHost)
         viewModel.setUsername(username)
-        viewModel.startPlayerSync()
+        viewModel.startFetchPlayersAndStartSync()
 
 
         setContent {
