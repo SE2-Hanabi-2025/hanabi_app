@@ -299,8 +299,10 @@ fun DiscardedCardsStack(
         )
     if (lastDiscardedCard == null) {
         EmptyStack(
-            cardSizeDp = cardSizeDp,
+            cardSizeDp = cardSizeDp, 
+            onClick = onClick,
             modifier = stackModifier
+
         )
     } else {
         CardItem(
