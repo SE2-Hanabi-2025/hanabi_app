@@ -3,6 +3,7 @@ package se2.hanabi.app.gamePlayUI
 import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,28 +21,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.delay
 import se2.hanabi.app.Services.WebSocketService
 import se2.hanabi.app.model.Player
+import se2.hanabi.app.ui.theme.customFont
 
 // eventually to be linked to Color Enum in backend
 val colors = listOf("red","green","yellow","blue","white")
@@ -146,28 +142,28 @@ fun GamePlayUI(viewModel: GamePlayViewModel) {
 
 
             // Action buttons at the bottom
-            if (isMyTurn && !gameOver) {
+            val cardSelected = viewModel.selectedCardId.collectAsState().value >= 0
+            if (isMyTurn && !gameOver && cardSelected) {
                 Row(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = 80.dp, start = 16.dp, end = 16.dp)
+                        .padding(bottom = cardHeight.times(1.1f), start = 16.dp, end = 16.dp)
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    androidx.compose.material3.Button(
-                        onClick = { viewModel.onPlayCardClick() },
-                        enabled = viewModel.selectedCardId.collectAsState().value >= 0
-                    ) {
-                        Text("Play Card")
-                    }
-                    
-                    androidx.compose.material3.Button(
-                        onClick = { viewModel.onDiscardCardClick() },
-                        enabled = viewModel.selectedCardId.collectAsState().value >= 0 && 
-                                 viewModel.numRemainingHintTokens.collectAsState().value < 8
-                    ) {
-                        Text("Discard Card")
-                    }
+                    val paddingAmount = cardSizeDp.width.times(hintPaddingToHintSelectorProportion)
+                    ActionButton(
+                        text = "PLAY",
+                        width = cardWidth.times(2f),
+                        paddingAmount = paddingAmount,
+                        onClick = viewModel::onPlayCardClick
+                    )
+                    ActionButton(
+                        text = "DISCARD",
+                        width = cardWidth.times(2f),
+                        paddingAmount = paddingAmount,
+                        onClick = viewModel::onDiscardCardClick
+                    )
                 }
             }
         }
@@ -223,3 +219,33 @@ fun InGamePlayerList(players: List<Player>, modifier: Modifier = Modifier){
     }
 }
     }}
+
+@Composable
+fun ActionButton(
+    modifier: Modifier = Modifier,
+    text: String = "",
+    paddingAmount: Dp,
+    onClick: () -> Unit = {},
+    width: Dp
+) {
+    Box(
+        modifier = modifier
+            .width(width)
+            .clip(RoundedCornerShape(paddingAmount))
+            .background(
+                brush = Brush.verticalGradient(
+                    listOf(Color(0xFF282828), Color(0xFF282828).copy(alpha = 0.7f))
+                )
+            )
+            .clickable() { onClick() }
+            .padding(paddingAmount),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = (width.value / 5).sp,
+            fontFamily = customFont,
+            color = Color(0xFFF2FF90),
+        )
+    }
+}
