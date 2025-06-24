@@ -54,6 +54,15 @@ data class GiveHintAction(
 }
 
 @Serializable
+@SerialName("CHEAT")
+data class CheatAction(
+    override val lobbyId: String,
+    override val playerId: Int
+) : ClientAction() {
+    override val action: String = "CHEAT"
+}
+
+@Serializable
 @SerialName("DEFUSE_ATTEMPT")
 data class DefuseAttemptAction(
     override val lobbyId: String,

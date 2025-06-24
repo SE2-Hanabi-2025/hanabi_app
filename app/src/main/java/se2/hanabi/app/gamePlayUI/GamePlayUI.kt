@@ -20,20 +20,25 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 import se2.hanabi.app.Services.WebSocketService
 import se2.hanabi.app.model.Player
 
@@ -50,7 +55,7 @@ const val maxGameBoardHeightProportion = 0.5f
  */
 
 @Composable
-fun GamePlayUI() {
+fun GamePlayUI(viewModel: GamePlayViewModel) {
     val configuration = LocalConfiguration.current
     var screeWidthDp = configuration.screenWidthDp.dp
     var screenHeightDP = configuration.screenHeightDp.dp
@@ -61,13 +66,12 @@ fun GamePlayUI() {
     var shrinkRatio = 1f
     var defaultCardWidth = screeWidthDp.times(CARD_PROPORTION_OF_WIDTH)
     var cardWidth: Dp
-
+    var cardHeight: Dp
     if (landscape) {
         val gameBoardVertPaddingElementsSum = boardElementPadding.times(4)
         val availableVertSpace = screenHeightDP.times(maxGameBoardHeightProportion)-gameBoardVertPaddingElementsSum
-        val cardHeight = availableVertSpace.div(2)
+        cardHeight = availableVertSpace.div(2)
         cardWidth = cardHeight.div(CARD_ASPECT_RATIO)
-
     } else { // portrait
         cardWidth = screeWidthDp.times(CARD_PROPORTION_OF_WIDTH)
         val gameBoardVertPaddingElementsSum = cardSpacing.times(4) + boardElementPadding.times(2)
@@ -77,6 +81,7 @@ fun GamePlayUI() {
                 screenHeightDP.times(maxGameBoardHeightProportion) - gameBoardVertPaddingElementsSum
             cardWidth = availableVertSpace.div(5)
         }
+        cardHeight = cardWidth.times(CARD_ASPECT_RATIO)
     }
 
     shrinkRatio = cardWidth.div(defaultCardWidth)
@@ -95,7 +100,6 @@ fun GamePlayUI() {
         ),
         contentAlignment = Alignment.Center
     ) {
-        val viewModel: GamePlayViewModel = viewModel()
 
         val players by viewModel.players.collectAsState()
         val statusMessage by viewModel.statusMessage.collectAsState()
@@ -127,7 +131,7 @@ fun GamePlayUI() {
             }
         } else {
             // Show game board and player cards
-            GameBoardUI(cardSizeDp, shrinkRatio)
+            GameBoardUI(cardSizeDp = cardSizeDp, shrinkRatio = shrinkRatio)
             PlayersCardsUI(landscape, cardSizeDp)
 
             Column (modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp),
