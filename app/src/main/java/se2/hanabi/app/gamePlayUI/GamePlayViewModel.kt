@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import se2.hanabi.app.model.GameStatus
 import se2.hanabi.app.model.Player
@@ -15,6 +17,8 @@ import se2.hanabi.app.Services.WebSocketService
 import se2.hanabi.app.model.Card
 import se2.hanabi.app.model.Hint
 import se2.hanabi.app.model.websocket.ResultType
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 
 /**
  * GamePlayViewModel displays a gameStatus object.
@@ -128,7 +132,31 @@ class GamePlayViewModel(
     private val _cardsShowingValueHints =  MutableStateFlow<Map<Int, Int>>(emptyMap())
     val cardsShowingValueHints: StateFlow<Map<Int,Int>> = _cardsShowingValueHints
 
+    // Drag-and-drop state
+    private val _draggedCardId = MutableStateFlow<Int?>(null)
+    val draggedCardId: StateFlow<Int?> = _draggedCardId
+
+    private val _cheatHand = MutableStateFlow<List<Card>>(emptyList())
+    val cheatHand: StateFlow<List<Card>> = _cheatHand.asStateFlow()
+
+    private var cheatSent = false
+
+    // Track the last round a cheat was sent
+    private var lastCheatRound: Int? = null
+
+    private var cheatSentThisTurn = false
+
+    // Track if cheat hand has been shown this turn (for UI logic)
+    var cheatHandShownThisTurn = false
+
+    // Drag-and-drop pointer and drop zone state
+    private val _pointerPosition = MutableStateFlow<Offset?>(null)
+    val pointerPosition: StateFlow<Offset?> = _pointerPosition
+    private val colorStackBounds = mutableMapOf<Card.Color, Rect>()
+    private var discardZoneBounds: Rect? = null
+
     init {
+        Log.d(TAG, "GamePlayViewModel initialized for player $playerId, lobby $lobbyId")
         Log.d(TAG, "Initialisiere GamePlayViewModel - LobbyId: $lobbyId, PlayerId: $playerId")
 
         // Set up WebSocket listeners
@@ -237,11 +265,16 @@ class GamePlayViewModel(
         _players.value = newStatus.players
         Log.v(TAG, "Spieler: ${newStatus.players.joinToString { it.name }}")
 
+        if (_currentPlayer.value != newStatus.currentPlayerId) {
+            cheatSentThisTurn = false
+            cheatHandShownThisTurn = false // Reset when turn changes
+        }
         _currentPlayer.value = newStatus.currentPlayerId
         _isMyTurn.value = newStatus.currentPlayerId == playerId
         Log.v(TAG, "Aktueller Spieler: ${newStatus.currentPlayerId}, Ich bin dran: ${_isMyTurn.value}")
 
         _thisPlayersHand.value = newStatus.playerCardIds
+        _cheatHand.value = newStatus.ownHand ?: emptyList()
         Log.v(TAG, "Eigene Hand: ${newStatus.playerCardIds.size} Karten, IDs: ${newStatus.playerCardIds}")
 
         _otherPlayersHands.value = newStatus.visibleHands
@@ -362,8 +395,7 @@ class GamePlayViewModel(
     }
 
     fun onColorStackClick(color: Card.Color) {
-        // Handle the color stack click event here
-        // For example, log the click or update some state
+        onPlayCardClick()
         Log.d("GamePlayViewModel", "Color stack clicked: $color")
     }
 
@@ -480,7 +512,187 @@ class GamePlayViewModel(
         return max_score
     }
 
-    // Remove old cheat methods and use new defuseAttempt
+    fun startDraggingCard(cardId: Int) {
+        _draggedCardId.value = cardId
+    }
+
+    fun stopDraggingCard() {
+        _draggedCardId.value = null
+    }
+
+    /**
+     * Called when a card is dropped on a color stack.
+     * Handles Hanabi rules: auto-placement for 1s, validation, and strikes.
+     * Updated: Dropping a 1 on any empty stack auto-places it on the correct color stack.
+     */
+    fun onPlayCardDrop(cardId: Int?, targetColor: Card.Color) {
+        val chand = thisPlayersHand.value
+        if (cardId == null || chand.none { it == cardId }) {
+            Log.d(TAG, "Drop error: cardId=$cardId not found in hand: $chand")
+        }
+        if (cardId == null) return
+        if (!_isMyTurn.value) {
+            _statusMessage.value = "Du bist nicht an der Reihe"
+            return
+        }
+        val hand = _thisPlayersHand.value
+        val cardIndex = hand.indexOf(cardId)
+        if (cardIndex < 0) {
+            _statusMessage.value = "Karte nicht gefunden"
+            return
+        }
+        // Get the card details from own hand (cheatHand) instead of visible hands
+        val myVisibleHand = cheatHand.value
+        val card = myVisibleHand.find { it.getID() == cardId }
+        if (card == null) {
+            _statusMessage.value = "Karte nicht gefunden (Details fehlen)"
+            Log.d(TAG, "Drop error: cardId=$cardId not found in own hand: ${myVisibleHand.map { it.getID() }}")
+            return
+        }
+        // Hanabi rules: auto-place 1s, validate others
+        if (card.value == 1) {
+            // Find the correct color stack for this 1
+            val correctStackValue = stackValues.value[card.color] ?: 0
+            if (correctStackValue == 0) {
+                // Play the card regardless of drop target if its color stack is empty
+                playCardByIndex(cardIndex)
+                return
+            } else {
+                // 1 cannot be played if its color stack is not empty
+                giveStrikeAndDiscard(cardIndex)
+                return
+            }
+        } else {
+            // For other values, must match stack color and be next in sequence
+            val stackValue = stackValues.value[targetColor] ?: 0
+            if (card.color == targetColor && stackValue == card.value - 1) {
+                playCardByIndex(cardIndex)
+                return
+            } else {
+                giveStrikeAndDiscard(cardIndex)
+                return
+            }
+        }
+    }
+
+    private fun playCardByIndex(cardIndex: Int) {
+        viewModelScope.launch {
+            _statusMessage.value = "Spiele Karte..."
+            Log.d(TAG, "Spiele Karte an Index $cardIndex (Drag-and-drop)")
+            webSocketService.playCard(lobbyId, playerId, cardIndex)
+        }
+    }
+
+    private fun giveStrikeAndDiscard(cardIndex: Int) {
+        viewModelScope.launch {
+            _statusMessage.value = "Falsche Karte! Strike erhalten."
+            Log.d(TAG, "Falsche Karte an Index $cardIndex (Drag-and-drop), Strike und Ablage")
+            // Use playCard, not discardCard, so backend handles strike/fuse logic
+            webSocketService.playCard(lobbyId, playerId, cardIndex)
+        }
+    }
+
+    fun onDiscardCardDrop(cardId: Int?) {
+        val hand = thisPlayersHand.value
+        if (cardId == null || hand.none { it == cardId }) {
+            Log.d(TAG, "Drop error: cardId=$cardId not found in hand: $hand")
+        }
+        if (cardId == null) return
+        if (!_isMyTurn.value) {
+            _statusMessage.value = "Du bist nicht an der Reihe"
+            return
+        }
+        if (_numRemainingHintTokens.value >= 8) {
+            _statusMessage.value = "Du kannst keine Karte abwerfen, wenn alle Hint-Token verfügbar sind"
+            return
+        }
+        viewModelScope.launch {
+            val cardIndex = _thisPlayersHand.value.indexOf(cardId)
+            if (cardIndex >= 0) {
+                _statusMessage.value = "Werfe Karte ab..."
+                Log.d(TAG, "Werfe Karte an Index $cardIndex ab (Drag-and-drop)")
+                webSocketService.discardCard(lobbyId, playerId, cardIndex)
+            } else {
+                _statusMessage.value = "Fehler: Karte nicht gefunden"
+                Log.e(TAG, "Karte $cardId nicht in der Hand gefunden")
+            }
+        }
+    }
+
+    // Drag-and-drop pointer and drop zone bounds
+    fun updatePointerPosition(position: Offset) {
+        Log.d(TAG, "Pointer position updated: $position")
+        _pointerPosition.value = position
+    }
+    fun updateColorStackBounds(color: Card.Color, bounds: Rect) {
+        Log.d(TAG, "Color stack bounds updated for $color: $bounds")
+        colorStackBounds[color] = bounds
+    }
+    fun updateDiscardZoneBounds(bounds: Rect) {
+        Log.d(TAG, "Discard zone bounds updated: $bounds")
+        discardZoneBounds = bounds
+    }
+
+    fun tryDropOnColorStack(cardId: Int?, color: Card.Color) {
+        val pointer = _pointerPosition.value
+        val bounds = colorStackBounds[color]
+        Log.d(TAG, "Try drop on color stack $color: pointer=$pointer, bounds=$bounds")
+        if (pointer != null && bounds != null && bounds.contains(pointer)) {
+            Log.d(TAG, "Pointer is inside color stack $color bounds. Dropping card.")
+            onPlayCardDrop(cardId, color)
+        } else {
+            Log.d(TAG, "Pointer is NOT inside color stack $color bounds. Drop ignored.")
+        }
+    }
+    fun tryDropOnDiscard(cardId: Int?) {
+        val pointer = _pointerPosition.value
+        val bounds = discardZoneBounds
+        Log.d(TAG, "Try drop on discard: pointer=$pointer, bounds=$bounds")
+        if (pointer != null && bounds != null && bounds.contains(pointer)) {
+            Log.d(TAG, "Pointer is inside discard bounds. Dropping card.")
+            onDiscardCardDrop(cardId)
+        } else {
+            Log.d(TAG, "Pointer is NOT inside discard bounds. Drop ignored.")
+        }
+    }
+
+    fun tryDropOnAnyZone(cardId: Int?) {
+        val pointer = _pointerPosition.value
+        var dropped = false
+        // Try all color stacks
+        for ((color, bounds) in colorStackBounds) {
+            if (pointer != null && bounds != null && bounds.contains(pointer)) {
+                Log.d(TAG, "Pointer is inside color stack $color bounds. Dropping card.")
+                onPlayCardDrop(cardId, color)
+                dropped = true
+                break
+            }
+        }
+        // Try discard
+        val discardBounds = discardZoneBounds
+        if (!dropped && pointer != null && discardBounds != null && discardBounds.contains(pointer)) {
+            Log.d(TAG, "Pointer is inside discard bounds. Dropping card.")
+            onDiscardCardDrop(cardId)
+            dropped = true
+        }
+        // If not dropped anywhere, do nothing (no strike, no discard)
+        if (!dropped) {
+            Log.d(TAG, "Pointer is not inside any drop zone. Card will return to hand. No strike or discard.")
+            // No action needed; UI should reset card position
+        }
+    }
+
+    fun onCheatRequested() {
+        // Only send cheat if not already shown this turn
+        if (!cheatHandShownThisTurn) {
+            viewModelScope.launch {
+                webSocketService.sendCheatAction(lobbyId, playerId)
+            }
+            cheatHandShownThisTurn = true
+        }
+    }
+
+    // Additional cheat function from development branch
     // Example usage: call this from UI with the actual sequence and proximity
     fun defuseAttemptCheat(sequence: List<String>, proximity: String) {
         viewModelScope.launch {
@@ -498,5 +710,5 @@ class GamePlayViewModel(
             }
         }
     }
-    
+   
 }
