@@ -1,36 +1,50 @@
 package se2.hanabi.app.activities
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.BorderStroke
+import androidx.annotation.RawRes
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,40 +57,38 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import dev.jeziellago.compose.markdowntext.MarkdownText
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.launch
-import se2.hanabi.app.EndAnimations.FireworkLauncher
-import se2.hanabi.app.lobby.LobbyActivity
+import se2.hanabi.app.Handler.CameraPermissionHandler
 import se2.hanabi.app.R
-import se2.hanabi.app.ui.theme.ClientTheme
+import se2.hanabi.app.components.QRScanner
+import se2.hanabi.app.endScreen.endAnimations.FireworkLauncher
+import se2.hanabi.app.lobby.LobbyActivity
+import se2.hanabi.app.ui.theme.customFont
+import se2.hanabi.app.utils.ServerAddressManager
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 
-class StartMenuActivity: ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            ClientTheme {
-                StartMenuScreen()
-            }
-        }
-    }
-
+class StartMenue {
+    @SuppressLint("UnusedBoxWithConstraintsScope")
     @Composable
     fun StartMenuScreen() {
         var showConnectDialog by remember { mutableStateOf(false) }
@@ -93,94 +105,83 @@ class StartMenuActivity: ComponentActivity() {
         var selectedAvatarResId by remember { mutableIntStateOf(R.drawable.whiteavatar) }
         val coroutineScope = rememberCoroutineScope()
         val client = remember { HttpClient(CIO) }
-        val urlEmulator = "http://10.0.2.2:8080"
-        val urlLocalHost = "http://localhost:8080"
         val context = LocalContext.current
+        var showQRScanner by remember { mutableStateOf(false) }
+        var hasCameraPermission by remember { mutableStateOf(false) }
+        var permissionDenied by remember { mutableStateOf(false) }
+        var showRules by remember { mutableStateOf(false) }
+        val elementSpacing = 10.dp
+        val elementWidth = 200.dp
+        val elementHeight = 60.dp
 
         fun fetchStatus() {
             coroutineScope.launch {
-                isLoading = true // Show loading spinner
+                isLoading = true
                 try {
-                    val response: HttpResponse = client.get("$urlEmulator/status")
+                    val response: HttpResponse = client.get(ServerAddressManager.STATUS_URL)
                     statusMessage = response.body()
                 } catch (e: Exception) {
                     statusMessage = "Failed to fetch status"
                 }
                 showStatusDialog = true
-                isLoading = false // Hide loading spinner
-            }
-        }
-
-        fun connectToServer() {
-            coroutineScope.launch {
-                isLoading = true // Show loading spinner
-                try {
-                    val response: HttpResponse = client.get("$urlEmulator/connect")
-                    statusMessage = response.body()
-                    //After connecting, navigate to LobbyScreen
-                    context.startActivity(Intent(context, LobbyActivity::class.java))
-                } catch (e: Exception) {
-                    statusMessage = "Failed to connect"
-                }
-                showStatusDialog = true
-                isLoading = false // Hide loading spinner
-            }
-        }
-
-        fun startGame() {
-            coroutineScope.launch {
-                isLoading = true
-                try {
-                    val response: HttpResponse = client.get("$urlEmulator/start-game/$lobbyCode")
-                    statusMessage = response.body()
-                    val intent = Intent(context, GameActivity::class.java)
-                    context.startActivity(intent)
-                } catch (e: Exception) {
-                    statusMessage = "Failed to start the game: ${e.localizedMessage}"
-                    showStatusDialog = true
-                }
-                isLoading = false
-            }
+                isLoading = false            }
         }
 
         fun joinLobby(code: String) {
-            coroutineScope.launch {
+            if (code.length != 6) {
+                statusMessage = "Invalid lobby code. Code must be 6 characters."
+                showStatusDialog = true
+                return
+            }
+              coroutineScope.launch {
                 isLoading = true
                 try {
                     val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
-                    val response: HttpResponse = client.get("$urlEmulator/join-lobby/$code?name=$encodedName")
-                    statusMessage = response.body()
-                    isConnected = true
-                    val intent = Intent(context, LobbyActivity::class.java).apply {
-                        putExtra("avatarResID", selectedAvatarResId)
-                        putExtra("username", username)
-                        putExtra("lobbyCode", code)
-                        putExtra("isHost", false)
+                    // Join the lobby
+                    val response: HttpResponse = client.get(ServerAddressManager.getJoinLobbyUrl(code) + "?name=$encodedName&avatarResID=$selectedAvatarResId")
+                    val responseBody: String = response.body()
+                    
+                    if (responseBody.startsWith("Joined lobby", ignoreCase = true)) {
+                        isConnected = true
+                        val playerId = responseBody.split(" ").last().toIntOrNull()
+                        val intent = Intent(context, LobbyActivity::class.java).apply {
+                           putExtra("lobbyCode", code)
+                           putExtra("playerId", playerId)
+                           putExtra("username", username)
+                           putExtra("avatarResID", selectedAvatarResId)
+                           putExtra("isHost", false)
+                        }
+                        context.startActivity(intent)
+                    } else {
+                        statusMessage = "Failed to join lobby: $responseBody"
+                        showStatusDialog = true
+
                     }
-                    context.startActivity(intent)
                 } catch (e: Exception) {
-                    statusMessage = "Failed to join lobby"
-                }
-                showStatusDialog = true
-                isLoading = false
+                    statusMessage = "Error joining lobby: ${e.localizedMessage}"
+                    showStatusDialog = true
+                } finally {
+                    isLoading = false                }
             }
         }
-
-        fun createLobbyAndJoin(currentUsername: String) {
+        
+        fun createLobbyAndJoin() {
             coroutineScope.launch {
                 isLoading = true
                 try {
-                    val response: HttpResponse = client.get("$urlEmulator/create-lobby")
+                    val response: HttpResponse = client.get(ServerAddressManager.getCreateLobbyUrl())
                     val createdCode: String = response.body()
                     val encodedName = URLEncoder.encode(username, StandardCharsets.UTF_8.toString())
-                    val joinResponse: HttpResponse = client.get("$urlEmulator/join-lobby/$createdCode?name=$encodedName")
+                    val joinResponse: HttpResponse = client.get(ServerAddressManager.getJoinLobbyUrl(createdCode) + "?name=$encodedName&avatarResID=$selectedAvatarResId")
                     val joinResponseBody: String = joinResponse.body()
 
                     println("-> Join Response: $joinResponseBody")
-
+                    
                     if (joinResponseBody.startsWith("Joined lobby", ignoreCase = true)) {
+                        val playerId = joinResponseBody.split(" ").last().toIntOrNull()
                         val intent = Intent(context, LobbyActivity::class.java).apply {
                             putExtra("lobbyCode", createdCode)
+                            putExtra("playerId", playerId)
                             putExtra("username", username)
                             putExtra("avatarResID", selectedAvatarResId)
                             putExtra("isHost", true)
@@ -199,55 +200,78 @@ class StartMenuActivity: ComponentActivity() {
             }
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            val screenHeight = maxHeight
+            val titleHeight = screenHeight * 0.27f
+            val showFireworksCounter = remember { mutableIntStateOf(0) }
+            val fireworkOn = showFireworksCounter.intValue >= 3
+
             Image(
                 painter = painterResource(id = R.drawable.backgroundimage),
                 contentDescription = "Background Image",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
-            // EasterEgg, click three times on title and watch firework display
-            val showFireworksCounter = remember { mutableIntStateOf(0) }
-            if (showFireworksCounter.intValue >= 3) {
+
+            if (fireworkOn) {
                 FireworkLauncher(onAnimationEnd = {
                     showFireworksCounter.intValue = 0
                 })
             }
-            val titleModifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 50.dp)
-                .clickable(
-//                        interactionSource = remember { MutableInteractionSource() },
-//                        indication = null
-                ) {
-                    showFireworksCounter.intValue += 1
-                }
-            Title(modifier = titleModifier)
 
             Column(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(bottom = 62.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(elementSpacing),
+                modifier = Modifier.fillMaxSize()
             ) {
+                // Title area (reserves space, clickable for fireworks)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(titleHeight)
+                        .background(Color.Transparent)
+                        .clickable { showFireworksCounter.intValue += 1 },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "",
+                        fontSize = 40.sp,
+                        color = Color.White,
+                        fontFamily = customFont,
+                        style = TextStyle(
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.5f),
+                                offset = Offset(2f, 4f),
+                                blurRadius = 8f
+                            )
+                        )
+                    )
+                }
                 //Avatar Placeholder
-                Box(modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(Color.DarkGray)
-                    .clickable { showAvatarDialog = true },
-                    contentAlignment = Alignment.Center){
-                    Image(painter = painterResource(id = selectedAvatarResId),
+                Box(
+                    modifier = Modifier
+                        .size(elementHeight)
+                        .clip(CircleShape)
+                        .background(Color.DarkGray)
+                        .clickable { showAvatarDialog = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = selectedAvatarResId),
                         contentDescription = "Select Avatar",
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop)
+                        contentScale = ContentScale.Crop
+                    )
                 }
                 androidx.compose.material3.TextField(
                     value = username,
-                    onValueChange = {
-                            newValue ->
+                    onValueChange = { newValue ->
                         val maxLength = 6
                         val allowedChars = "a-zA-Z0-9,.!_;:?"
+
                         val regex = Regex("^[$allowedChars]*$")
                         if (newValue.length <= maxLength){
                             if (newValue.matches(regex)){
@@ -277,79 +301,74 @@ class StartMenuActivity: ComponentActivity() {
                     },
                     shape = RoundedCornerShape(50),
                     modifier = Modifier
-                        .padding(top = 16.dp, bottom = 24.dp)
-                        .width(220.dp))
-
-                Button(
-                    onClick = { showJoinDialog = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2ecc71),
-                        contentColor = Color.White
+                        .width(elementWidth),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent,
+                        errorIndicatorColor = Color.Transparent
                     ),
-                    border = BorderStroke(2.dp, Color.White),
+                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
+                )
+                val wiggleAnim2 = rememberInfiniteTransition(label = "wiggle2").animateFloat(
+                    initialValue = 2f,
+                    targetValue = -2f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 600, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ), label = "wiggle2"
+                )
+                Text(
+                    text = "CREATE A LOBBY",
                     modifier = Modifier
-                        .padding(top = 10.dp)
-                        .width(200.dp)
-                        .height(60.dp)
-                ) {
-                    Text(
-                        text = "Join Lobby",
-                        textAlign = TextAlign.Center,
-                        fontSize = 20.sp
-                    )
-                }
+                        .clickable { createLobbyAndJoin() }
+                        .padding(screenHeight * 0.05f)
+                        .fillMaxWidth()
 
-                Button(
-                    onClick = {
-                        createLobbyAndJoin(username)
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.DarkGray,
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier
-                        .padding(top = 10.dp)
-                        .width(200.dp)
-                        .height(60.dp)
-                ) {
-                    Text(
-                        text = "Create Lobby",
-                        textAlign = TextAlign.Center,
-                        fontSize = 20.sp
-                    )
-                }
-
-
-                Button(
-                    onClick = { startGame() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.DarkGray,
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(2.dp, Color.White),
-                    modifier = Modifier
-                        .padding(top = 10.dp)
-                        .width(200.dp)
-                        .height(60.dp)
-                ) {
-                    Text(text = "Start game",
-                        textAlign = TextAlign.Center,
-                        fontSize = 20.sp)
-                }
-                /*Button(
-                    onClick = {
-                        context.startActivity(
-                            Intent(
-                                context,
-                                LobbyActivity::class.java
-                            )
+                        .graphicsLayer {
+                            rotationZ = wiggleAnim2.value
+                        },
+                    textAlign = TextAlign.Center,
+                    fontSize = 26.sp,
+                    color = Color(0xFFFCAE21),
+                    fontFamily = customFont,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            offset = Offset(2f, 4f),
+                            blurRadius = 8f
                         )
-                    },
-                    modifier = Modifier.fillMaxWidth().height(60.dp)
-                ) {
-                    Text("Temporary: Go to lobby")
-                }*/
+                    )
+                )
+                val wiggleAnim = rememberInfiniteTransition(label = "wiggle").animateFloat(
+                    initialValue = -2f,
+                    targetValue = 2f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 600, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ), label = "wiggle"
+                )
+                Text(
+                    text = "JOIN A LOBBY",
+                    modifier = Modifier
+                        .clickable { showJoinDialog = true }
+                        .padding(screenHeight * 0.05f)
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            rotationZ = wiggleAnim.value
+                        },
+                    textAlign = TextAlign.Center,
+                    fontSize = 26.sp,
+                    color = Color(0xFFFCAE21),
+                    fontFamily = customFont,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            offset = Offset(2f, 4f),
+                            blurRadius = 8f
+                        )
+                    )
+                )
             }
             Surface(
                 modifier = Modifier
@@ -361,11 +380,11 @@ class StartMenuActivity: ComponentActivity() {
                 tonalElevation = 4.dp
             ) {
                 IconButton(
-                    onClick = { fetchStatus() }
+                    onClick = { showRules = true }
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = "Status",
+                        contentDescription = "Game Rules",
                         tint = Color.DarkGray,
                         modifier = Modifier.size(50.dp)
                     )
@@ -419,6 +438,15 @@ class StartMenuActivity: ComponentActivity() {
                             onValueChange = { lobbyCode = it.filter { char -> char.isLetterOrDigit()}.take(6).uppercase()},
                             label = { Text("Enter Lobby Code with 6 chars") }
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {showQRScanner = true},
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(imageVector = Icons.Default.Camera, contentDescription = "Scan QR Code")
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Scan QR Code")
+                        }
                     } },
                 confirmButton = {
                     Button(onClick = {
@@ -446,6 +474,52 @@ class StartMenuActivity: ComponentActivity() {
                 }
             )
         }
+        if (showQRScanner) {
+            CameraPermissionHandler(
+                onPermissionGranted = {
+                    hasCameraPermission = true
+                    permissionDenied = false
+                    println("Camera permission granted in StartMenue!")
+                },
+                onPermissionDenied = {
+                    hasCameraPermission = false
+                    permissionDenied = true
+                    println("Camera permission denied in StartMenue!")
+                }
+            )
+
+            if (hasCameraPermission) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    QRScanner(
+                        onScanned = { scannedCode ->
+                            println("QR Code scanned: $scannedCode")
+                            if (scannedCode.length == 6) {
+                                // Make sure we have a 6-character lobby code
+                                joinLobby(scannedCode)
+                                showQRScanner = false
+                                showJoinDialog = false
+                            } else {
+                                statusMessage = "Invalid QR code format. Expected 6-character lobby code."
+                                showStatusDialog = true
+                                showQRScanner = false
+                            }
+                        },
+                        onDismiss = { showQRScanner = false }
+                    )
+                }
+            } else if (permissionDenied) {
+                // Zeige Snackbar oder Dialog
+                statusMessage = "Camera permission denied. Please grant camera permission in app settings."
+                showStatusDialog = true
+                showQRScanner = false
+            }
+        }
+        if (showRules){
+            FullScreenRulesDialog (onDismiss = { showRules = false })
+        }
     }
 
     @Composable
@@ -466,14 +540,20 @@ class StartMenuActivity: ComponentActivity() {
             title = { Text("Choose your Avatar")},
             text = {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ){
                     avatarOptions.forEach {avatarRes ->
                         Image(painter = painterResource(id = avatarRes),
                             contentDescription = "Choose your player",
-                            modifier = Modifier.size(50.dp).clip(CircleShape).clickable { onAvatarSelected(avatarRes) }.padding(4.dp),
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .clickable { onAvatarSelected(avatarRes) }
+                                .padding(4.dp),
                             contentScale = ContentScale.Crop)
                     }
                 }
@@ -482,14 +562,6 @@ class StartMenuActivity: ComponentActivity() {
                 Button(onClick = onDismiss) { Text("Cancel") }
             }
         )}
-
-    @Preview(showBackground = true)
-    @Composable
-    fun StartMenuScreenPreview() {
-        ClientTheme {
-            StartMenuScreen()
-        }
-    }
 
     @Composable
     fun PopupDialog(title: String, message: String, onDismiss: () -> Unit) {
@@ -506,21 +578,136 @@ class StartMenuActivity: ComponentActivity() {
     }
 }
 
+fun loadMarkdownFromRaw(@RawRes resId: Int, context: Context): String {
+    return context.resources.openRawResource(resId)
+        .bufferedReader()
+        .use { it.readText() }
+}
+
 @Composable
-fun Title(modifier: Modifier = Modifier) {
-    Text(
-        text = "Hanabi!",
-        fontFamily = FontFamily.Cursive,
-        color = Color(0xFFF2FF90),
-        fontSize = 100.sp,
-        fontWeight = FontWeight.Bold,
-        style = TextStyle(
-            shadow = Shadow(
-                color = Color.Black.copy(alpha = 100f),
-                offset = Offset(-0f, 0f),
-                blurRadius = 50f
-            )
-        ),
-        modifier = modifier
-    )
+fun FullScreenRulesDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+
+    var standardRulesText by remember { mutableStateOf("") }
+    var extrasRulesText by remember { mutableStateOf("") }
+    var selectedTabIndex by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        standardRulesText = loadMarkdownFromRaw(R.raw.hanabi_rules, context)
+        extrasRulesText = loadMarkdownFromRaw(R.raw.hanabi_extras, context)
+    }
+
+    val currentMarkdown = when (selectedTabIndex) {
+        0 -> standardRulesText
+        else -> extrasRulesText
+    }
+
+    val selectedTabColor = colorResource(id = R.color.selected_tab_color)
+    val indicatorColor = colorResource(id=R.color.indicator_violet)
+    val backgroundColor = colorResource(id = R.color.light_background)
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Gray.copy(alpha = 0.5f))
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(0.95f),
+                color = MaterialTheme.colorScheme.background,
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Hanabi Rules",
+                            style = MaterialTheme.typography.headlineMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    TabRow(
+                        selectedTabIndex = selectedTabIndex,
+                        containerColor = Color.Transparent,
+                        indicator = {},
+                    ) {
+                        listOf("Standard", "Extras").forEachIndexed { index, title ->
+                            val isSelected = selectedTabIndex == index
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { selectedTabIndex = index }
+                                    .background(if (isSelected) selectedTabColor else Color.Transparent)
+                                    .padding(vertical = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    title,
+                                    color = if (isSelected) Color.Black else Color.DarkGray
+                                )
+                                if (isSelected) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .height(3.dp)
+                                            .width(40.dp)
+                                            .background(indicatorColor, RoundedCornerShape(2.dp))
+                                    )
+                                } else {
+                                    Spacer(modifier = Modifier.height(7.dp)) // Match height with selected
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .background(backgroundColor, shape = RoundedCornerShape(12.dp))
+                            .padding(16.dp)
+                    ) {
+                        if (currentMarkdown.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                            ) {
+                                MarkdownText(
+                                    markdown = currentMarkdown,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        } else {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Text("Close")
+                    }
+                }
+            }
+        }
+    }
 }

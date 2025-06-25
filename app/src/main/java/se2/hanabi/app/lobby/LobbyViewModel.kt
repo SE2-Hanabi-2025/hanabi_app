@@ -15,24 +15,37 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import se2.hanabi.app.utils.ServerAddressManager
 
+
+@kotlinx.serialization.Serializable
+data class PlayerInLobby(
+    val name: String,
+    val avatarResID: Int
+)
 
 class LobbyViewModel : ViewModel() {
+
+    private val _isCasualMode = MutableStateFlow(false)
+    val isCasualMode: StateFlow<Boolean> = _isCasualMode
 
     private val _isGameStarted = MutableStateFlow(false)
     val isGameStarted: StateFlow<Boolean> = _isGameStarted
 
-    private val _players = MutableStateFlow<List<String>>(emptyList())
-    val players: StateFlow<List<String>> = _players
+    private val _players = MutableStateFlow<List<PlayerInLobby>>(emptyList())
+    val players: StateFlow<List<PlayerInLobby>> = _players
 
     private val _lobbyCode = mutableStateOf<String?>(null)
-
     val lobbyCode: String?
         get() = _lobbyCode.value
+
+    private val _playerId = mutableStateOf<Int?>(null)
 
     private val _isHost = mutableStateOf(false)
     val isHost: Boolean
         get() = _isHost.value
+          // Username of the current player
+    private val _username = mutableStateOf("")
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -42,7 +55,6 @@ class LobbyViewModel : ViewModel() {
             })
         }
     }
-
     fun setIsHost(isHost: Boolean) {
         _isHost.value = isHost
     }
@@ -51,34 +63,107 @@ class LobbyViewModel : ViewModel() {
         _lobbyCode.value = code
     }
 
+    fun setPlayerId(playerId: Int?) {
+        _playerId.value = playerId
+    }
+
+    fun getPlayerId(): Int? {
+        return _playerId.value
+    }
+
     fun fetchPlayers() {
         viewModelScope.launch {
             try {
                 val code = _lobbyCode.value ?: return@launch
-                val response: List<String> =  client.get("http://10.0.2.2:8080/lobby/$code/players").body()
-                _players.value = response
 
-                val gameStatusResponse = client.get("http://10.0.2.2:8080/start-game/$code/status")
-                if (gameStatusResponse.status == HttpStatusCode.OK) {
-                    val gameStarted: Boolean = gameStatusResponse.body()
-                    if (gameStarted){
-                        _isGameStarted.value = true
-                    }
+                  // Fetch players from server
+                val response: List<PlayerInLobby> =  client.get(ServerAddressManager.getLobbyPlayersUrl(code)).body()
+                
+                // Use all players including duplicates
+                val allPlayers = response.toMutableList()
+                
+                // Make sure current player is in the list
+                val currentUsername = _username.value
+                if (currentUsername.isNotEmpty() && !allPlayers.any{it.name ==currentUsername}) {
+                    allPlayers.add(PlayerInLobby(currentUsername, 0))
+                    
+                    println("Added current player ($currentUsername) to list: ${allPlayers.joinToString { it.name }}")
+                } else {
+                    
+                    // Log for debugging
+                    println("Updated player list: ${allPlayers.joinToString { it.name }}")
                 }
-            }catch (e: Exception){
+                  // Use the complete list including duplicates
+                _players.value = allPlayers
+
+            } catch (e: Exception) {
                 e.printStackTrace()
-                _players.value = emptyList()
+                println("Error fetching players: ${e.message}")
+                
+                // If there's an error, ensure at least the current player is in the list
+                val currentUsername = _username.value
+                if (currentUsername.isNotEmpty() && (_players.value.isEmpty() || !_players.value.any{it.name == currentUsername})) {
+                    _players.value = listOf(PlayerInLobby(currentUsername, 0))
+                    println("Added only current player ($currentUsername) after error")
+                }
             }
         }
     }
 
-    fun startPlayerSync(intervalMillis : Long = 1000L){
+    fun fetchGameStartStatus() {
         viewModelScope.launch {
-            while (true) {
-                fetchPlayers()
-                delay(intervalMillis)
+            try {
+                val code = _lobbyCode.value ?: return@launch
+
+                println("Checking game status for lobby: $code")
+                val gameStatusUrl = ServerAddressManager.getStartGameUrl(code) + "/status"
+                println("URL: $gameStatusUrl")
+
+                val gameStatusResponse = client.get(gameStatusUrl)
+                println("Game status response: ${gameStatusResponse.status}")
+
+                if (gameStatusResponse.status == HttpStatusCode.OK) {
+                    val gameStarted: Boolean = gameStatusResponse.body()
+                    println("Game started: $gameStarted")
+                    _isGameStarted.value = gameStarted
+                } else {
+                    println("Game status check failed: ${gameStatusResponse.status}")
+                }
+            } catch (e: Exception) {
+                println("Error checking game status: ${e.message}")
             }
         }
+    }
+
+    fun startFetchPlayersAndStartSync(intervalMillis: Long = 2000L) {
+        viewModelScope.launch {
+            // Initial delay to make sure any join operations are completed
+            delay(500L)
+            
+            // Fetch players immediately once
+            fetchPlayers()
+            fetchGameStartStatus()
+            
+            // Then start regular polling
+            while (true) {
+                delay(intervalMillis)
+                fetchPlayers()
+                fetchGameStartStatus()
+            }
+        }
+    } 
+
+    fun setIsGameStarted(isGameStarted: Boolean) {
+        _isGameStarted.value = isGameStarted
+    }
+
+    // Set username when joining a lobby
+    fun setUsername(username: String) {
+        _username.value = username
+    }
+
+    fun onGameModeToggle() {
+        _isCasualMode.value = !_isCasualMode.value
     }
 }
 
