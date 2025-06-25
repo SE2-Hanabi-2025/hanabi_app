@@ -16,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,12 +57,12 @@ fun PlayersCardsUI(
     val currentPlayer = viewModel.currentPlayer.collectAsState().value
     var showCheat by remember { mutableStateOf(false) }
     var cheatUsedThisRound by remember { mutableStateOf(false) }
-    var lastPlayer by remember { mutableStateOf(currentPlayer ?: -1) }
+    var lastPlayer by remember { mutableIntStateOf(currentPlayer) }
 
     // Reset cheat usage when the round changes
     if (lastPlayer != currentPlayer) {
         cheatUsedThisRound = false
-        lastPlayer = currentPlayer ?: -1
+        lastPlayer = currentPlayer
     }
 
     val showRealCards = showCheat && cheatHand.isNotEmpty()
@@ -193,9 +194,6 @@ fun PlayersHand(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             if (showRealCards && realCards.isNotEmpty()) {
-                val density = LocalDensity.current
-                val cardWidthPx = with(density) { cardSizeDp.width.toPx() }
-                val cardHeightPx = with(density) { cardSizeDp.height.toPx() }
                 realCards.forEachIndexed { idx, card ->
                     val cardId = card.getID()
                     val offset = cardOffsets[cardId] ?: Offset.Zero
@@ -237,9 +235,6 @@ fun PlayersHand(
                             })
                 }
             } else {
-                val density = LocalDensity.current
-                val cardWidthPx = with(density) { cardSizeDp.width.toPx() }
-                val cardHeightPx = with(density) { cardSizeDp.height.toPx() }
                 hand.forEach { cardId ->
                     val offset = cardOffsets[cardId] ?: Offset.Zero
                     var cardCoordinates: androidx.compose.ui.layout.LayoutCoordinates? = null
@@ -398,10 +393,10 @@ fun OtherPlayersHand(
                     rotationAmountZ = -30f + index * (60 / hand.value.size), //60 degree arc
                     onClick = onClick,
                     isHighlighted = isSelected && (
-                            card.color == viewModel.selectedHint.collectAsState().value?.getColor() ||
-                                    card.value == viewModel.selectedHint.collectAsState().value?.getValue()
+                            card.getColor() == viewModel.selectedHint.collectAsState().value?.getColor() ||
+                                    card.getValue() == viewModel.selectedHint.collectAsState().value?.getValue()
                             ),
-                    highlightColor = if (viewModel.selectedHint.collectAsState().value?.getColor()!=null) colorFromColorEnum(card.color) else Color.White,
+                    highlightColor = if (viewModel.selectedHint.collectAsState().value?.getColor()!=null) colorFromColorEnum(card.getColor()) else Color.White,
                     colorHint = viewModel.cardsShowingColorHints.collectAsState().value[card.getID()],
                     valueHint = viewModel.cardsShowingValueHints.collectAsState().value[card.getID()],
                 )

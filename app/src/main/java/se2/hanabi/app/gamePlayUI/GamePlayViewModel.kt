@@ -1,24 +1,23 @@
 package se2.hanabi.app.gamePlayUI
 
 import android.util.Log
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import se2.hanabi.app.model.GameStatus
-import se2.hanabi.app.model.Player
 import se2.hanabi.app.Services.GamePlayService
 import se2.hanabi.app.Services.WebSocketService
 import se2.hanabi.app.model.Card
+import se2.hanabi.app.model.GameStatus
 import se2.hanabi.app.model.Hint
+import se2.hanabi.app.model.Player
 import se2.hanabi.app.model.websocket.ResultType
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 
 /**
  * GamePlayViewModel displays a gameStatus object.
@@ -139,11 +138,6 @@ class GamePlayViewModel(
     private val _cheatHand = MutableStateFlow<List<Card>>(emptyList())
     val cheatHand: StateFlow<List<Card>> = _cheatHand.asStateFlow()
 
-    private var cheatSent = false
-
-    // Track the last round a cheat was sent
-    private var lastCheatRound: Int? = null
-
     private var cheatSentThisTurn = false
 
     // Track if cheat hand has been shown this turn (for UI logic)
@@ -151,7 +145,6 @@ class GamePlayViewModel(
 
     // Drag-and-drop pointer and drop zone state
     private val _pointerPosition = MutableStateFlow<Offset?>(null)
-    val pointerPosition: StateFlow<Offset?> = _pointerPosition
     private val colorStackBounds = mutableMapOf<Card.Color, Rect>()
     private var discardZoneBounds: Rect? = null
 
@@ -280,7 +273,7 @@ class GamePlayViewModel(
         _otherPlayersHands.value = newStatus.visibleHands
         Log.v(TAG, "Hände anderer Spieler: ${newStatus.visibleHands.size} Spieler haben sichtbare Karten")
         newStatus.visibleHands.forEach { (playerId, cards) ->
-            Log.v(TAG, "  Spieler $playerId: ${cards.size} Karten - ${cards.joinToString { "${it.color}_${it.value}" }}")
+            Log.v(TAG, "  Spieler $playerId: ${cards.size} Karten - ${cards.joinToString { "${it.getColor()}_${it.getValue()}" }}")
         }
 
         _stackValues.value = newStatus.playedCards
@@ -374,11 +367,11 @@ class GamePlayViewModel(
 
             if (playerHand != null) {
                 playerHand.forEach { card ->
-                    val matchColor = card.color == _selectedHint.value?.getColor()
-                    val matchValue = card.value == _selectedHint.value?.getValue()
+                    val matchColor = card.getColor() == _selectedHint.value?.getColor()
+                    val matchValue = card.getValue() == _selectedHint.value?.getValue()
 
                     if (matchColor || matchValue) {
-                        Log.d(TAG, "Karte ${card.color}_${card.value} passt zum Hinweis - Hinweis ist gültig")
+                        Log.d(TAG, "Karte ${card.getColor()}_${card.getValue()} passt zum Hinweis - Hinweis ist gültig")
                         validHint = true
                     }
                 }
@@ -550,9 +543,9 @@ class GamePlayViewModel(
             return
         }
         // Hanabi rules: auto-place 1s, validate others
-        if (card.value == 1) {
+        if (card.getValue() == 1) {
             // Find the correct color stack for this 1
-            val correctStackValue = stackValues.value[card.color] ?: 0
+            val correctStackValue = stackValues.value[card.getColor()] ?: 0
             if (correctStackValue == 0) {
                 // Play the card regardless of drop target if its color stack is empty
                 playCardByIndex(cardIndex)
@@ -565,7 +558,7 @@ class GamePlayViewModel(
         } else {
             // For other values, must match stack color and be next in sequence
             val stackValue = stackValues.value[targetColor] ?: 0
-            if (card.color == targetColor && stackValue == card.value - 1) {
+            if (card.getColor() == targetColor && stackValue == card.getValue() - 1) {
                 playCardByIndex(cardIndex)
                 return
             } else {
@@ -661,7 +654,7 @@ class GamePlayViewModel(
         var dropped = false
         // Try all color stacks
         for ((color, bounds) in colorStackBounds) {
-            if (pointer != null && bounds != null && bounds.contains(pointer)) {
+            if (pointer != null && bounds.contains(pointer)) {
                 Log.d(TAG, "Pointer is inside color stack $color bounds. Dropping card.")
                 onPlayCardDrop(cardId, color)
                 dropped = true
@@ -692,8 +685,6 @@ class GamePlayViewModel(
         }
     }
 
-    // Additional cheat function from development branch
-    // Example usage: call this from UI with the actual sequence and proximity
     fun defuseAttemptCheat(sequence: List<String>, proximity: String) {
         viewModelScope.launch {
             webSocketService.defuseAttempt(lobbyId, playerId, sequence, proximity)

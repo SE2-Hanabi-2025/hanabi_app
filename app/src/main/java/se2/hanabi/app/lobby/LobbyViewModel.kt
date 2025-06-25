@@ -46,8 +46,6 @@ class LobbyViewModel : ViewModel() {
         get() = _isHost.value
           // Username of the current player
     private val _username = mutableStateOf("")
-    val username: String
-        get() = _username.value
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -97,24 +95,7 @@ class LobbyViewModel : ViewModel() {
                 }
                   // Use the complete list including duplicates
                 _players.value = allPlayers
-                try {
-                    println("Checking game status for lobby: $code")
-                    val gameStatusUrl = ServerAddressManager.getStartGameUrl(code) + "/status"
-                    println("URL: $gameStatusUrl")
 
-                    val gameStatusResponse = client.get(gameStatusUrl)
-                    println("Game status response: ${gameStatusResponse.status}")
-
-                    if (gameStatusResponse.status == HttpStatusCode.OK) {
-                        val gameStarted: Boolean = gameStatusResponse.body()
-                        println("Game started: $gameStarted")
-                        _isGameStarted.value = gameStarted
-                    } else {
-                        println("Game status check failed: ${gameStatusResponse.status}")
-                    }
-                } catch (e: Exception) {
-                    println("Error checking game status: ${e.message}")
-                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 println("Error fetching players: ${e.message}")
@@ -129,18 +110,45 @@ class LobbyViewModel : ViewModel() {
         }
     }
 
-    fun startPlayerSync(intervalMillis: Long = 2000L) {
+    fun fetchGameStartStatus() {
+        viewModelScope.launch {
+            try {
+                val code = _lobbyCode.value ?: return@launch
+
+                println("Checking game status for lobby: $code")
+                val gameStatusUrl = ServerAddressManager.getStartGameUrl(code) + "/status"
+                println("URL: $gameStatusUrl")
+
+                val gameStatusResponse = client.get(gameStatusUrl)
+                println("Game status response: ${gameStatusResponse.status}")
+
+                if (gameStatusResponse.status == HttpStatusCode.OK) {
+                    val gameStarted: Boolean = gameStatusResponse.body()
+                    println("Game started: $gameStarted")
+                    _isGameStarted.value = gameStarted
+                } else {
+                    println("Game status check failed: ${gameStatusResponse.status}")
+                }
+            } catch (e: Exception) {
+                println("Error checking game status: ${e.message}")
+            }
+        }
+    }
+
+    fun startFetchPlayersAndStartSync(intervalMillis: Long = 2000L) {
         viewModelScope.launch {
             // Initial delay to make sure any join operations are completed
             delay(500L)
             
             // Fetch players immediately once
             fetchPlayers()
+            fetchGameStartStatus()
             
             // Then start regular polling
             while (true) {
                 delay(intervalMillis)
                 fetchPlayers()
+                fetchGameStartStatus()
             }
         }
     } 
@@ -157,24 +165,5 @@ class LobbyViewModel : ViewModel() {
     fun onGameModeToggle() {
         _isCasualMode.value = !_isCasualMode.value
     }
-
-    /*// Get player ID by matching username in the players list
-    fun getPlayerId(): Int {
-        val username = _username.value
-        val playersList = _players.value
-        
-        // If we have a username, find its index in the players list
-        // The index corresponds to the player ID assigned by the server
-        if (username.isNotEmpty()) {
-            val index = playersList.indexOf(username)
-            if (index != -1) {
-                return index
-            }
-        }
-        
-        // If we can't find the player or have no username, return -1
-        // The calling code should handle this appropriately
-        return 0
-    }*/
 }
 

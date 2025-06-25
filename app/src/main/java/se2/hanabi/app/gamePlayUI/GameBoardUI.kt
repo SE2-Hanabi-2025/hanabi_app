@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,15 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -99,11 +95,6 @@ fun GameBoardUI(
                     shrinkRatio = shrinkRatio,
                     landscape = landscape,
                     numRemainingCards = viewModel.numRemainingCard.collectAsState().value,
-                    modifier = Modifier.onGloballyPositioned { coordinates ->
-                        val position = coordinates.localToWindow(androidx.compose.ui.geometry.Offset.Zero)
-                        val size = coordinates.size.toSize()
-                        android.util.Log.d("HanabiGameBoardUI", "RemainingCardsStack onGloballyPositioned: position=$position, size=$size")
-                    }
                 )
                 DiscardedCardsStack(
                     cardSizeDp = cardSizeDp,
@@ -161,13 +152,12 @@ fun HintTokens(
     numRemaining: Int,
     cardSizeDp: DpSize
 ) {
-    val totalNumTokens = 8
     Column(modifier = Modifier
         .size(cardHeight, tokenAreaHeight),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(){ // tokens 7,8 on top row
+        Row{ // tokens 7,8 on top row
             for (tokenIndex in 7..8) {
                 Token(
                     cardSizeDp = cardSizeDp,
@@ -176,7 +166,7 @@ fun HintTokens(
                 )
             }
         }
-        Row(){ // tokens 4,5,6 on mid row
+        Row{ // tokens 4,5,6 on mid row
             for (tokenIndex in 4..6) {
                 Token(
                     cardSizeDp = cardSizeDp,
@@ -185,7 +175,7 @@ fun HintTokens(
                 )
             }
         }
-        Row(){ // tokens 1,2,3 on bottom row
+        Row{ // tokens 1,2,3 on bottom row
             for (tokenIndex in 1..3) {
                 Token(
                     cardSizeDp = cardSizeDp,
@@ -204,7 +194,6 @@ fun FuseTokens(
     numRemaining: Int,
     cardSizeDp: DpSize
 ) {
-    val totalNumTokens = 3
     Column(modifier = Modifier
         .size(cardHeight, tokenAreaHeight),
         verticalArrangement = Arrangement.Center,
@@ -215,7 +204,7 @@ fun FuseTokens(
             type = TokenType.fuse,
             isFlipped = 3 > numRemaining
         )
-        Row() { // fuse token num 1 and 2 on bottom row
+        Row { // fuse token num 1 and 2 on bottom row
             for (tokenIndex in 1..2) {
                 Token(
                     cardSizeDp = cardSizeDp,
@@ -232,7 +221,6 @@ fun RemainingCardsStack(
     cardSizeDp: DpSize,
     shrinkRatio: Float,
     landscape: Boolean,
-    modifier: Modifier = Modifier,
     numRemainingCards: Int
 ) {
     Box(contentAlignment = Alignment.Center ) {
@@ -307,7 +295,7 @@ fun DiscardedCardsStack(
     } else {
         CardItem(
             cardSizeDp = cardSizeDp,
-            card = Card(lastDiscardedCard.color,lastDiscardedCard.value),
+            card = Card(lastDiscardedCard.getColor(),lastDiscardedCard.getValue()),
             isFlipped = false,
             isPortrait = false,
             onClick = onClick,
@@ -341,7 +329,6 @@ fun EmptyStack(
 fun ColorStacks(
     cardSizeDp: DpSize,
     cardSpacing: Dp,
-    modifier: Modifier = Modifier,
     stackValues: Map<Card.Color, Int>,
     onColorStackClick: (Card.Color) -> Unit,
     onStackPositioned: ((Card.Color, androidx.compose.ui.layout.LayoutCoordinates) -> Unit)? = null,
@@ -352,7 +339,7 @@ fun ColorStacks(
     Column(
         verticalArrangement = Arrangement.spacedBy(cardSpacing),
     ) {
-        Card.Color.entries.forEach() { color ->
+        Card.Color.entries.forEach { color ->
             val stackModifier = Modifier
                 .size(cardSizeDp.height, cardSizeDp.width)
                 .then(

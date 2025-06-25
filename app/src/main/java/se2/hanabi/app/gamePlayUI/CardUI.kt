@@ -33,7 +33,7 @@ const val CARD_PROPORTION_OF_WIDTH = 0.17f
 
 // Returns name of the corresponding card image, following the schema "color_number"
 fun getCardImageName(card: Card): String {
-    return "${card.color.toString().lowercase()}_${card.value}"
+    return "${card.getColor().toString().lowercase()}_${card.getValue()}"
 }
 
 /**
